@@ -74,22 +74,7 @@ pub async fn start_opengl(
         let display_builder = DisplayBuilder::new().with_window_builder(Some(window_builder));
 
         let (window, gl_config) = display_builder
-            .build(&event_loop, template, |configs| {
-                // Find the config with the maximum number of samples, so our triangle will
-                // be smooth.
-                configs
-                    .reduce(|accum, config| {
-                        let transparency_check = config.supports_transparency().unwrap_or(false)
-                            & !accum.supports_transparency().unwrap_or(false);
-
-                        if transparency_check || config.num_samples() < accum.num_samples() {
-                            config
-                        } else {
-                            accum
-                        }
-                    })
-                    .unwrap()
-            })
+            .build(&event_loop, template, |mut configs| configs.next().unwrap())
             .unwrap();
 
         let window = window.unwrap();
