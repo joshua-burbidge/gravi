@@ -11,7 +11,6 @@ mod non_wasm_imports {
     #[allow(deprecated)]
     pub use raw_window_handle::HasRawWindowHandle;
     pub use std::num::NonZeroU32;
-    pub use std::sync::Arc;
 }
 #[cfg(not(target_arch = "wasm32"))]
 use non_wasm_imports::*;
@@ -19,6 +18,7 @@ use non_wasm_imports::*;
 use super::{run, WindowSurface};
 
 use femtovg::{renderer::OpenGl, Canvas};
+use std::sync::Arc;
 use winit::{dpi::PhysicalSize, event_loop::EventLoop, window::WindowAttributes};
 
 pub struct DemoSurface {
@@ -137,8 +137,9 @@ pub async fn start_opengl(
     #[cfg(target_arch = "wasm32")]
     let (canvas, window) = {
         use wasm_bindgen::JsCast;
+        use winit::platform::web::WindowAttributesExtWebSys;
 
-        let canvas = web_sys::window()
+        let html_canvas = web_sys::window()
             .unwrap()
             .document()
             .unwrap()
@@ -147,19 +148,15 @@ pub async fn start_opengl(
             .dyn_into::<web_sys::HtmlCanvasElement>()
             .unwrap();
 
-        use winit::platform::web::WindowBuilderExtWebSys;
+        let width = html_canvas.width();
+        let height = html_canvas.height();
 
-        let width = canvas.width();
-        let height = canvas.height();
+        let renderer = OpenGl::new_from_html_canvas(&html_canvas).expect("Cannot create renderer");
 
-        let renderer = OpenGl::new_from_html_canvas(&canvas).expect("Cannot create renderer");
+        let window_attrs = WindowAttributes::default().with_canvas(Some(html_canvas));
+        let window = event_loop.create_window(window_attrs).unwrap();
 
-        let window = WindowBuilder::new()
-            .with_canvas(Some(canvas))
-            .build(&event_loop)
-            .unwrap();
-
-        let _ = window.request_inner_size(winit::dpi::PhysicalSize::new(width, height));
+        let _ = window.request_inner_size(PhysicalSize::new(width, height));
 
         let canvas = Canvas::new(renderer).expect("Cannot create canvas");
 

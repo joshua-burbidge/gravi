@@ -7,7 +7,7 @@ edition = "2021"
 femtovg = { version = "0.11.2", features = ["wgpu"] }
 spin_on = "0.1.1"
 winit = { version = "0.30.5" }
-wgpu = { version = "23" }
+wgpu = { version = "23", optional = true }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 glutin = "0.32.1"
@@ -26,4 +26,4 @@ wasm-bindgen-futures = { version = "0.4.45" }
 wasm-bindgen = "0.2.99"
 
 [features]
-wgpu = []
+wgpu = ["dep:wgpu"]
