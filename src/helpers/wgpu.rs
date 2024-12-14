@@ -1,7 +1,9 @@
-use std::sync::Arc;
+#[cfg(not(target_arch = "wasm32"))]
+use winit::dpi::PhysicalSize;
 
 use femtovg::{renderer::WGPURenderer, Canvas};
-use winit::{event_loop::EventLoop, window::WindowBuilder};
+use std::sync::Arc;
+use winit::{event_loop::EventLoop, window::WindowAttributes};
 
 use super::{run, WindowSurface};
 
@@ -49,18 +51,21 @@ pub async fn start_wgpu(
 
     #[cfg(not(target_arch = "wasm32"))]
     let window = {
-        let window_builder = WindowBuilder::new()
-            .with_inner_size(winit::dpi::PhysicalSize::new(width, height))
-            .with_resizable(resizeable)
-            .with_title(title);
-        window_builder.build(&event_loop).unwrap()
+        let window_attrs = WindowAttributes::default()
+            .with_inner_size(PhysicalSize::new(1000., 600.))
+            .with_title(title)
+            .with_resizable(resizeable);
+
+        #[allow(deprecated)]
+        event_loop.create_window(window_attrs).unwrap()
     };
 
     #[cfg(target_arch = "wasm32")]
     let (window, width, height) = {
         use wasm_bindgen::JsCast;
+        use winit::platform::web::WindowAttributesExtWebSys;
 
-        let canvas = web_sys::window()
+        let html_canvas = web_sys::window()
             .unwrap()
             .document()
             .unwrap()
@@ -69,15 +74,12 @@ pub async fn start_wgpu(
             .dyn_into::<web_sys::HtmlCanvasElement>()
             .unwrap();
 
-        use winit::platform::web::WindowBuilderExtWebSys;
+        let width = html_canvas.width();
+        let height = html_canvas.height();
 
-        let width = canvas.width();
-        let height = canvas.height();
-
-        let window = WindowBuilder::new()
-            .with_canvas(Some(canvas.clone()))
-            .build(&event_loop)
-            .unwrap();
+        let window_attrs = WindowAttributes::default().with_canvas(Some(html_canvas.clone()));
+        #[allow(deprecated)]
+        let window = event_loop.create_window(window_attrs).unwrap();
 
         let _ = window.request_inner_size(winit::dpi::PhysicalSize::new(width, height));
 

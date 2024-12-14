@@ -26,4 +26,5 @@ wasm-bindgen-futures = { version = "0.4.45" }
 wasm-bindgen = "0.2.99"
 
 [features]
+# default = ["wgpu"]
 wgpu = ["dep:wgpu"]
