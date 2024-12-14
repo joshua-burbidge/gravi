@@ -18,6 +18,7 @@ raw-window-handle = "0.5.0"
 web_sys = { version = "0.3", package = "web-sys", features = [
   "console",
   "WebGlContextAttributes",
+  "WebGl2RenderingContext",
 ] }
 console_error_panic_hook = "0.1.5"
 instant = { version = "0.1", features = ["wasm-bindgen", "now"] }

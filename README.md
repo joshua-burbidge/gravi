@@ -1,0 +1,1 @@
+wasm doesn't work with wgpu feature

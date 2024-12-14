@@ -86,13 +86,11 @@ fn run<W: WindowSurface>(
                     canvas.stroke_path(&path, &Paint::color(Color::white()));
 
                     surface.present(&mut canvas);
-                    // i guess this takes the place of surface.swap_buffers
                     // this is calling flush_to_surface and swap_buffers
                 }
                 WindowEvent::CloseRequested => event_loop_window_target.exit(),
-                _ => {
-                    println!("{:?}", event)
-                }
+                // _ => println!("{:?}", event)
+                _ => {}
             },
             Event::AboutToWait => window.request_redraw(),
             _ => (),
