@@ -1,23 +1,25 @@
 #[cfg(not(target_arch = "wasm32"))]
-use std::num::NonZeroU32;
-use std::sync::Arc;
+mod non_wasm_imports {
+    pub use glutin::{
+        config::ConfigTemplateBuilder,
+        context::{ContextApi, ContextAttributesBuilder},
+        display::GetGlDisplay,
+        prelude::*,
+        surface::SurfaceAttributesBuilder,
+    };
+    pub use glutin_winit::DisplayBuilder;
+    #[allow(deprecated)]
+    pub use raw_window_handle::HasRawWindowHandle;
+    pub use std::num::NonZeroU32;
+    pub use std::sync::Arc;
+}
+#[cfg(not(target_arch = "wasm32"))]
+use non_wasm_imports::*;
 
 use super::{run, WindowSurface};
 
 use femtovg::{renderer::OpenGl, Canvas};
-#[cfg(not(target_arch = "wasm32"))]
-use glutin::{
-    config::ConfigTemplateBuilder,
-    context::{ContextApi, ContextAttributesBuilder},
-    display::GetGlDisplay,
-    prelude::*,
-    surface::SurfaceAttributesBuilder,
-};
-#[cfg(not(target_arch = "wasm32"))]
-use glutin_winit::DisplayBuilder;
-#[cfg(not(target_arch = "wasm32"))]
-use raw_window_handle::HasRawWindowHandle;
-use winit::{event_loop::EventLoop, window::WindowBuilder};
+use winit::{dpi::PhysicalSize, event_loop::EventLoop, window::WindowAttributes};
 
 pub struct DemoSurface {
     #[cfg(not(target_arch = "wasm32"))]
@@ -64,14 +66,14 @@ pub async fn start_opengl(
 
     #[cfg(not(target_arch = "wasm32"))]
     let (canvas, window, context, surface) = {
-        let window_builder = WindowBuilder::new()
-            .with_inner_size(winit::dpi::PhysicalSize::new(width, height))
-            .with_resizable(resizeable)
-            .with_title(title);
+        let window_attr = WindowAttributes::default()
+            .with_inner_size(PhysicalSize::new(width, height))
+            .with_title(title)
+            .with_resizable(resizeable);
 
         let template = ConfigTemplateBuilder::new().with_alpha_size(8);
 
-        let display_builder = DisplayBuilder::new().with_window_builder(Some(window_builder));
+        let display_builder = DisplayBuilder::new().with_window_attributes(Some(window_attr));
 
         let (window, gl_config) = display_builder
             .build(&event_loop, template, |mut configs| configs.next().unwrap())
@@ -79,14 +81,18 @@ pub async fn start_opengl(
 
         let window = window.unwrap();
 
-        let raw_window_handle = Some(window.raw_window_handle());
-
         let gl_display = gl_config.display();
 
-        let context_attributes = ContextAttributesBuilder::new().build(raw_window_handle);
+        #[allow(deprecated)]
+        let raw_window_handle = window
+            .raw_window_handle()
+            .expect("raw window handle failed");
+
+        let context_attributes = ContextAttributesBuilder::new().build(Some(raw_window_handle));
         let fallback_context_attributes = ContextAttributesBuilder::new()
             .with_context_api(ContextApi::Gles(None))
-            .build(raw_window_handle);
+            .build(Some(raw_window_handle));
+
         let mut not_current_gl_context = Some(unsafe {
             gl_display
                 .create_context(&gl_config, &context_attributes)
@@ -98,7 +104,7 @@ pub async fn start_opengl(
         });
 
         let (width, height): (u32, u32) = window.inner_size().into();
-        let raw_window_handle = window.raw_window_handle();
+
         let attrs = SurfaceAttributesBuilder::<glutin::surface::WindowSurface>::new().build(
             raw_window_handle,
             NonZeroU32::new(width).unwrap(),
