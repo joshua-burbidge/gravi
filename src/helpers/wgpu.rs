@@ -22,7 +22,7 @@ impl WindowSurface for DemoSurface {
         self.surface.configure(&self.device, &self.surface_config);
     }
 
-    fn present(&self, canvas: &mut femtovg::Canvas<Self::Renderer>) {
+    fn present(&self, canvas: &mut Canvas<Self::Renderer>) {
         let frame = self
             .surface
             .get_current_texture()
@@ -92,6 +92,9 @@ pub async fn start_wgpu(
     let dx12_shader_compiler = wgpu::util::dx12_shader_compiler_from_env().unwrap_or_default();
     let gles_minor_version = wgpu::util::gles_minor_version_from_env().unwrap_or_default();
 
+    web_sys::console::log_1(&format!("{:?}", gles_minor_version).into());
+    web_sys::console::log_1(&format!("{:?}", dx12_shader_compiler).into());
+
     let instance = wgpu::util::new_instance_with_webgpu_detection(wgpu::InstanceDescriptor {
         backends,
         flags: wgpu::InstanceFlags::from_build_config().with_env(),
@@ -146,6 +149,8 @@ pub async fn start_wgpu(
 
     let mut canvas = Canvas::new(renderer).expect("Cannot create canvas");
     canvas.set_size(width, height, window.scale_factor() as f32);
+
+    web_sys::console::log_1(&format!("running").into());
 
     run(canvas, event_loop, demo_surface, window);
 }
