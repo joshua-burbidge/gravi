@@ -6,6 +6,7 @@ use winit::{
     application::ApplicationHandler,
     event::{ElementState, MouseButton, WindowEvent},
     event_loop::ActiveEventLoop,
+    keyboard,
     window::{Window, WindowId},
 };
 
@@ -22,6 +23,7 @@ pub struct App<W: WindowSurface> {
     mousex: f32,
     mousey: f32,
     dragging: bool,
+    close_requested: bool,
     window: Arc<Window>,
     canvas: Canvas<W::Renderer>,
     surface: W,
@@ -35,6 +37,7 @@ impl<W: WindowSurface> App<W> {
             mousex: 0.,
             mousey: 0.,
             dragging: false,
+            close_requested: false,
         }
     }
 }
@@ -105,6 +108,16 @@ impl<W: WindowSurface> ApplicationHandler for App<W> {
                 ElementState::Pressed => self.dragging = true,
                 ElementState::Released => self.dragging = false,
             },
+            WindowEvent::KeyboardInput { event, .. } => {
+                let key = event.logical_key;
+
+                match key {
+                    keyboard::Key::Named(keyboard::NamedKey::Escape) => {
+                        self.close_requested = true;
+                    }
+                    _ => {}
+                }
+            }
             WindowEvent::RedrawRequested { .. } => {
                 let window = &self.window;
                 let canvas = &mut self.canvas;
@@ -133,6 +146,12 @@ impl<W: WindowSurface> ApplicationHandler for App<W> {
                 #[cfg(target_arch = "wasm32")]
                 web_sys::console::log_1(&format!("{:?}", event).into());
             }
+        }
+    }
+
+    fn about_to_wait(&mut self, event_loop: &ActiveEventLoop) {
+        if self.close_requested {
+            event_loop.exit();
         }
     }
 }
