@@ -3,9 +3,14 @@ use winit::dpi::PhysicalSize;
 
 use femtovg::{renderer::WGPURenderer, Canvas};
 use std::sync::Arc;
-use winit::{event_loop::EventLoop, window::WindowAttributes};
+use winit::{
+    event_loop::EventLoop,
+    window::{Window, WindowAttributes},
+};
 
-use super::{run, WindowSurface};
+use crate::App;
+
+use super::WindowSurface;
 
 pub struct DemoSurface {
     device: Arc<wgpu::Device>,
@@ -34,11 +39,21 @@ impl WindowSurface for DemoSurface {
     }
 }
 
+pub fn init_wgpu_app(
+    event_loop: EventLoop<()>,
+    canvas: Canvas<WGPURenderer>,
+    surface: DemoSurface,
+    window: Arc<Window>,
+) {
+    let mut app = App::new(canvas, surface, window);
+
+    event_loop.run_app(&mut app).expect("failed to run app");
+}
+
 pub async fn start_wgpu(
     #[cfg(not(target_arch = "wasm32"))] width: u32,
     #[cfg(not(target_arch = "wasm32"))] height: u32,
     #[cfg(not(target_arch = "wasm32"))] title: &'static str,
-    #[cfg(not(target_arch = "wasm32"))] resizeable: bool,
 ) {
     println!("using Wgpu...");
 
@@ -53,8 +68,7 @@ pub async fn start_wgpu(
     let window = {
         let window_attrs = WindowAttributes::default()
             .with_inner_size(PhysicalSize::new(1000., 600.))
-            .with_title(title)
-            .with_resizable(resizeable);
+            .with_title(title);
 
         #[allow(deprecated)]
         event_loop.create_window(window_attrs).unwrap()
@@ -91,9 +105,6 @@ pub async fn start_wgpu(
     let backends = wgpu::util::backend_bits_from_env().unwrap_or_default();
     let dx12_shader_compiler = wgpu::util::dx12_shader_compiler_from_env().unwrap_or_default();
     let gles_minor_version = wgpu::util::gles_minor_version_from_env().unwrap_or_default();
-
-    web_sys::console::log_1(&format!("{:?}", gles_minor_version).into());
-    web_sys::console::log_1(&format!("{:?}", dx12_shader_compiler).into());
 
     let instance = wgpu::util::new_instance_with_webgpu_detection(wgpu::InstanceDescriptor {
         backends,
@@ -150,7 +161,5 @@ pub async fn start_wgpu(
     let mut canvas = Canvas::new(renderer).expect("Cannot create canvas");
     canvas.set_size(width, height, window.scale_factor() as f32);
 
-    web_sys::console::log_1(&format!("running").into());
-
-    run(canvas, event_loop, demo_surface, window);
+    init_wgpu_app(event_loop, canvas, demo_surface, window);
 }

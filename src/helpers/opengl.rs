@@ -15,11 +15,17 @@ mod non_wasm_imports {
 #[cfg(not(target_arch = "wasm32"))]
 use non_wasm_imports::*;
 
-use super::{run, WindowSurface};
+use crate::App;
+
+use super::WindowSurface;
 
 use femtovg::{renderer::OpenGl, Canvas};
 use std::sync::Arc;
-use winit::{dpi::PhysicalSize, event_loop::EventLoop, window::WindowAttributes};
+use winit::{
+    dpi::PhysicalSize,
+    event_loop::EventLoop,
+    window::{Window, WindowAttributes},
+};
 
 pub struct DemoSurface {
     #[cfg(not(target_arch = "wasm32"))]
@@ -31,13 +37,13 @@ pub struct DemoSurface {
 impl WindowSurface for DemoSurface {
     type Renderer = OpenGl;
 
-    fn resize(&mut self, width: u32, height: u32) {
+    fn resize(&mut self, _width: u32, _height: u32) {
         #[cfg(not(target_arch = "wasm32"))]
         {
             self.surface.resize(
                 &self.context,
-                width.try_into().unwrap(),
-                height.try_into().unwrap(),
+                _width.try_into().unwrap(),
+                _height.try_into().unwrap(),
             );
         }
     }
@@ -50,13 +56,26 @@ impl WindowSurface for DemoSurface {
     }
 }
 
+pub fn init_opengl_app(
+    event_loop: EventLoop<()>,
+    canvas: Canvas<OpenGl>,
+    surface: DemoSurface,
+    window: Arc<Window>,
+) {
+    let mut app = App::new(canvas, surface, window);
+
+    event_loop.run_app(&mut app).expect("failed to run app");
+}
+
+// remove resizable arg
+// async to match wgpu initialization
 pub async fn start_opengl(
     #[cfg(not(target_arch = "wasm32"))] width: u32,
     #[cfg(not(target_arch = "wasm32"))] height: u32,
     #[cfg(not(target_arch = "wasm32"))] title: &'static str,
-    #[cfg(not(target_arch = "wasm32"))] resizeable: bool,
 ) {
     println!("using openGL...");
+
     // This provides better error messages in debug mode.
     // It's disabled in release mode so it doesn't bloat up the file size.
     #[cfg(all(debug_assertions, target_arch = "wasm32"))]
@@ -68,8 +87,7 @@ pub async fn start_opengl(
     let (canvas, window, context, surface) = {
         let window_attr = WindowAttributes::default()
             .with_inner_size(PhysicalSize::new(width, height))
-            .with_title(title)
-            .with_resizable(resizeable);
+            .with_title(title);
 
         let template = ConfigTemplateBuilder::new().with_alpha_size(8);
 
@@ -154,6 +172,7 @@ pub async fn start_opengl(
         let renderer = OpenGl::new_from_html_canvas(&html_canvas).expect("Cannot create renderer");
 
         let window_attrs = WindowAttributes::default().with_canvas(Some(html_canvas));
+        #[allow(deprecated)]
         let window = event_loop.create_window(window_attrs).unwrap();
 
         let _ = window.request_inner_size(PhysicalSize::new(width, height));
@@ -170,5 +189,5 @@ pub async fn start_opengl(
         surface,
     };
 
-    run(canvas, event_loop, demo_surface, Arc::new(window));
+    init_opengl_app(event_loop, canvas, demo_surface, Arc::new(window));
 }
