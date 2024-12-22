@@ -4,7 +4,7 @@ use femtovg::{Canvas, Color, Paint, Path};
 use helpers::WindowSurface;
 use winit::{
     application::ApplicationHandler,
-    event::{ElementState, MouseButton, WindowEvent},
+    event::{ElementState, MouseButton, MouseScrollDelta, WindowEvent},
     event_loop::ActiveEventLoop,
     keyboard,
     window::{Window, WindowId},
@@ -82,13 +82,13 @@ impl<W: WindowSurface> ApplicationHandler for App<W> {
                 self.mousex = position.x as f32;
                 self.mousey = position.y as f32;
             }
-            WindowEvent::MouseWheel {
-                device_id: _,
-                delta: winit::event::MouseScrollDelta::LineDelta(_, y),
-                ..
-            } => {
-                // it's a PixelDelta in wasm
+            WindowEvent::MouseWheel { delta, .. } => {
                 let canvas = &mut self.canvas;
+
+                let y = match delta {
+                    MouseScrollDelta::LineDelta(_x_delta, y_delta) => y_delta,
+                    MouseScrollDelta::PixelDelta(delta) => (delta.y * 0.01) as f32,
+                };
 
                 let pt = canvas
                     .transform()
@@ -110,7 +110,6 @@ impl<W: WindowSurface> ApplicationHandler for App<W> {
             },
             WindowEvent::KeyboardInput { event, .. } => {
                 let key = event.logical_key;
-
                 match key {
                     keyboard::Key::Named(keyboard::NamedKey::Escape) => {
                         self.close_requested = true;
@@ -149,9 +148,11 @@ impl<W: WindowSurface> ApplicationHandler for App<W> {
         }
     }
 
-    fn about_to_wait(&mut self, event_loop: &ActiveEventLoop) {
+    fn about_to_wait(&mut self, _event_loop: &ActiveEventLoop) {
+        // exiting in wasm just makes it freeze and do nothing
+        #[cfg(not(target_arch = "wasm32"))]
         if self.close_requested {
-            event_loop.exit();
+            _event_loop.exit();
         }
     }
 }
