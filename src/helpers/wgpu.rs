@@ -8,7 +8,7 @@ use winit::{
     window::{Window, WindowAttributes},
 };
 
-use crate::App;
+use crate::{App, Egui};
 
 use super::WindowSurface;
 
@@ -16,6 +16,7 @@ pub struct DemoSurface {
     device: Arc<wgpu::Device>,
     surface_config: wgpu::SurfaceConfiguration,
     surface: wgpu::Surface<'static>,
+    queue: Arc<wgpu::Queue>,
 }
 
 impl WindowSurface for DemoSurface {
@@ -27,15 +28,26 @@ impl WindowSurface for DemoSurface {
         self.surface.configure(&self.device, &self.surface_config);
     }
 
-    fn present(&self, canvas: &mut Canvas<Self::Renderer>) {
-        let frame = self
-            .surface
-            .get_current_texture()
-            .expect("unable to get next texture from swapchain");
+    fn present(&self, canvas: &mut Canvas<Self::Renderer>, surface_texture: &wgpu::SurfaceTexture) {
+        // removing this makes the surface error stop
+        // let frame = self
+        //     .surface
+        //     .get_current_texture()
+        //     .expect("unable to get next texture from swapchain");
 
-        canvas.flush_to_surface(&frame.texture);
+        canvas.flush_to_surface(&surface_texture.texture);
 
-        frame.present();
+        // surface_texture.present();
+    }
+
+    fn get_device(&self) -> &Arc<wgpu::Device> {
+        &self.device
+    }
+    fn get_surface(&self) -> &wgpu::Surface<'static> {
+        &self.surface
+    }
+    fn get_queue(&self) -> &Arc<wgpu::Queue> {
+        &self.queue
     }
 }
 
@@ -45,7 +57,12 @@ pub fn init_wgpu_app(
     surface: DemoSurface,
     window: Arc<Window>,
 ) {
-    let mut app = App::new(canvas, surface, window);
+    let surface_config = &surface.surface_config;
+    let device = &surface.device;
+
+    let egui = Egui::new(&window, device, surface_config.format);
+
+    let mut app = App::new(canvas, surface, window, egui);
 
     event_loop.run_app(&mut app).expect("failed to run app");
 }
@@ -67,7 +84,7 @@ pub async fn start_wgpu(
     #[cfg(not(target_arch = "wasm32"))]
     let window = {
         let window_attrs = WindowAttributes::default()
-            .with_inner_size(PhysicalSize::new(1000., 600.))
+            .with_inner_size(PhysicalSize::new(width, height))
             .with_title(title);
 
         #[allow(deprecated)]
@@ -149,14 +166,16 @@ pub async fn start_wgpu(
     surface.configure(&device, &surface_config);
 
     let device = Arc::new(device);
+    let queue = Arc::new(queue);
 
     let demo_surface = DemoSurface {
         device: device.clone(),
         surface_config,
         surface,
+        queue: queue.clone(),
     };
 
-    let renderer = WGPURenderer::new(device, Arc::new(queue));
+    let renderer = WGPURenderer::new(device, queue);
 
     let mut canvas = Canvas::new(renderer).expect("Cannot create canvas");
     canvas.set_size(width, height, window.scale_factor() as f32);

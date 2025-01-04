@@ -1,7 +1,7 @@
-use std::sync::Arc;
-
+use egui_ui::Egui;
 use femtovg::{Canvas, Color, Paint, Path};
 use helpers::WindowSurface;
+use std::sync::Arc;
 use winit::{
     application::ApplicationHandler,
     event::{ElementState, MouseButton, MouseScrollDelta, WindowEvent},
@@ -10,11 +10,12 @@ use winit::{
     window::{Window, WindowId},
 };
 
+mod egui_ui;
 mod helpers;
 
 fn main() {
     #[cfg(not(target_arch = "wasm32"))]
-    helpers::start(1000, 600, "femtovg app");
+    helpers::start(1200, 700, "femtovg app");
     #[cfg(target_arch = "wasm32")]
     helpers::start();
 }
@@ -27,13 +28,15 @@ pub struct App<W: WindowSurface> {
     window: Arc<Window>,
     canvas: Canvas<W::Renderer>,
     surface: W,
+    egui: Egui,
 }
 impl<W: WindowSurface> App<W> {
-    fn new(canvas: Canvas<W::Renderer>, surface: W, window: Arc<Window>) -> Self {
+    fn new(canvas: Canvas<W::Renderer>, surface: W, window: Arc<Window>, egui: Egui) -> Self {
         App {
             canvas,
             surface,
             window,
+            egui,
             mousex: 0.,
             mousey: 0.,
             dragging: false,
@@ -41,8 +44,17 @@ impl<W: WindowSurface> App<W> {
         }
     }
 }
+
 impl<W: WindowSurface> ApplicationHandler for App<W> {
-    fn resumed(&mut self, _event_loop: &ActiveEventLoop) {}
+    fn resumed(&mut self, _event_loop: &ActiveEventLoop) {
+        self.canvas.reset_transform();
+        self.canvas.translate(self.egui.ui.panel_width, 0.);
+
+        println!(
+            "panel width is {}, text is {}",
+            self.egui.ui.panel_width, self.egui.ui.text
+        );
+    }
 
     fn window_event(
         &mut self,
@@ -50,6 +62,11 @@ impl<W: WindowSurface> ApplicationHandler for App<W> {
         _window_id: WindowId,
         event: WindowEvent,
     ) {
+        let is_consumed = self.egui.handle_input(&self.window, &event);
+        if is_consumed {
+            return ();
+        }
+
         match event {
             #[cfg(not(target_arch = "wasm32"))]
             WindowEvent::Resized(physical_size) => {
@@ -111,30 +128,53 @@ impl<W: WindowSurface> ApplicationHandler for App<W> {
             WindowEvent::KeyboardInput { event, .. } => {
                 let key = event.logical_key;
                 match key {
-                    keyboard::Key::Named(keyboard::NamedKey::Escape) => {
-                        self.close_requested = true;
-                    }
+                    keyboard::Key::Named(named_key) => match named_key {
+                        keyboard::NamedKey::Escape => {
+                            self.close_requested = true;
+                        }
+                        _ => {}
+                    },
+                    keyboard::Key::Character(c) => match c.as_str() {
+                        "r" => {
+                            println!("pressed r");
+                        }
+                        _ => {}
+                    },
                     _ => {}
                 }
             }
             WindowEvent::RedrawRequested { .. } => {
                 let window = &self.window;
-                let canvas = &mut self.canvas;
                 let surface = &mut self.surface;
+
+                let wgpu_surface: &wgpu::Surface<'static> = surface.get_surface();
+
+                let surface_result = wgpu_surface
+                    .get_current_texture()
+                    .expect(" failed to get current texture");
+
+                // femtovg
+                let canvas = &mut self.canvas;
 
                 let size = window.inner_size();
                 let dpi_factor = window.scale_factor();
-
                 canvas.set_size(size.width, size.height, dpi_factor as f32);
                 canvas.clear_rect(0, 0, size.width, size.height, Color::black());
 
                 let mut path = Path::new();
                 path.move_to(0., 0.);
-                path.line_to(100., 100.);
+                path.line_to(300., 300.);
                 canvas.stroke_path(&path, &Paint::color(Color::white()));
+                // this is canvas.flush_to_surface
+                surface.present(canvas, &surface_result);
 
-                surface.present(canvas);
-                // this is calling flush_to_surface and swap_buffers
+                // egui
+                let device = surface.get_device();
+                let queue = surface.get_queue();
+                self.egui.render_ui(window, device, queue, &surface_result);
+
+                // both
+                surface_result.present();
             }
             WindowEvent::CloseRequested => {
                 event_loop.exit();
