@@ -1,6 +1,6 @@
 use egui_ui::Egui;
-use femtovg::{Canvas, Color, Paint, Path};
-use helpers::WindowSurface;
+use femtovg::{renderer::WGPURenderer, Canvas, Color, Paint, Path};
+use helpers::wgpu::WgpuWindowSurface;
 use std::sync::Arc;
 use winit::{
     application::ApplicationHandler,
@@ -20,18 +20,23 @@ fn main() {
     helpers::start();
 }
 
-pub struct App<W: WindowSurface> {
+pub struct App {
     mousex: f32,
     mousey: f32,
     dragging: bool,
     close_requested: bool,
     window: Arc<Window>,
-    canvas: Canvas<W::Renderer>,
-    surface: W,
+    canvas: Canvas<WGPURenderer>,
+    surface: WgpuWindowSurface,
     egui: Egui,
 }
-impl<W: WindowSurface> App<W> {
-    fn new(canvas: Canvas<W::Renderer>, surface: W, window: Arc<Window>, egui: Egui) -> Self {
+impl App {
+    fn new(
+        canvas: Canvas<WGPURenderer>,
+        surface: WgpuWindowSurface,
+        window: Arc<Window>,
+        egui: Egui,
+    ) -> Self {
         App {
             canvas,
             surface,
@@ -45,7 +50,7 @@ impl<W: WindowSurface> App<W> {
     }
 }
 
-impl<W: WindowSurface> ApplicationHandler for App<W> {
+impl ApplicationHandler for App {
     fn resumed(&mut self, _event_loop: &ActiveEventLoop) {
         self.canvas.reset_transform();
         self.canvas.translate(self.egui.ui.panel_width, 0.);
@@ -146,12 +151,7 @@ impl<W: WindowSurface> ApplicationHandler for App<W> {
             WindowEvent::RedrawRequested { .. } => {
                 let window = &self.window;
                 let surface = &mut self.surface;
-
-                let wgpu_surface: &wgpu::Surface<'static> = surface.get_surface();
-
-                let surface_result = wgpu_surface
-                    .get_current_texture()
-                    .expect(" failed to get current texture");
+                let surface_texture = surface.get_surface_texture();
 
                 // femtovg
                 let canvas = &mut self.canvas;
@@ -161,20 +161,18 @@ impl<W: WindowSurface> ApplicationHandler for App<W> {
                 canvas.set_size(size.width, size.height, dpi_factor as f32);
                 canvas.clear_rect(0, 0, size.width, size.height, Color::black());
 
-                let mut path = Path::new();
-                path.move_to(0., 0.);
-                path.line_to(300., 300.);
-                canvas.stroke_path(&path, &Paint::color(Color::white()));
-                // this is canvas.flush_to_surface
-                surface.present(canvas, &surface_result);
+                draw_app(canvas);
+                surface.present_canvas(canvas, &surface_texture);
 
                 // egui
                 let device = surface.get_device();
                 let queue = surface.get_queue();
-                self.egui.render_ui(window, device, queue, &surface_result);
+                self.egui.render_ui(window, device, queue, &surface_texture);
 
                 // both
-                surface_result.present();
+                surface_texture.present();
+                // maybe take the ui part out of the render_ui function and pass it in,
+                // so we can do the femtovg logic and ui logic before rendering
             }
             WindowEvent::CloseRequested => {
                 event_loop.exit();
@@ -195,4 +193,11 @@ impl<W: WindowSurface> ApplicationHandler for App<W> {
             _event_loop.exit();
         }
     }
+}
+
+fn draw_app(canvas: &mut Canvas<WGPURenderer>) {
+    let mut path = Path::new();
+    path.move_to(0., 0.);
+    path.line_to(300., 300.);
+    canvas.stroke_path(&path, &Paint::color(Color::white()));
 }

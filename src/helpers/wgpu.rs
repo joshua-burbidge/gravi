@@ -10,25 +10,27 @@ use winit::{
 
 use crate::{App, Egui};
 
-use super::WindowSurface;
-
-pub struct DemoSurface {
+pub struct WgpuWindowSurface {
     device: Arc<wgpu::Device>,
     surface_config: wgpu::SurfaceConfiguration,
     surface: wgpu::Surface<'static>,
     queue: Arc<wgpu::Queue>,
 }
 
-impl WindowSurface for DemoSurface {
-    type Renderer = femtovg::renderer::WGPURenderer;
-
-    fn resize(&mut self, width: u32, height: u32) {
+impl WgpuWindowSurface {
+    pub fn resize(&mut self, width: u32, height: u32) {
         self.surface_config.width = width.max(1);
         self.surface_config.height = height.max(1);
         self.surface.configure(&self.device, &self.surface_config);
     }
 
-    fn present(&self, canvas: &mut Canvas<Self::Renderer>, surface_texture: &wgpu::SurfaceTexture) {
+    // want to use surface to get the texture, but it seems to error
+    // if you call surface.get_current_texture twice
+    pub fn present_canvas(
+        &self,
+        canvas: &mut Canvas<WGPURenderer>,
+        surface_texture: &wgpu::SurfaceTexture,
+    ) {
         // removing this makes the surface error stop
         // let frame = self
         //     .surface
@@ -36,17 +38,19 @@ impl WindowSurface for DemoSurface {
         //     .expect("unable to get next texture from swapchain");
 
         canvas.flush_to_surface(&surface_texture.texture);
-
-        // surface_texture.present();
+    }
+    pub fn get_surface_texture(&self) -> wgpu::SurfaceTexture {
+        let surface_texture = self
+            .surface
+            .get_current_texture()
+            .expect(" failed to get current texture");
+        surface_texture
     }
 
-    fn get_device(&self) -> &Arc<wgpu::Device> {
+    pub fn get_device(&self) -> &Arc<wgpu::Device> {
         &self.device
     }
-    fn get_surface(&self) -> &wgpu::Surface<'static> {
-        &self.surface
-    }
-    fn get_queue(&self) -> &Arc<wgpu::Queue> {
+    pub fn get_queue(&self) -> &Arc<wgpu::Queue> {
         &self.queue
     }
 }
@@ -54,7 +58,7 @@ impl WindowSurface for DemoSurface {
 pub fn init_wgpu_app(
     event_loop: EventLoop<()>,
     canvas: Canvas<WGPURenderer>,
-    surface: DemoSurface,
+    surface: WgpuWindowSurface,
     window: Arc<Window>,
 ) {
     let surface_config = &surface.surface_config;
@@ -168,7 +172,7 @@ pub async fn start_wgpu(
     let device = Arc::new(device);
     let queue = Arc::new(queue);
 
-    let demo_surface = DemoSurface {
+    let demo_surface = WgpuWindowSurface {
         device: device.clone(),
         surface_config,
         surface,
