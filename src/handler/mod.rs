@@ -161,8 +161,6 @@ impl ApplicationHandler for App {
 
                 // both
                 surface_texture.present();
-                // maybe take the ui part out of the render_ui function and pass it in,
-                // so we can do the femtovg logic and ui logic before rendering
             }
             WindowEvent::CloseRequested => {
                 event_loop.exit();

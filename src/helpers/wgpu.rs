@@ -24,21 +24,14 @@ impl WgpuWindowSurface {
         self.surface.configure(&self.device, &self.surface_config);
     }
 
-    // want to use surface to get the texture, but it seems to error
-    // if you call surface.get_current_texture twice
     pub fn present_canvas(
         &self,
         canvas: &mut Canvas<WGPURenderer>,
         surface_texture: &wgpu::SurfaceTexture,
     ) {
-        // removing this makes the surface error stop
-        // let frame = self
-        //     .surface
-        //     .get_current_texture()
-        //     .expect("unable to get next texture from swapchain");
-
         canvas.flush_to_surface(&surface_texture.texture);
     }
+
     pub fn get_surface_texture(&self) -> wgpu::SurfaceTexture {
         let surface_texture = self
             .surface

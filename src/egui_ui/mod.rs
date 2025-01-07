@@ -142,8 +142,6 @@ impl Egui {
 
             let mut static_render_pass = render_pass.forget_lifetime();
 
-            // adding this line is what causes the encode lifetime error
-            // resolved by calling forget_lifetime and using the return from that one here
             egui_renderer.render(
                 &mut static_render_pass,
                 &clipped_primitives,
