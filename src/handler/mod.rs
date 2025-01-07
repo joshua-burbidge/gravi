@@ -8,13 +8,15 @@ use winit::{
     window::{Window, WindowId},
 };
 
-use crate::{app::draw_app, egui_ui::Egui, helpers::wgpu::WgpuWindowSurface};
+use crate::{app::AppState, egui_ui::Egui, helpers::wgpu::WgpuWindowSurface};
 
 pub struct App {
     mousex: f32,
     mousey: f32,
     dragging: bool,
     close_requested: bool,
+    next_tick: bool,
+    state: AppState,
     window: Arc<Window>,
     canvas: Canvas<WGPURenderer>,
     surface: WgpuWindowSurface,
@@ -36,6 +38,8 @@ impl App {
             mousey: 0.,
             dragging: false,
             close_requested: false,
+            next_tick: false,
+            state: AppState::new(),
         }
     }
 }
@@ -122,20 +126,28 @@ impl ApplicationHandler for App {
             },
             WindowEvent::KeyboardInput { event, .. } => {
                 let key = event.logical_key;
-                match key {
-                    keyboard::Key::Named(named_key) => match named_key {
-                        keyboard::NamedKey::Escape => {
-                            self.close_requested = true;
-                        }
+                let state = event.state;
+
+                match state {
+                    ElementState::Pressed => match key {
+                        keyboard::Key::Named(named_key) => match named_key {
+                            keyboard::NamedKey::Escape => {
+                                self.close_requested = true;
+                            }
+                            keyboard::NamedKey::ArrowRight => {
+                                self.next_tick = true;
+                            }
+                            _ => {}
+                        },
+                        keyboard::Key::Character(c) => match c.as_str() {
+                            "r" => {
+                                println!("pressed r");
+                            }
+                            _ => {}
+                        },
                         _ => {}
                     },
-                    keyboard::Key::Character(c) => match c.as_str() {
-                        "r" => {
-                            println!("pressed r");
-                        }
-                        _ => {}
-                    },
-                    _ => {}
+                    ElementState::Released => {}
                 }
             }
             WindowEvent::RedrawRequested { .. } => {
@@ -151,7 +163,8 @@ impl ApplicationHandler for App {
                 canvas.set_size(size.width, size.height, dpi_factor as f32);
                 canvas.clear_rect(0, 0, size.width, size.height, Color::black());
 
-                draw_app(canvas);
+                self.state.draw_app(canvas, self.next_tick);
+                self.next_tick = false;
                 surface.present_canvas(canvas, &surface_texture);
 
                 // egui
@@ -165,12 +178,12 @@ impl ApplicationHandler for App {
             WindowEvent::CloseRequested => {
                 event_loop.exit();
             }
-            // _ => {}
-            _ => {
-                println!("{:?}", event);
-                #[cfg(target_arch = "wasm32")]
-                web_sys::console::log_1(&format!("{:?}", event).into());
-            }
+            // _ => {
+            //     println!("{:?}", event);
+            //     #[cfg(target_arch = "wasm32")]
+            //     web_sys::console::log_1(&format!("{:?}", event).into());
+            // }
+            _ => {}
         }
     }
 
