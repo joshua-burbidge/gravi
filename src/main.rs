@@ -1,3 +1,4 @@
+mod app;
 mod egui_ui;
 mod handler;
 mod helpers;

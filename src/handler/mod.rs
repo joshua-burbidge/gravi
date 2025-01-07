@@ -1,4 +1,4 @@
-use femtovg::{renderer::WGPURenderer, Canvas, Color, Paint, Path};
+use femtovg::{renderer::WGPURenderer, Canvas, Color};
 use std::sync::Arc;
 use winit::{
     application::ApplicationHandler,
@@ -8,7 +8,7 @@ use winit::{
     window::{Window, WindowId},
 };
 
-use crate::{egui_ui::Egui, helpers::wgpu::WgpuWindowSurface};
+use crate::{app::draw_app, egui_ui::Egui, helpers::wgpu::WgpuWindowSurface};
 
 pub struct App {
     mousex: f32,
@@ -181,11 +181,4 @@ impl ApplicationHandler for App {
             _event_loop.exit();
         }
     }
-}
-
-fn draw_app(canvas: &mut Canvas<WGPURenderer>) {
-    let mut path = Path::new();
-    path.move_to(0., 0.);
-    path.line_to(300., 300.);
-    canvas.stroke_path(&path, &Paint::color(Color::white()));
 }
