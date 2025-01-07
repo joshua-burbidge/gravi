@@ -1,5 +1,5 @@
 [package]
-name = "femtovg-wgpu"
+name = "grav"
 version = "0.1.0"
 edition = "2021"
 
