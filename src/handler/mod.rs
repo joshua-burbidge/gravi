@@ -47,7 +47,8 @@ impl App {
 impl ApplicationHandler for App {
     fn resumed(&mut self, _event_loop: &ActiveEventLoop) {
         self.canvas.reset_transform();
-        self.canvas.translate(self.egui.ui.panel_width, 0.);
+        let y = (self.canvas.height() / 2) as f32;
+        self.canvas.translate(self.egui.ui.panel_width, y);
 
         println!(
             "panel width is {}, text is {}",
@@ -163,7 +164,7 @@ impl ApplicationHandler for App {
                 canvas.set_size(size.width, size.height, dpi_factor as f32);
                 canvas.clear_rect(0, 0, size.width, size.height, Color::black());
 
-                self.state.draw_app(canvas, self.next_tick);
+                self.state.run(canvas, self.next_tick);
                 self.next_tick = false;
                 surface.present_canvas(canvas, &surface_texture);
 
