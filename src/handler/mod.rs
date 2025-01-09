@@ -49,11 +49,6 @@ impl ApplicationHandler for App {
         self.canvas.reset_transform();
         let y = (self.canvas.height() / 2) as f32;
         self.canvas.translate(self.egui.ui.panel_width, y);
-
-        println!(
-            "panel width is {}, text is {}",
-            self.egui.ui.panel_width, self.egui.ui.text
-        );
     }
 
     fn window_event(
