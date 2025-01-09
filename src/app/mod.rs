@@ -30,14 +30,17 @@ pub struct AppState {
     hist: Vec<Position>,
     v: Velocity,
     a: Accel,
+    t_per_tick: f32,
 }
+// ui interaction
 impl AppState {
     pub fn new() -> Self {
         let starting_pos = Position { x: 0., y: 0. };
         AppState {
             hist: vec![starting_pos],
-            v: Velocity { x: 10., y: 50. },
+            v: Velocity { x: 15., y: 60. },
             a: Accel { x: 0., y: -9.8 },
+            t_per_tick: 0.25,
         }
     }
 
@@ -48,8 +51,8 @@ impl AppState {
 
     pub fn run(&mut self, canvas: &mut Canvas<WGPURenderer>, next_tick: bool) {
         if next_tick {
-            let new_pos = new_position(self.current(), &self.v, &self.a);
-            let new_vel = new_vel(&self.v, &self.a);
+            let new_pos = new_position(self.current(), &self.v, &self.a, self.t_per_tick);
+            let new_vel = new_vel(&self.v, &self.a, self.t_per_tick);
 
             self.hist.push(new_pos);
             self.v = new_vel;
@@ -87,18 +90,18 @@ fn convert_pos_to_canvas(pos: &Position) -> Position {
 }
 
 // position after one tick given constant acceleration
-fn new_position(p: &Position, v: &Velocity, a: &Accel) -> Position {
+fn new_position(p: &Position, v: &Velocity, a: &Accel, t: f32) -> Position {
     // px + vx t + 1/2 ax t^2
     Position {
-        x: p.x + v.x + 0.5 * a.x,
-        y: p.y + v.y + 0.5 * a.x,
+        x: p.x + v.x * t + 0.5 * a.x * t.powi(2),
+        y: p.y + v.y * t + 0.5 * a.x * t.powi(2),
     }
 }
 
-fn new_vel(v: &Velocity, a: &Accel) -> Velocity {
+fn new_vel(v: &Velocity, a: &Accel, t: f32) -> Velocity {
     // vx + ax t
     Velocity {
-        x: v.x + a.x,
-        y: v.y + a.y,
+        x: v.x + a.x * t,
+        y: v.y + a.y * t,
     }
 }
