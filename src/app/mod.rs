@@ -12,23 +12,11 @@ struct Position {
     y: f32,
 }
 impl Position {
-    fn new(x: f32, y: f32) -> Self {
+    fn _new(x: f32, y: f32) -> Self {
         Position { x, y }
     }
 }
-struct PositionHistory {
-    history: Vec<Position>,
-}
-impl PositionHistory {
-    fn new() -> Self {
-        PositionHistory { history: vec![] }
-    }
-    fn from_start(start: Position) -> Self {
-        PositionHistory {
-            history: vec![start],
-        }
-    }
-}
+
 struct Velocity {
     x: f32,
     y: f32,
@@ -39,7 +27,6 @@ struct Accel {
 }
 
 pub struct AppState {
-    pos: Position,
     hist: Vec<Position>,
     v: Velocity,
     a: Accel,
@@ -48,19 +35,22 @@ impl AppState {
     pub fn new() -> Self {
         let starting_pos = Position { x: 0., y: 0. };
         AppState {
-            pos: starting_pos.clone(),
             hist: vec![starting_pos],
             v: Velocity { x: 10., y: 50. },
             a: Accel { x: 0., y: -9.8 },
         }
     }
 
+    fn current(&self) -> &Position {
+        let index = self.hist.len() - 1;
+        &self.hist[index]
+    }
+
     pub fn run(&mut self, canvas: &mut Canvas<WGPURenderer>, next_tick: bool) {
         if next_tick {
-            let new_pos = new_position(&self.pos, &self.v, &self.a);
+            let new_pos = new_position(self.current(), &self.v, &self.a);
             let new_vel = new_vel(&self.v, &self.a);
 
-            self.pos = new_pos.clone();
             self.hist.push(new_pos);
             self.v = new_vel;
         }
