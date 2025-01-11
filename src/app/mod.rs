@@ -1,5 +1,7 @@
 use femtovg::{renderer::WGPURenderer, Canvas, Color, Paint, Path};
 
+mod ui;
+
 // this module is for the main app functionality
 
 #[derive(Clone)]
@@ -97,23 +99,6 @@ impl App {
         dots.circle(self.ui_state.start_pos as f32, 0., 3.);
 
         canvas.fill_path(&dots, &Paint::color(Color::white()));
-    }
-}
-
-impl App {
-    pub fn ui(&mut self, ctx: &egui::Context) {
-        let panel = egui::SidePanel::left("main-ui-panel")
-            .exact_width(self.ui_state.panel_width)
-            .resizable(false);
-
-        panel.show(ctx, |ui| {
-            ui.label("Hello, egui!");
-            ui.label("Hello, egui!");
-            ui.add(egui::Slider::new(&mut self.ui_state.start_pos, 0..=1000));
-            if ui.button("Start").clicked() {
-                self.start();
-            }
-        });
     }
 }
 
