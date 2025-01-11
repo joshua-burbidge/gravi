@@ -20,7 +20,7 @@ struct Velocity {
     x: f32,
     y: f32,
 }
-struct Accel {
+struct Acceleration {
     x: f32,
     y: f32,
 }
@@ -30,7 +30,7 @@ pub struct App {
     started: bool,
     hist: Vec<Position>,
     v: Velocity,
-    a: Accel,
+    a: Acceleration,
     t_per_tick: f32,
 }
 // make a trait and implement it for each kind of app
@@ -41,7 +41,7 @@ impl App {
             started: false,
             hist: vec![],
             v: Velocity { x: 0., y: 0. },
-            a: Accel { x: 0., y: -9.8 },
+            a: Acceleration { x: 0., y: -9.8 },
             t_per_tick: 0.25,
         }
     }
@@ -92,7 +92,7 @@ fn convert_pos_to_canvas(pos: &Position) -> Position {
 }
 
 // position after one tick given constant acceleration
-fn new_position(p: &Position, v: &Velocity, a: &Accel, t: f32) -> Position {
+fn new_position(p: &Position, v: &Velocity, a: &Acceleration, t: f32) -> Position {
     // px + vx t + 1/2 ax t^2
     Position {
         x: p.x + v.x * t + 0.5 * a.x * t.powi(2),
@@ -100,7 +100,7 @@ fn new_position(p: &Position, v: &Velocity, a: &Accel, t: f32) -> Position {
     }
 }
 
-fn new_vel(v: &Velocity, a: &Accel, t: f32) -> Velocity {
+fn new_vel(v: &Velocity, a: &Acceleration, t: f32) -> Velocity {
     // vx + ax t
     Velocity {
         x: v.x + a.x * t,

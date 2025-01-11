@@ -1,4 +1,4 @@
-use super::{Accel, App, Velocity};
+use super::{Acceleration, App, Velocity};
 
 pub struct UiState {
     pub panel_width: f32,
@@ -58,7 +58,7 @@ impl App {
         self.hist = vec![start_pos];
         self.started = true;
 
-        self.a = Accel {
+        self.a = Acceleration {
             x: self.a.x,
             y: self.a.y + self.ui_state.accel,
         };
