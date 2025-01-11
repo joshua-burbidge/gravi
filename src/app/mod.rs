@@ -33,13 +33,14 @@ pub struct App {
     a: Accel,
     t_per_tick: f32,
 }
+// make a trait and implement it for each kind of app
 impl App {
     pub fn new() -> Self {
         App {
             ui_state: UiState::default(),
             started: false,
             hist: vec![],
-            v: Velocity { x: 15., y: 60. },
+            v: Velocity { x: 0., y: 0. },
             a: Accel { x: 0., y: -9.8 },
             t_per_tick: 0.25,
         }
