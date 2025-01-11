@@ -159,7 +159,10 @@ impl ApplicationHandler for AppHandler {
                 canvas.set_size(size.width, size.height, dpi_factor as f32);
                 canvas.clear_rect(0, 0, size.width, size.height, Color::black());
 
-                self.app.run(canvas, self.next_tick);
+                if self.next_tick {
+                    self.app.run();
+                }
+                self.app.draw(canvas);
                 self.next_tick = false;
                 surface.present_canvas(canvas, &surface_texture);
 

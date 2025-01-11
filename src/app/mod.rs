@@ -67,19 +67,17 @@ impl App {
         self.ui_state.started = true;
     }
 
-    pub fn run(&mut self, canvas: &mut Canvas<WGPURenderer>, next_tick: bool) {
-        if next_tick && self.ui_state.started {
+    pub fn run(&mut self) {
+        if self.ui_state.started {
             let new_pos = new_position(self.current(), &self.v, &self.a, self.t_per_tick);
             let new_vel = new_vel(&self.v, &self.a, self.t_per_tick);
 
             self.hist.push(new_pos);
             self.v = new_vel;
         }
-
-        self.draw_app(canvas);
     }
 
-    pub fn draw_app(&mut self, canvas: &mut Canvas<WGPURenderer>) {
+    pub fn draw(&mut self, canvas: &mut Canvas<WGPURenderer>) {
         let mut path = Path::new();
         path.move_to(-10000., 0.);
         path.line_to(10000., 0.);
