@@ -60,7 +60,7 @@ impl Ui {
     }
 }
 
-pub struct AppState {
+pub struct App {
     pub ui: Ui,
     hist: Vec<Position>,
     v: Velocity,
@@ -68,10 +68,10 @@ pub struct AppState {
     t_per_tick: f32,
 }
 // ui interaction
-impl AppState {
+impl App {
     pub fn new() -> Self {
         let starting_pos = Position { x: 0., y: 0. };
-        AppState {
+        App {
             ui: Ui::new(),
             hist: vec![starting_pos],
             v: Velocity { x: 15., y: 60. },
