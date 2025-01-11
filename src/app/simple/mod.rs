@@ -1,30 +1,9 @@
 use femtovg::{renderer::WGPURenderer, Canvas, Color, Paint, Path};
 
-use super::App;
-
-mod ui;
-
-// this module is for the main app functionality
-
-#[derive(Clone)]
-struct Position {
-    x: f32,
-    y: f32,
-}
-impl Position {
-    fn new(x: f32, y: f32) -> Self {
-        Position { x, y }
-    }
-}
-
-struct Velocity {
-    x: f32,
-    y: f32,
-}
-struct Acceleration {
-    x: f32,
-    y: f32,
-}
+use super::{
+    core::{new_position, new_vel, Acceleration, Position, Velocity},
+    App,
+};
 
 pub struct ConstAcceleration {
     pub ui_state: UiState,
@@ -161,22 +140,5 @@ fn convert_pos_to_canvas(pos: &Position) -> Position {
     Position {
         x: pos.x,
         y: -pos.y,
-    }
-}
-
-// position after one tick given constant acceleration
-fn new_position(p: &Position, v: &Velocity, a: &Acceleration, t: f32) -> Position {
-    // px + vx t + 1/2 ax t^2
-    Position {
-        x: p.x + v.x * t + 0.5 * a.x * t.powi(2),
-        y: p.y + v.y * t + 0.5 * a.x * t.powi(2),
-    }
-}
-
-fn new_vel(v: &Velocity, a: &Acceleration, t: f32) -> Velocity {
-    // vx + ax t
-    Velocity {
-        x: v.x + a.x * t,
-        y: v.y + a.y * t,
     }
 }
