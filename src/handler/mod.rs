@@ -48,7 +48,7 @@ impl ApplicationHandler for AppHandler {
     fn resumed(&mut self, _event_loop: &ActiveEventLoop) {
         self.canvas.reset_transform();
         let y = (self.canvas.height() / 2) as f32;
-        self.canvas.translate(self.app.ui.panel_width, y);
+        self.canvas.translate(self.app.ui_state.panel_width, y);
     }
 
     fn window_event(
@@ -167,7 +167,7 @@ impl ApplicationHandler for AppHandler {
                 let device = surface.get_device();
                 let queue = surface.get_queue();
                 self.egui
-                    .render_ui(&mut self.app.ui, window, device, queue, &surface_texture);
+                    .render_ui(&mut self.app, window, device, queue, &surface_texture);
 
                 // both
                 surface_texture.present();

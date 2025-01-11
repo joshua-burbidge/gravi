@@ -2,17 +2,13 @@ use femtovg::{renderer::WGPURenderer, Canvas, Color, Paint, Path};
 
 // this module is for the main app functionality
 
-// process:
-// 1. if (next_tick) run one tick
-// 2. draw
-
 #[derive(Clone)]
 struct Position {
     x: f32,
     y: f32,
 }
 impl Position {
-    fn _new(x: f32, y: f32) -> Self {
+    fn new(x: f32, y: f32) -> Self {
         Position { x, y }
     }
 }
@@ -26,54 +22,34 @@ struct Accel {
     y: f32,
 }
 
-pub struct Ui {
-    pub text: String,
+pub struct UiState {
     pub panel_width: f32,
-    pub start: i32,
+    start_pos: i32,
+    started: bool,
 }
-impl Ui {
-    fn new() -> Self {
-        Self {
-            text: "Initial text".to_owned(),
-            panel_width: 200.,
-            start: 0,
-        }
-    }
-    pub fn ui(&mut self, ctx: &egui::Context) {
-        let panel = egui::SidePanel::left("main-ui-panel")
-            .exact_width(self.panel_width)
-            .resizable(false);
 
-        panel.show(ctx, |ui| {
-            ui.label("Hello, egui!");
-            ui.label("Hello, egui!");
-            ui.add(egui::Slider::new(&mut self.start, 0..=1000));
-            ui.text_edit_multiline(&mut self.text);
-            ui.add(egui::TextEdit::multiline(&mut self.text).desired_width(f32::INFINITY));
-            if ui.button("Click me").clicked() {
-                println!("Button clicked!");
-            }
-            if ui.button("Click me 2").clicked() {
-                println!("Button 2 clicked!");
-            }
-        });
+impl Default for UiState {
+    fn default() -> Self {
+        UiState {
+            panel_width: 200.,
+            start_pos: 0,
+            started: false,
+        }
     }
 }
 
 pub struct App {
-    pub ui: Ui,
+    pub ui_state: UiState,
     hist: Vec<Position>,
     v: Velocity,
     a: Accel,
     t_per_tick: f32,
 }
-// ui interaction
 impl App {
     pub fn new() -> Self {
-        let starting_pos = Position { x: 0., y: 0. };
         App {
-            ui: Ui::new(),
-            hist: vec![starting_pos],
+            ui_state: UiState::default(),
+            hist: vec![],
             v: Velocity { x: 15., y: 60. },
             a: Accel { x: 0., y: -9.8 },
             t_per_tick: 0.25,
@@ -85,8 +61,14 @@ impl App {
         &self.hist[index]
     }
 
+    fn start(&mut self) {
+        let start_pos = Position::new(self.ui_state.start_pos as f32, 0.);
+        self.hist = vec![start_pos];
+        self.ui_state.started = true;
+    }
+
     pub fn run(&mut self, canvas: &mut Canvas<WGPURenderer>, next_tick: bool) {
-        if next_tick {
+        if next_tick && self.ui_state.started {
             let new_pos = new_position(self.current(), &self.v, &self.a, self.t_per_tick);
             let new_vel = new_vel(&self.v, &self.a, self.t_per_tick);
 
@@ -114,7 +96,26 @@ impl App {
             dots.circle(canvas_pos.x, canvas_pos.y, 3.);
         }
 
+        dots.circle(self.ui_state.start_pos as f32, 0., 3.);
+
         canvas.fill_path(&dots, &Paint::color(Color::white()));
+    }
+}
+
+impl App {
+    pub fn ui(&mut self, ctx: &egui::Context) {
+        let panel = egui::SidePanel::left("main-ui-panel")
+            .exact_width(self.ui_state.panel_width)
+            .resizable(false);
+
+        panel.show(ctx, |ui| {
+            ui.label("Hello, egui!");
+            ui.label("Hello, egui!");
+            ui.add(egui::Slider::new(&mut self.ui_state.start_pos, 0..=1000));
+            if ui.button("Start").clicked() {
+                self.start();
+            }
+        });
     }
 }
 

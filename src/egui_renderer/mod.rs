@@ -7,7 +7,7 @@ use wgpu::{
 };
 use winit::{event::WindowEvent, window::Window};
 
-use crate::app::Ui;
+use crate::app::App;
 
 pub struct EguiRenderer {
     state: egui_winit::State,
@@ -36,7 +36,7 @@ impl EguiRenderer {
 
     pub fn render_ui(
         &mut self,
-        ui: &mut Ui,
+        app: &mut App, // generalize this
         window: &Window,
         device: &wgpu::Device,
         queue: &wgpu::Queue,
@@ -48,7 +48,7 @@ impl EguiRenderer {
         let egui_context = state.egui_ctx();
 
         let full_output = egui_context.run(raw_input, |ctx| {
-            ui.ui(ctx);
+            app.ui(ctx);
         });
 
         let platform_output = full_output.platform_output;
