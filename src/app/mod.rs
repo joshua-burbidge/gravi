@@ -1,4 +1,5 @@
 use femtovg::{renderer::WGPURenderer, Canvas, Color, Paint, Path};
+use ui::UiState;
 
 mod ui;
 
@@ -24,24 +25,9 @@ struct Accel {
     y: f32,
 }
 
-pub struct UiState {
-    pub panel_width: f32,
-    start_pos: i32,
-    started: bool,
-}
-
-impl Default for UiState {
-    fn default() -> Self {
-        UiState {
-            panel_width: 200.,
-            start_pos: 0,
-            started: false,
-        }
-    }
-}
-
 pub struct App {
     pub ui_state: UiState,
+    started: bool,
     hist: Vec<Position>,
     v: Velocity,
     a: Accel,
@@ -51,6 +37,7 @@ impl App {
     pub fn new() -> Self {
         App {
             ui_state: UiState::default(),
+            started: false,
             hist: vec![],
             v: Velocity { x: 15., y: 60. },
             a: Accel { x: 0., y: -9.8 },
@@ -63,14 +50,8 @@ impl App {
         &self.hist[index]
     }
 
-    fn start(&mut self) {
-        let start_pos = Position::new(self.ui_state.start_pos as f32, 0.);
-        self.hist = vec![start_pos];
-        self.ui_state.started = true;
-    }
-
     pub fn run(&mut self) {
-        if self.ui_state.started {
+        if self.started {
             let new_pos = new_position(self.current(), &self.v, &self.a, self.t_per_tick);
             let new_vel = new_vel(&self.v, &self.a, self.t_per_tick);
 
