@@ -8,7 +8,11 @@ use winit::{
     window::{Window, WindowId},
 };
 
-use crate::{app::App, egui_renderer::EguiRenderer, helpers::wgpu::WgpuWindowSurface};
+use crate::{
+    app::{self},
+    egui_renderer::EguiRenderer,
+    helpers::wgpu::WgpuWindowSurface,
+};
 
 pub struct AppHandler {
     mousex: f32,
@@ -16,7 +20,7 @@ pub struct AppHandler {
     dragging: bool,
     close_requested: bool,
     next_tick: bool,
-    app: App,
+    app: app::App,
     window: Arc<Window>,
     canvas: Canvas<WGPURenderer>,
     surface: WgpuWindowSurface,
@@ -39,7 +43,7 @@ impl AppHandler {
             dragging: false,
             close_requested: false,
             next_tick: false,
-            app: App::new(),
+            app: app::create_app(),
         }
     }
 }

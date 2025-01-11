@@ -36,7 +36,7 @@ impl EguiRenderer {
 
     pub fn render_ui(
         &mut self,
-        app: &mut App, // generalize this
+        app: &mut App,
         window: &Window,
         device: &wgpu::Device,
         queue: &wgpu::Queue,
