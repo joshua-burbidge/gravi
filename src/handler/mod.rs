@@ -8,30 +8,27 @@ use winit::{
     window::{Window, WindowId},
 };
 
-use crate::{
-    app::{self},
-    egui_renderer::EguiRenderer,
-    helpers::wgpu::WgpuWindowSurface,
-};
+use crate::{app::App, egui_renderer::EguiRenderer, helpers::wgpu::WgpuWindowSurface};
 
-pub struct AppHandler {
+pub struct AppHandler<A: App> {
     mousex: f32,
     mousey: f32,
     dragging: bool,
     close_requested: bool,
     next_tick: bool,
-    app: app::App,
+    app: A,
     window: Arc<Window>,
     canvas: Canvas<WGPURenderer>,
     surface: WgpuWindowSurface,
     egui: EguiRenderer,
 }
-impl AppHandler {
+impl<A: App> AppHandler<A> {
     pub fn new(
         canvas: Canvas<WGPURenderer>,
         surface: WgpuWindowSurface,
         window: Arc<Window>,
         egui: EguiRenderer,
+        app: A,
     ) -> Self {
         AppHandler {
             canvas,
@@ -43,16 +40,16 @@ impl AppHandler {
             dragging: false,
             close_requested: false,
             next_tick: false,
-            app: app::create_app(),
+            app,
         }
     }
 }
 
-impl ApplicationHandler for AppHandler {
+impl<A: App> ApplicationHandler for AppHandler<A> {
     fn resumed(&mut self, _event_loop: &ActiveEventLoop) {
         self.canvas.reset_transform();
         let y = (self.canvas.height() / 2) as f32;
-        self.canvas.translate(self.app.ui_state.panel_width, y);
+        self.canvas.translate(self.app.panel_width(), y);
     }
 
     fn window_event(
