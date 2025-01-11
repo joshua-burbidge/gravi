@@ -8,7 +8,7 @@ use winit::{
     window::{Window, WindowAttributes},
 };
 
-use crate::{app, egui_renderer::EguiRenderer, handler::AppHandler};
+use crate::{app::App, egui_renderer::EguiRenderer, handler::AppHandler};
 
 pub struct WgpuWindowSurface {
     device: Arc<wgpu::Device>,
@@ -48,7 +48,8 @@ impl WgpuWindowSurface {
     }
 }
 
-pub fn init_wgpu_app(
+pub fn init_wgpu_app<A: App>(
+    app: A,
     event_loop: EventLoop<()>,
     canvas: Canvas<WGPURenderer>,
     surface: WgpuWindowSurface,
@@ -59,16 +60,15 @@ pub fn init_wgpu_app(
 
     let egui = EguiRenderer::new(&window, device, surface_config.format);
 
-    let app = app::simple::ConstAcceleration::new();
-    let mut app_handler =
-        AppHandler::<app::simple::ConstAcceleration>::new(canvas, surface, window, egui, app);
+    let mut app_handler = AppHandler::<A>::new(canvas, surface, window, egui, app);
 
     event_loop
         .run_app(&mut app_handler)
         .expect("failed to run app");
 }
 
-pub async fn start_wgpu(
+pub async fn start_wgpu<A: App>(
+    app: A,
     #[cfg(not(target_arch = "wasm32"))] width: u32,
     #[cfg(not(target_arch = "wasm32"))] height: u32,
     #[cfg(not(target_arch = "wasm32"))] title: &'static str,
@@ -181,5 +181,5 @@ pub async fn start_wgpu(
     let mut canvas = Canvas::new(renderer).expect("Cannot create canvas");
     canvas.set_size(width, height, window.scale_factor() as f32);
 
-    init_wgpu_app(event_loop, canvas, demo_surface, window);
+    init_wgpu_app(app, event_loop, canvas, demo_surface, window);
 }

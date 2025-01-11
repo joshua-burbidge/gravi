@@ -4,8 +4,13 @@ mod handler;
 mod helpers;
 
 fn main() {
+    let app = {
+        #[cfg(feature = "simple")]
+        app::simple::ConstAcceleration::new()
+    };
+
     #[cfg(not(target_arch = "wasm32"))]
-    helpers::start(1200, 700, "femtovg app");
+    helpers::start(app, 1200, 700, "femtovg app");
     #[cfg(target_arch = "wasm32")]
-    helpers::start();
+    helpers::start(app);
 }
