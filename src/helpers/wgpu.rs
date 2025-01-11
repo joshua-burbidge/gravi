@@ -8,7 +8,7 @@ use winit::{
     window::{Window, WindowAttributes},
 };
 
-use crate::{egui_ui::Egui, handler::App};
+use crate::{egui_ui::EguiRenderer, handler::AppHandler};
 
 pub struct WgpuWindowSurface {
     device: Arc<wgpu::Device>,
@@ -57,9 +57,9 @@ pub fn init_wgpu_app(
     let surface_config = &surface.surface_config;
     let device = &surface.device;
 
-    let egui = Egui::new(&window, device, surface_config.format);
+    let egui = EguiRenderer::new(&window, device, surface_config.format);
 
-    let mut app = App::new(canvas, surface, window, egui);
+    let mut app = AppHandler::new(canvas, surface, window, egui);
 
     event_loop.run_app(&mut app).expect("failed to run app");
 }

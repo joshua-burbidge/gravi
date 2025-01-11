@@ -1,5 +1,3 @@
-use core::f32;
-
 use egui;
 use egui_wgpu;
 use egui_winit;
@@ -9,44 +7,14 @@ use wgpu::{
 };
 use winit::{event::WindowEvent, window::Window};
 
-pub struct Ui {
-    pub text: String,
-    pub panel_width: f32,
-}
-impl Ui {
-    fn new() -> Self {
-        Self {
-            text: "Initial text".to_owned(),
-            panel_width: 200.,
-        }
-    }
-    fn ui(&mut self, ctx: &egui::Context) {
-        let panel = egui::SidePanel::left("main-ui-panel")
-            .exact_width(self.panel_width)
-            .resizable(false);
+use crate::app::Ui;
 
-        panel.show(ctx, |ui| {
-            ui.label("Hello, egui!");
-            ui.label("Hello, egui!");
-            ui.text_edit_multiline(&mut self.text);
-            ui.add(egui::TextEdit::multiline(&mut self.text).desired_width(f32::INFINITY));
-            if ui.button("Click me").clicked() {
-                println!("Button clicked!");
-            }
-            if ui.button("Click me 2").clicked() {
-                println!("Button 2 clicked!");
-            }
-        });
-    }
-}
-
-pub struct Egui {
+pub struct EguiRenderer {
     state: egui_winit::State,
     _context: egui::Context,
     renderer: egui_wgpu::Renderer,
-    pub ui: Ui,
 }
-impl Egui {
+impl EguiRenderer {
     pub fn new(
         window: &Window,
         device: &wgpu::Device,
@@ -59,18 +27,16 @@ impl Egui {
 
         let egui_renderer = egui_wgpu::Renderer::new(device, output_color_format, None, 1, false);
 
-        let ui = Ui::new();
-
         Self {
             state: egui_winit_state,
             _context: egui_context,
             renderer: egui_renderer,
-            ui,
         }
     }
 
     pub fn render_ui(
         &mut self,
+        ui: &mut Ui,
         window: &Window,
         device: &wgpu::Device,
         queue: &wgpu::Queue,
@@ -82,7 +48,7 @@ impl Egui {
         let egui_context = state.egui_ctx();
 
         let full_output = egui_context.run(raw_input, |ctx| {
-            self.ui.ui(ctx);
+            ui.ui(ctx);
         });
 
         let platform_output = full_output.platform_output;

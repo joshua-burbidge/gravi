@@ -8,9 +8,9 @@ use winit::{
     window::{Window, WindowId},
 };
 
-use crate::{app::AppState, egui_ui::Egui, helpers::wgpu::WgpuWindowSurface};
+use crate::{app::AppState, egui_ui::EguiRenderer, helpers::wgpu::WgpuWindowSurface};
 
-pub struct App {
+pub struct AppHandler {
     mousex: f32,
     mousey: f32,
     dragging: bool,
@@ -20,16 +20,16 @@ pub struct App {
     window: Arc<Window>,
     canvas: Canvas<WGPURenderer>,
     surface: WgpuWindowSurface,
-    egui: Egui,
+    egui: EguiRenderer,
 }
-impl App {
+impl AppHandler {
     pub fn new(
         canvas: Canvas<WGPURenderer>,
         surface: WgpuWindowSurface,
         window: Arc<Window>,
-        egui: Egui,
+        egui: EguiRenderer,
     ) -> Self {
-        App {
+        AppHandler {
             canvas,
             surface,
             window,
@@ -44,11 +44,11 @@ impl App {
     }
 }
 
-impl ApplicationHandler for App {
+impl ApplicationHandler for AppHandler {
     fn resumed(&mut self, _event_loop: &ActiveEventLoop) {
         self.canvas.reset_transform();
         let y = (self.canvas.height() / 2) as f32;
-        self.canvas.translate(self.egui.ui.panel_width, y);
+        self.canvas.translate(self.state.ui.panel_width, y);
     }
 
     fn window_event(
@@ -166,7 +166,8 @@ impl ApplicationHandler for App {
                 // egui
                 let device = surface.get_device();
                 let queue = surface.get_queue();
-                self.egui.render_ui(window, device, queue, &surface_texture);
+                self.egui
+                    .render_ui(&mut self.state.ui, window, device, queue, &surface_texture);
 
                 // both
                 surface_texture.present();

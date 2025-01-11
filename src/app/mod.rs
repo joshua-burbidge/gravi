@@ -26,7 +26,42 @@ struct Accel {
     y: f32,
 }
 
+pub struct Ui {
+    pub text: String,
+    pub panel_width: f32,
+    pub start: i32,
+}
+impl Ui {
+    fn new() -> Self {
+        Self {
+            text: "Initial text".to_owned(),
+            panel_width: 200.,
+            start: 0,
+        }
+    }
+    pub fn ui(&mut self, ctx: &egui::Context) {
+        let panel = egui::SidePanel::left("main-ui-panel")
+            .exact_width(self.panel_width)
+            .resizable(false);
+
+        panel.show(ctx, |ui| {
+            ui.label("Hello, egui!");
+            ui.label("Hello, egui!");
+            ui.add(egui::Slider::new(&mut self.start, 0..=1000));
+            ui.text_edit_multiline(&mut self.text);
+            ui.add(egui::TextEdit::multiline(&mut self.text).desired_width(f32::INFINITY));
+            if ui.button("Click me").clicked() {
+                println!("Button clicked!");
+            }
+            if ui.button("Click me 2").clicked() {
+                println!("Button 2 clicked!");
+            }
+        });
+    }
+}
+
 pub struct AppState {
+    pub ui: Ui,
     hist: Vec<Position>,
     v: Velocity,
     a: Accel,
@@ -37,6 +72,7 @@ impl AppState {
     pub fn new() -> Self {
         let starting_pos = Position { x: 0., y: 0. };
         AppState {
+            ui: Ui::new(),
             hist: vec![starting_pos],
             v: Velocity { x: 15., y: 60. },
             a: Accel { x: 0., y: -9.8 },
