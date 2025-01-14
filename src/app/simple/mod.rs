@@ -1,7 +1,7 @@
 use femtovg::{renderer::WGPURenderer, Canvas, Color, Paint, Path};
 
 use super::{
-    core::{new_position, new_vel, Acceleration, Position, Velocity},
+    core::{eq_tolerance, midpoint, new_position, new_vel, Acceleration, Position, Velocity},
     App,
 };
 
@@ -16,11 +16,15 @@ pub struct ConstAcceleration {
 impl App for ConstAcceleration {
     fn run(&mut self) {
         if self.started {
-            let new_pos = new_position(self.current(), &self.v, &self.a, self.t_per_tick);
-            let new_vel = new_vel(&self.v, &self.a, self.t_per_tick);
+            while self.hist.len() < 500 && self.current().y >= 0. {
+                let new_pos = new_position(self.current(), &self.v, &self.a, self.t_per_tick);
+                let new_vel = new_vel(&self.v, &self.a, self.t_per_tick);
 
-            self.hist.push(new_pos);
-            self.v = new_vel;
+                self.hist.push(new_pos);
+                self.v = new_vel;
+            }
+
+            self.analyze();
         }
     }
 
@@ -31,7 +35,7 @@ impl App for ConstAcceleration {
 
         path.move_to(0., -10000.);
         path.line_to(0., 10000.);
-        canvas.stroke_path(&path, &Paint::color(Color::white()));
+        canvas.stroke_path(&path, &Paint::color(Color::white()).with_line_width(3.));
 
         let mut dots = Path::new();
         let history = &self.hist;
@@ -97,8 +101,8 @@ impl Default for UiState {
             panel_width: 300.,
             start_pos: 0,
             accel: 0.,
-            vx: 0.,
-            vy: 0.,
+            vx: 20.,
+            vy: 70.,
         }
     }
 }
@@ -113,6 +117,62 @@ impl ConstAcceleration {
             a: Acceleration { x: 0., y: -9.8 },
             t_per_tick: 0.25,
         }
+    }
+
+    fn analyze(&self) {
+        if self.current().y <= 0. {
+            println!(
+                "final pos: x: {}, y: {}",
+                self.current().x,
+                self.current().y
+            );
+            println!("final time: {}", self.hist.len() as f32 * self.t_per_tick);
+            // 0 = p.y + v.y * t + 0.5 * a.y * t^2
+            self.find_intercept();
+        } else {
+            println!("did not terminate");
+        }
+    }
+
+    // Find the final y-intercept using a binary search
+    // There are analytical ways to find the y-int but it's done like this as a demo for more complicated cases
+    fn find_intercept(&self) {
+        let v = &self.v;
+        let a = &self.a;
+        let overall_end_t = self.hist.len() as f32 * self.t_per_tick;
+        let overall_end_pos = self.current();
+
+        let mut end_t = overall_end_t;
+        let mut start_t = end_t - self.t_per_tick;
+        let mut i = 0;
+
+        let (t, pos) = loop {
+            i += 1;
+
+            let mid_t = midpoint(start_t, end_t);
+            let delta_t_from_end = mid_t - overall_end_t;
+            let mid_pos = new_position(overall_end_pos, v, a, delta_t_from_end);
+
+            println!(
+                "looping. start {}, end {}, mid {}, pos {}",
+                start_t, end_t, mid_t, mid_pos.y
+            );
+            if i > 50 {
+                println!("loop limit");
+                break (mid_t, mid_pos);
+            }
+
+            if eq_tolerance(mid_pos.y, 0.0, 0.001) {
+                break (mid_t, mid_pos);
+            }
+
+            if mid_pos.y < 0.0 {
+                end_t = mid_t;
+            } else {
+                start_t = mid_t;
+            }
+        };
+        println!("finished. t: {}, {:?}", t, pos);
     }
 
     pub fn start(&mut self) {

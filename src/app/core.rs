@@ -1,4 +1,4 @@
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Position {
     pub x: f32,
     pub y: f32,
@@ -33,4 +33,12 @@ pub fn new_vel(v: &Velocity, a: &Acceleration, t: f32) -> Velocity {
         x: v.x + a.x * t,
         y: v.y + a.y * t,
     }
+}
+
+pub fn midpoint(a: f32, b: f32) -> f32 {
+    (a + b) / 2.
+}
+
+pub fn eq_tolerance(a: f32, b: f32, tol: f32) -> bool {
+    (a - b).abs() < tol
 }
