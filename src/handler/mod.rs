@@ -1,4 +1,4 @@
-use femtovg::{renderer::WGPURenderer, Canvas, Color};
+use femtovg::{renderer::WGPURenderer, Canvas, Color, Paint, Path};
 use std::sync::Arc;
 use winit::{
     application::ApplicationHandler,
@@ -50,6 +50,15 @@ impl<A: App> ApplicationHandler for AppHandler<A> {
         self.canvas.reset_transform();
         let y = (self.canvas.height() / 2) as f32;
         self.canvas.translate(self.app.panel_width(), y);
+
+        let mut path = Path::new();
+        path.move_to(-10000., 0.);
+        path.line_to(10000., 0.);
+
+        path.move_to(0., -10000.);
+        path.line_to(0., 10000.);
+        self.canvas
+            .stroke_path(&path, &Paint::color(Color::white()).with_line_width(3.));
     }
 
     fn window_event(

@@ -29,14 +29,6 @@ impl App for ConstAcceleration {
     }
 
     fn draw(&mut self, canvas: &mut Canvas<WGPURenderer>) {
-        let mut path = Path::new();
-        path.move_to(-10000., 0.);
-        path.line_to(10000., 0.);
-
-        path.move_to(0., -10000.);
-        path.line_to(0., 10000.);
-        canvas.stroke_path(&path, &Paint::color(Color::white()).with_line_width(3.));
-
         let mut dots = Path::new();
         let history = &self.hist;
 
