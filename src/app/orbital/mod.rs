@@ -1,0 +1,108 @@
+use femtovg::{Color, Paint, Path};
+
+use super::{
+    core::{Acceleration, Position, Velocity},
+    App,
+};
+
+pub struct Orbital {
+    ui_state: UiState,
+    started: bool,
+    central: Body,
+    outer: Body,
+}
+
+impl App for Orbital {
+    fn run(&mut self) {}
+
+    fn draw(&mut self, canvas: &mut femtovg::Canvas<femtovg::renderer::WGPURenderer>) {
+        let mut path = Path::new();
+        let paint = Paint::color(Color::white()).with_line_width(2.);
+
+        let central_px = convert_pos_to_canvas(&self.central.pos);
+        path.circle(central_px.x, central_px.y, 20.);
+
+        canvas.fill_path(&path, &paint);
+    }
+
+    fn ui(&mut self, ctx: &egui::Context) {
+        let panel = egui::SidePanel::left("main-ui-panel")
+            .exact_width(self.ui_state.panel_width)
+            .resizable(false);
+        panel.show(ctx, |ui| {
+            if self.started {
+                ui.disable();
+            }
+            ui.label("Central body");
+            ui.horizontal(|ui| {
+                ui.label("X:");
+                ui.add(egui::Slider::new(&mut self.ui_state.central_x, 0.0..=1000.));
+            });
+            ui.horizontal(|ui| {
+                ui.label("Y:");
+                ui.add(egui::Slider::new(
+                    &mut self.ui_state.central_y,
+                    -500.0..=500.,
+                ));
+            });
+            if ui.button("Start").clicked() {
+                self.start();
+            }
+        });
+    }
+    fn panel_width(&self) -> f32 {
+        self.ui_state.panel_width
+    }
+}
+
+impl Orbital {
+    pub fn new() -> Self {
+        Self {
+            ui_state: UiState::new(),
+            started: false,
+            central: Body::default(),
+            outer: Body::default(),
+        }
+    }
+
+    fn start(&mut self) {
+        self.central = Body {
+            pos: Position::new(self.ui_state.central_x, self.ui_state.central_y),
+            v: self.central.v.clone(),
+            a: self.central.a.clone(),
+            mass: self.ui_state.central_m,
+        };
+        self.started = true;
+    }
+}
+
+#[derive(Default)]
+struct Body {
+    pos: Position,
+    v: Velocity,
+    a: Acceleration,
+    mass: f32,
+}
+struct UiState {
+    panel_width: f32,
+    central_x: f32,
+    central_y: f32,
+    central_m: f32,
+}
+impl UiState {
+    fn new() -> Self {
+        Self {
+            panel_width: 300.,
+            central_x: 0.,
+            central_y: 0.,
+            central_m: 0.,
+        }
+    }
+}
+
+fn convert_pos_to_canvas(pos: &Position) -> Position {
+    Position {
+        x: pos.x,
+        y: -pos.y,
+    }
+}

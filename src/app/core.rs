@@ -1,4 +1,4 @@
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct Position {
     pub x: f32,
     pub y: f32,
@@ -9,10 +9,12 @@ impl Position {
     }
 }
 
+#[derive(Clone, Debug, Default)]
 pub struct Velocity {
     pub x: f32,
     pub y: f32,
 }
+#[derive(Clone, Debug, Default)]
 pub struct Acceleration {
     pub x: f32,
     pub y: f32,

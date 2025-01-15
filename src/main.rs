@@ -6,7 +6,8 @@ mod helpers;
 fn main() {
     let app = {
         #[cfg(feature = "simple")]
-        app::simple::ConstAcceleration::new()
+        app::orbital::Orbital::new()
+        // app::simple::ConstAcceleration::new()
     };
 
     #[cfg(not(target_arch = "wasm32"))]
