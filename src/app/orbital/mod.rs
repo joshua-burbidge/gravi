@@ -45,6 +45,14 @@ impl App for Orbital {
                     -500.0..=500.,
                 ));
             });
+            ui.horizontal(|ui| {
+                ui.label("M:");
+                ui.add(egui::Slider::new(
+                    &mut self.ui_state.central_m,
+                    0.0..=10000.,
+                ));
+            });
+            // add ui for outer
             if ui.button("Start").clicked() {
                 self.start();
             }
