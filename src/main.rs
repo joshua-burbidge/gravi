@@ -1,7 +1,7 @@
 mod app;
-mod egui;
 mod handler;
 mod helpers;
+mod ui;
 
 fn main() {
     let app = {

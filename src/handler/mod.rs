@@ -8,7 +8,7 @@ use winit::{
     window::{Window, WindowId},
 };
 
-use crate::{app::App, egui::EguiRenderer, helpers::wgpu::WgpuWindowSurface};
+use crate::{app::App, helpers::wgpu::WgpuWindowSurface, ui::EguiRenderer};
 
 pub struct AppHandler<A: App> {
     mousex: f32,

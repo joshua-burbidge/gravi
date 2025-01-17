@@ -1,6 +1,6 @@
 use femtovg::{Color, Paint, Path};
 
-use crate::egui::widgets::CustomSlider;
+use crate::ui::widgets::CustomSlider;
 
 use super::{
     core::{Acceleration, Position, Velocity},

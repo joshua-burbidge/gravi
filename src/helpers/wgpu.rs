@@ -8,7 +8,7 @@ use winit::{
     window::{Window, WindowAttributes},
 };
 
-use crate::{app::App, egui::EguiRenderer, handler::AppHandler};
+use crate::{app::App, handler::AppHandler, ui::EguiRenderer};
 
 pub struct WgpuWindowSurface {
     device: Arc<wgpu::Device>,
