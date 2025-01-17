@@ -20,6 +20,8 @@ impl App for Orbital {
         let paint = Paint::color(Color::white()).with_line_width(2.);
 
         let central_px = convert_pos_to_canvas(&self.central.pos);
+        let outer_px = convert_pos_to_canvas(&self.outer.pos);
+        path.circle(outer_px.x, outer_px.y, 5.);
         path.circle(central_px.x, central_px.y, 20.);
 
         canvas.fill_path(&path, &paint);
@@ -36,21 +38,15 @@ impl App for Orbital {
             ui.label("Central body");
             ui.horizontal(|ui| {
                 ui.label("X:");
-                ui.add(egui::Slider::new(&mut self.ui_state.central_x, 0.0..=1000.));
+                ui.add(egui::Slider::new(&mut self.central.pos.x, 0.0..=1000.));
             });
             ui.horizontal(|ui| {
                 ui.label("Y:");
-                ui.add(egui::Slider::new(
-                    &mut self.ui_state.central_y,
-                    -500.0..=500.,
-                ));
+                ui.add(egui::Slider::new(&mut self.central.pos.y, -500.0..=500.));
             });
             ui.horizontal(|ui| {
                 ui.label("M:");
-                ui.add(egui::Slider::new(
-                    &mut self.ui_state.central_m,
-                    0.0..=10000.,
-                ));
+                ui.add(egui::Slider::new(&mut self.central.mass, 0.0..=10000.));
             });
             // add ui for outer
             if ui.button("Start").clicked() {
@@ -74,12 +70,6 @@ impl Orbital {
     }
 
     fn start(&mut self) {
-        self.central = Body {
-            pos: Position::new(self.ui_state.central_x, self.ui_state.central_y),
-            v: self.central.v.clone(),
-            a: self.central.a.clone(),
-            mass: self.ui_state.central_m,
-        };
         self.started = true;
     }
 }
@@ -93,18 +83,10 @@ struct Body {
 }
 struct UiState {
     panel_width: f32,
-    central_x: f32,
-    central_y: f32,
-    central_m: f32,
 }
 impl UiState {
     fn new() -> Self {
-        Self {
-            panel_width: 300.,
-            central_x: 0.,
-            central_y: 0.,
-            central_m: 0.,
-        }
+        Self { panel_width: 300. }
     }
 }
 
