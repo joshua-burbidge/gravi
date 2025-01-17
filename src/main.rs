@@ -1,5 +1,5 @@
 mod app;
-mod egui_renderer;
+mod egui;
 mod handler;
 mod helpers;
 
