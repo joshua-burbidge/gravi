@@ -1,5 +1,7 @@
 use femtovg::{Color, Paint, Path};
 
+use crate::egui::widgets::CustomSlider;
+
 use super::{
     core::{Acceleration, Position, Velocity},
     App,
@@ -44,10 +46,12 @@ impl App for Orbital {
                 ui.label("Y:");
                 ui.add(egui::Slider::new(&mut self.central.pos.y, -500.0..=500.));
             });
-            ui.horizontal(|ui| {
-                ui.label("M:");
-                ui.add(egui::Slider::new(&mut self.central.mass, 0.0..=10000.));
-            });
+            ui.add(
+                CustomSlider::new(&mut self.central.mass, 0.0..=10000.)
+                    .label("M:")
+                    .full_width(true),
+            );
+
             // add ui for outer
             if ui.button("Start").clicked() {
                 self.start();
