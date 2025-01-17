@@ -1,6 +1,6 @@
 use femtovg::{Color, Paint, Path};
 
-use crate::ui::widgets::CustomSlider;
+use crate::ui::widgets::{CustomSlider, XYInput};
 
 use super::{
     core::{Acceleration, Position, Velocity},
@@ -38,14 +38,15 @@ impl App for Orbital {
                 ui.disable();
             }
             ui.label("Central body");
-            ui.horizontal(|ui| {
-                ui.label("X:");
-                ui.add(egui::Slider::new(&mut self.central.pos.x, 0.0..=1000.));
-            });
-            ui.horizontal(|ui| {
-                ui.label("Y:");
-                ui.add(egui::Slider::new(&mut self.central.pos.y, -500.0..=500.));
-            });
+            let x_range = 0.0..=1000.;
+            let y_range = -500.0..=500.;
+            ui.add(XYInput::new(
+                &mut self.central.pos.x,
+                &mut self.central.pos.y,
+                x_range,
+                y_range,
+            ));
+
             ui.add(
                 CustomSlider::new(&mut self.central.mass, 0.0..=10000.)
                     .label("M:")
