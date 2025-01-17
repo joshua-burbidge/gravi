@@ -1,14 +1,16 @@
 use std::ops::RangeInclusive;
 
-pub struct CustomSlider<'a> {
-    value: &'a mut f32,
-    range: RangeInclusive<f32>,
+use egui::emath;
+
+pub struct CustomSlider<'a, Num: emath::Numeric> {
+    value: &'a mut Num,
+    range: RangeInclusive<Num>,
     label: Option<String>,
     full_width: bool,
 }
 
-impl<'a> CustomSlider<'a> {
-    pub fn new(value: &'a mut f32, range: RangeInclusive<f32>) -> Self {
+impl<'a, Num: emath::Numeric> CustomSlider<'a, Num> {
+    pub fn new(value: &'a mut Num, range: RangeInclusive<Num>) -> Self {
         Self {
             value,
             range,
@@ -28,7 +30,7 @@ impl<'a> CustomSlider<'a> {
     }
 }
 
-impl<'a> egui::Widget for CustomSlider<'a> {
+impl<'a, Num: emath::Numeric> egui::Widget for CustomSlider<'a, Num> {
     fn ui(self, ui: &mut egui::Ui) -> egui::Response {
         let mut response = None;
 
