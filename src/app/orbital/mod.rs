@@ -15,7 +15,9 @@ pub struct Orbital {
 }
 
 impl App for Orbital {
-    fn run(&mut self) {}
+    fn run(&mut self) {
+        // self.run_euler();
+    }
 
     fn draw(&mut self, canvas: &mut femtovg::Canvas<femtovg::renderer::WGPURenderer>) {
         let mut path = Path::new();
@@ -43,17 +45,28 @@ impl App for Orbital {
             ui.add(XYInput::new(
                 &mut self.central.pos.x,
                 &mut self.central.pos.y,
-                x_range,
-                y_range,
+                x_range.clone(),
+                y_range.clone(),
             ));
-
             ui.add(
-                CustomSlider::new(&mut self.central.mass, 0.0..=10000.)
+                CustomSlider::new(&mut self.central.mass, 1000.0..=100000.)
                     .label("M:")
                     .full_width(true),
             );
 
-            // add ui for outer
+            ui.label("Outer body");
+            ui.add(XYInput::new(
+                &mut self.outer.pos.x,
+                &mut self.outer.pos.y,
+                x_range,
+                y_range,
+            ));
+            ui.add(
+                CustomSlider::new(&mut self.outer.mass, 1.0..=100.)
+                    .label("M:")
+                    .full_width(true),
+            );
+
             if ui.button("Start").clicked() {
                 self.start();
             }
@@ -77,6 +90,8 @@ impl Orbital {
     fn start(&mut self) {
         self.started = true;
     }
+
+    fn run_euler(&mut self) {}
 }
 
 #[derive(Default)]
