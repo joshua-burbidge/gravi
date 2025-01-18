@@ -45,7 +45,7 @@ impl<'a, Num: emath::Numeric> egui::Widget for CustomSlider<'a, Num> {
             // scope to change width of this slider only
             ui.scope(|ui| {
                 if self.full_width {
-                    ui.style_mut().spacing.slider_width = ui.available_width() - 50.0;
+                    ui.style_mut().spacing.slider_width = ui.available_width() - 70.0;
                 }
 
                 let slider = egui::Slider::new(self.value, self.range);
