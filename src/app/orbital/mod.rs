@@ -90,8 +90,8 @@ impl Orbital {
         Self {
             ui_state: UiState::new(),
             started: false,
-            central: Body::default().mass(5.97e24),
-            outer: Body::outer(),
+            central: Body::earth(),
+            outer: Body::outer_low(),
             trajectory: vec![],
         }
     }
@@ -111,11 +111,19 @@ impl Orbital {
             x: self.outer.pos.x,
             y: self.outer.pos.y,
         };
-        let g = 6.674e-11;
-        let a_x = -g * self.central.mass * r.x / r.mag().powi(3);
+        // let g = 6.674e-11; // N m^2 / kg^2
+        let g = 6.674e-11 * 1e-6; // N km^2 / kg^2 (converted to km)
 
-        let a_y = -g * self.central.mass * r.y / r.mag().powi(3);
-        let cur_a = Acceleration { x: a_x, y: a_y };
+        let a_x = -g * self.central.mass * r.x / r.mag().powi(3); // m/s^2
+        let a_x_km = a_x * 1e-3; // km/s^2
+
+        let a_y = -g * self.central.mass * r.y / r.mag().powi(3); // m/s^2
+        let a_y_km = a_y * 1e-3; // km/s^2
+
+        let cur_a = Acceleration {
+            x: a_x_km,
+            y: a_y_km,
+        };
         println!("{:?}", cur_a);
 
         // v(t + dt) = v(t) + a(t)*dt
@@ -140,19 +148,36 @@ impl Orbital {
 struct Body {
     pos: Position,
     v: Velocity,
-    a: Acceleration,
+    _a: Acceleration,
     mass: f32,
 }
 impl Body {
-    fn mass(mut self, mass: f32) -> Self {
+    fn _mass(mut self, mass: f32) -> Self {
         self.mass = mass;
         self
     }
-    fn outer() -> Self {
+    fn outer_low() -> Self {
         Self {
-            mass: 400000.,
-            pos: Position { x: 0., y: 400. },
-            v: Velocity { x: 7.8, y: 0. },
+            mass: 400000., // kg
+            pos: Position {
+                x: 0.,
+                y: 400. + 6378., // km, radius of earth = 6378
+            },
+            v: Velocity { x: 7.8, y: 0. }, // km/s
+            ..Default::default()
+        }
+    }
+    fn _outer_med() -> Self {
+        Self {
+            mass: 5000.,
+            pos: Position { x: 0., y: 20000. },
+            v: Velocity { x: 3.9, y: 0. },
+            ..Default::default()
+        }
+    }
+    fn earth() -> Self {
+        Self {
+            mass: 5.97e24, // kg
             ..Default::default()
         }
     }

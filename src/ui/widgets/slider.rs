@@ -48,7 +48,8 @@ impl<'a, Num: emath::Numeric> egui::Widget for CustomSlider<'a, Num> {
                     ui.style_mut().spacing.slider_width = ui.available_width() - 70.0;
                 }
 
-                let slider = egui::Slider::new(self.value, self.range);
+                let slider =
+                    egui::Slider::new(self.value, self.range).clamping(egui::SliderClamping::Never);
 
                 response = Some(ui.add(slider));
             })
