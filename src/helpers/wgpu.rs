@@ -4,6 +4,7 @@ use winit::dpi::PhysicalSize;
 use femtovg::{renderer::WGPURenderer, Canvas};
 use std::sync::Arc;
 use winit::{
+    dpi::{PhysicalPosition, Position},
     event_loop::EventLoop,
     window::{Window, WindowAttributes},
 };
@@ -86,6 +87,7 @@ pub async fn start_wgpu<A: App>(
     let window = {
         let window_attrs = WindowAttributes::default()
             .with_inner_size(PhysicalSize::new(width, height))
+            .with_position(PhysicalPosition::new(50, 50))
             .with_title(title);
 
         #[allow(deprecated)]

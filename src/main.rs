@@ -11,7 +11,7 @@ fn main() {
     };
 
     #[cfg(not(target_arch = "wasm32"))]
-    helpers::start(app, 1200, 700, "femtovg app");
+    helpers::start(app, 1600, 1000, "femtovg app");
     #[cfg(target_arch = "wasm32")]
     helpers::start(app);
 }
