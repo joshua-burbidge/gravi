@@ -30,6 +30,14 @@ impl<'a, Num: emath::Numeric> CustomSlider<'a, Num> {
     }
 }
 
+// fn custom_formatter(ui: egui::Ui, num: f64, range: RangeInclusive<usize>) -> String {
+//     if num < 1000. {
+//         ui.style().number_formatter.format(num, range)
+//     } else {
+
+//     }
+// }
+
 impl<'a, Num: emath::Numeric> egui::Widget for CustomSlider<'a, Num> {
     fn ui(self, ui: &mut egui::Ui) -> egui::Response {
         let mut response = None;

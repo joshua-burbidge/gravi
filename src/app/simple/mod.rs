@@ -42,6 +42,9 @@ impl App for ConstAcceleration {
         canvas.fill_path(&dots, &Paint::color(Color::white()));
     }
 
+    fn enable_ui(&self) -> bool {
+        !self.started
+    }
     fn ui(&mut self, ctx: &egui::Context) {
         let panel = egui::SidePanel::left("main-ui-panel")
             .exact_width(self.ui_state.panel_width)

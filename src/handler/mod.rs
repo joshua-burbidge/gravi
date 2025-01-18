@@ -61,9 +61,11 @@ impl<A: App> ApplicationHandler for AppHandler<A> {
         _window_id: WindowId,
         event: WindowEvent,
     ) {
-        let is_consumed = self.egui.handle_input(&self.window, &event);
-        if is_consumed {
-            return ();
+        if self.app.enable_ui() {
+            let is_consumed = self.egui.handle_input(&self.window, &event);
+            if is_consumed {
+                return ();
+            }
         }
 
         match event {
@@ -136,6 +138,7 @@ impl<A: App> ApplicationHandler for AppHandler<A> {
                             }
                             keyboard::NamedKey::ArrowRight => {
                                 self.next_tick = true;
+                                self.window.request_redraw();
                             }
                             _ => {}
                         },

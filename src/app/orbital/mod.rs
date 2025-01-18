@@ -39,6 +39,9 @@ impl App for Orbital {
         canvas.fill_path(&path, &paint);
     }
 
+    fn enable_ui(&self) -> bool {
+        !self.started
+    }
     fn ui(&mut self, ctx: &egui::Context) {
         let panel = egui::SidePanel::left("main-ui-panel")
             .exact_width(self.ui_state.panel_width)
