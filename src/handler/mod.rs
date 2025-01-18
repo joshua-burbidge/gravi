@@ -48,8 +48,11 @@ impl<A: App> AppHandler<A> {
 impl<A: App> ApplicationHandler for AppHandler<A> {
     fn resumed(&mut self, _event_loop: &ActiveEventLoop) {
         self.canvas.reset_transform();
-        let y = (self.canvas.height() / 2) as f32;
-        self.canvas.translate(self.app.panel_width(), y);
+
+        let midpoint_y = (self.canvas.height() / 2) as f32;
+        let midpoint_x = (self.app.panel_width() + self.canvas.width() as f32) / 2.;
+        self.canvas.translate(midpoint_x, midpoint_y);
+        self.canvas.scale(0.05, 0.05);
     }
 
     fn window_event(
@@ -199,11 +202,26 @@ impl<A: App> ApplicationHandler for AppHandler<A> {
 }
 
 fn draw_base_canvas(canvas: &mut Canvas<WGPURenderer>) {
+    let scale = get_scale(canvas);
+
     let mut path = Path::new();
     path.move_to(-10000., 0.);
     path.line_to(10000., 0.);
 
     path.move_to(0., -10000.);
     path.line_to(0., 10000.);
-    canvas.stroke_path(&path, &Paint::color(Color::white()).with_line_width(3.));
+
+    let width = scale + 1. / scale; // balance width when scale is small and large
+
+    canvas.stroke_path(&path, &Paint::color(Color::white()).with_line_width(width));
+}
+
+fn get_scale(canvas: &Canvas<WGPURenderer>) -> f32 {
+    let transform_matrix = canvas.transform().0;
+    let scale_opt = transform_matrix.get(0);
+
+    match scale_opt {
+        Some(scale) => *scale,
+        None => 1.,
+    }
 }

@@ -17,21 +17,23 @@ pub struct Orbital {
 
 impl App for Orbital {
     fn run(&mut self) {
-        self.run_euler();
+        for _ in 1..6000 {
+            self.run_euler();
+        }
     }
 
     fn draw(&mut self, canvas: &mut femtovg::Canvas<femtovg::renderer::WGPURenderer>) {
         let mut path = Path::new();
-        let paint = Paint::color(Color::white()).with_line_width(2.);
+        let paint = Paint::color(Color::rgbf(0., 1., 0.));
 
         let central_px = convert_pos_to_canvas(&self.central.pos);
         let outer_px = convert_pos_to_canvas(&self.outer.pos);
-        path.circle(outer_px.x, outer_px.y, 10.);
-        path.circle(central_px.x, central_px.y, 25.);
+        path.circle(outer_px.x, outer_px.y, 60.);
+        path.circle(central_px.x, central_px.y, 100.);
 
         for p in &self.trajectory {
             let canvas_pos = convert_pos_to_canvas(p);
-            path.circle(canvas_pos.x, canvas_pos.y, 3.);
+            path.circle(canvas_pos.x, canvas_pos.y, 5.);
         }
 
         canvas.fill_path(&path, &paint);
@@ -124,7 +126,7 @@ impl Orbital {
             x: a_x_km,
             y: a_y_km,
         };
-        println!("{:?}", cur_a);
+        // println!("{:?}", cur_a);
 
         // v(t + dt) = v(t) + a(t)*dt
         let next_v = Velocity {
