@@ -50,15 +50,6 @@ impl<A: App> ApplicationHandler for AppHandler<A> {
         self.canvas.reset_transform();
         let y = (self.canvas.height() / 2) as f32;
         self.canvas.translate(self.app.panel_width(), y);
-
-        let mut path = Path::new();
-        path.move_to(-10000., 0.);
-        path.line_to(10000., 0.);
-
-        path.move_to(0., -10000.);
-        path.line_to(0., 10000.);
-        self.canvas
-            .stroke_path(&path, &Paint::color(Color::white()).with_line_width(3.));
     }
 
     fn window_event(
@@ -168,6 +159,7 @@ impl<A: App> ApplicationHandler for AppHandler<A> {
                 let dpi_factor = window.scale_factor();
                 canvas.set_size(size.width, size.height, dpi_factor as f32);
                 canvas.clear_rect(0, 0, size.width, size.height, Color::black());
+                draw_base_canvas(canvas);
 
                 if self.next_tick {
                     self.app.run();
@@ -204,4 +196,14 @@ impl<A: App> ApplicationHandler for AppHandler<A> {
             _event_loop.exit();
         }
     }
+}
+
+fn draw_base_canvas(canvas: &mut Canvas<WGPURenderer>) {
+    let mut path = Path::new();
+    path.move_to(-10000., 0.);
+    path.line_to(10000., 0.);
+
+    path.move_to(0., -10000.);
+    path.line_to(0., 10000.);
+    canvas.stroke_path(&path, &Paint::color(Color::white()).with_line_width(3.));
 }

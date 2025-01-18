@@ -25,8 +25,8 @@ impl App for Orbital {
 
         let central_px = convert_pos_to_canvas(&self.central.pos);
         let outer_px = convert_pos_to_canvas(&self.outer.pos);
-        path.circle(outer_px.x, outer_px.y, 5.);
-        path.circle(central_px.x, central_px.y, 20.);
+        path.circle(outer_px.x, outer_px.y, 10.);
+        path.circle(central_px.x, central_px.y, 25.);
 
         canvas.fill_path(&path, &paint);
     }
