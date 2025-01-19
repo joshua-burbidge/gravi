@@ -9,7 +9,7 @@ use winit::{
 };
 
 use crate::{
-    app::{core::draw::get_scale, App},
+    app::{core::draw::scaled_width, App},
     helpers::wgpu::WgpuWindowSurface,
     ui::EguiRenderer,
 };
@@ -209,8 +209,6 @@ impl<A: App> ApplicationHandler for AppHandler<A> {
 }
 
 fn draw_base_canvas(canvas: &mut Canvas<WGPURenderer>) {
-    let scale = get_scale(canvas);
-
     let mut path = Path::new();
     path.move_to(-10000., 0.);
     path.line_to(10000., 0.);
@@ -218,7 +216,7 @@ fn draw_base_canvas(canvas: &mut Canvas<WGPURenderer>) {
     path.move_to(0., -10000.);
     path.line_to(0., 10000.);
 
-    let width = scale + 1. / scale; // balance width when scale is small and large
+    let width = scaled_width(canvas, 1.);
 
     canvas.stroke_path(&path, &Paint::color(Color::white()).with_line_width(width));
 }

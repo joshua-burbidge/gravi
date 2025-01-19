@@ -3,7 +3,10 @@ use femtovg::{Color, Paint, Path};
 use crate::ui::widgets::{CustomSlider, XYInput};
 
 use super::{
-    core::physics::{Acceleration, Position, Vector, Velocity, G_KM},
+    core::{
+        draw::scaled_width,
+        physics::{Acceleration, Position, Vector, Velocity, G_KM},
+    },
     App,
 };
 
@@ -28,12 +31,12 @@ impl App for Orbital {
 
     fn draw(&mut self, canvas: &mut femtovg::Canvas<femtovg::renderer::WGPURenderer>) {
         let mut circles = Path::new();
-        let paint = Paint::color(Color::rgbf(0., 1., 0.)).with_line_width(15.);
+        let paint = Paint::color(Color::rgbf(0., 1., 0.)).with_line_width(scaled_width(canvas, 1.));
 
         let central_px = convert_pos_to_canvas(&self.central.pos);
         let outer_px = convert_pos_to_canvas(&self.outer.pos);
-        circles.circle(outer_px.x, outer_px.y, 60.);
-        circles.circle(central_px.x, central_px.y, 100.);
+        circles.circle(outer_px.x, outer_px.y, scaled_width(canvas, 4.));
+        circles.circle(central_px.x, central_px.y, scaled_width(canvas, 10.));
 
         let sec_per_graph = 100.; // graph a point every 100 seconds
         let ticks_per_graph_point = (sec_per_graph / self.dt).round() as usize;
