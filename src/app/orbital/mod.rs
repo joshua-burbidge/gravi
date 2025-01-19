@@ -9,6 +9,7 @@ use super::{
 
 pub struct Orbital {
     ui_state: UiState,
+    dt: f32,
     started: bool,
     central: Body,
     outer: Body,
@@ -17,6 +18,9 @@ pub struct Orbital {
 
 impl App for Orbital {
     fn run(&mut self) {
+        if !self.started {
+            return;
+        }
         for _ in 1..6000 {
             self.run_euler();
         }
@@ -103,6 +107,7 @@ impl Orbital {
     pub fn new() -> Self {
         Self {
             ui_state: UiState::new(),
+            dt: 1.,
             started: false,
             central: Body::earth(),
             outer: Body::outer_low(),
@@ -131,7 +136,7 @@ impl Orbital {
 
     // run function contains calculations necessary for the iteration process
     fn run_euler(&mut self) {
-        let dt = 1.;
+        let dt = self.dt;
 
         // a = -G * m_central * r_vec / (|r_vec|^3)
 
