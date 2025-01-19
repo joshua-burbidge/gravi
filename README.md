@@ -5,4 +5,4 @@
   - don't clear canvas?
 - is growing elliptical orbit accurate or just because of approximation (Vx = 5)
   - inaccurate
-  - fix that
+  - fix that (smaller dt works)

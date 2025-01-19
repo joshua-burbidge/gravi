@@ -27,20 +27,41 @@ impl App for Orbital {
     }
 
     fn draw(&mut self, canvas: &mut femtovg::Canvas<femtovg::renderer::WGPURenderer>) {
-        let mut path = Path::new();
-        let paint = Paint::color(Color::rgbf(0., 1., 0.));
+        let mut circles = Path::new();
+        let paint = Paint::color(Color::rgbf(0., 1., 0.)).with_line_width(15.);
 
         let central_px = convert_pos_to_canvas(&self.central.pos);
         let outer_px = convert_pos_to_canvas(&self.outer.pos);
-        path.circle(outer_px.x, outer_px.y, 60.);
-        path.circle(central_px.x, central_px.y, 100.);
+        circles.circle(outer_px.x, outer_px.y, 60.);
+        circles.circle(central_px.x, central_px.y, 100.);
 
-        for body in &self.trajectory {
-            let canvas_pos = convert_pos_to_canvas(&body.pos);
-            path.circle(canvas_pos.x, canvas_pos.y, 5.);
+        let sec_per_graph = 100.; // graph a point every 100 seconds
+        let ticks_per_graph_point = (sec_per_graph / self.dt).round() as usize;
+
+        let mut filtered = self
+            .trajectory
+            .iter()
+            .enumerate()
+            .filter(|(i, _)| i % ticks_per_graph_point == 0)
+            .map(|(_, val)| val.pos.clone());
+
+        let mut path = Path::new();
+        let initial_pos = filtered.next();
+        match initial_pos {
+            Some(p) => {
+                let canvas_pos = convert_pos_to_canvas(&p);
+                path.move_to(canvas_pos.x, canvas_pos.y);
+            }
+            None => {}
         }
+        for pos in filtered {
+            let canvas_pos = convert_pos_to_canvas(&pos);
+            path.line_to(canvas_pos.x, canvas_pos.y);
+        }
+        path.line_to(outer_px.x, outer_px.y);
 
-        canvas.fill_path(&path, &paint);
+        canvas.fill_path(&circles, &paint);
+        canvas.stroke_path(&path, &paint);
     }
 
     fn enable_ui(&self) -> bool {
@@ -56,6 +77,13 @@ impl App for Orbital {
             if self.started {
                 ui.disable();
             }
+
+            ui.label("General");
+            ui.add(
+                CustomSlider::new(&mut self.dt, 0.1..=10.0)
+                    .label("dt:")
+                    .full_width(true),
+            );
 
             // ui.label("Central body");
             // ui.add(
