@@ -13,7 +13,7 @@ pub struct Orbital {
     started: bool,
     central: Body,
     outer: Body,
-    trajectory: Vec<Position>,
+    trajectory: Vec<Body>,
 }
 
 impl App for Orbital {
@@ -35,8 +35,8 @@ impl App for Orbital {
         path.circle(outer_px.x, outer_px.y, 60.);
         path.circle(central_px.x, central_px.y, 100.);
 
-        for p in &self.trajectory {
-            let canvas_pos = convert_pos_to_canvas(p);
+        for body in &self.trajectory {
+            let canvas_pos = convert_pos_to_canvas(&body.pos);
             path.circle(canvas_pos.x, canvas_pos.y, 5.);
         }
 
@@ -125,7 +125,7 @@ impl Orbital {
 
     fn start(&mut self) {
         self.started = true;
-        self.trajectory.push(self.outer.pos.clone());
+        self.trajectory.push(self.outer.clone());
     }
 
     // contains calculations not necessary for the iteration process, only for displaying
@@ -181,16 +181,24 @@ impl Orbital {
 
         self.outer.v = next_v;
         self.outer.pos = next_r;
-        self.trajectory.push(self.outer.pos.clone());
+        self.trajectory.push(self.outer.clone());
     }
 
     fn reset(&mut self) {
-        self.started = false;
+        match self.trajectory.get(0) {
+            Some(initial_body) => {
+                self.outer = initial_body.clone();
+            }
+            None => {
+                self.outer = Body::outer_low();
+            }
+        }
         self.trajectory = vec![];
+        self.started = false;
     }
 }
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 struct Body {
     pos: Position,
     v: Velocity,
