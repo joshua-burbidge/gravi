@@ -13,6 +13,7 @@ use super::{
 pub struct Orbital {
     ui_state: UiState,
     dt: f32,
+    num_ticks: i32,
     started: bool,
     central: Body,
     outer: Body,
@@ -24,7 +25,7 @@ impl App for Orbital {
         if !self.started {
             return;
         }
-        for _ in 1..6000 {
+        for _ in 1..self.num_ticks {
             self.run_euler();
         }
     }
@@ -82,11 +83,8 @@ impl App for Orbital {
             }
 
             ui.label("General");
-            ui.add(
-                CustomSlider::new(&mut self.dt, 0.01..=10.0)
-                    .label("dt:")
-                    .full_width(true),
-            );
+            ui.add(CustomSlider::new(&mut self.dt, 0.01..=10.0).label("dt:"));
+            ui.add(CustomSlider::new(&mut self.num_ticks, 100..=100000).label("ticks per press:"));
 
             // ui.label("Central body");
             // ui.add(
@@ -147,6 +145,7 @@ impl Orbital {
         Self {
             ui_state: UiState::new(),
             dt: 0.1,
+            num_ticks: 10000,
             started: false,
             central: Body::earth(),
             outer: Body::outer_low(),
