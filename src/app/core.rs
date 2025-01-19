@@ -1,3 +1,10 @@
+pub const G: f32 = 6.674e-11; // N m^2 / kg^2
+pub const G_KM: f32 = G * 1e-6; // N km^2 / kg^2 (converted to km)
+
+pub trait Vector {
+    fn mag(&self) -> f32;
+}
+
 #[derive(Clone, Debug, Default)]
 pub struct Position {
     pub x: f32,
@@ -7,7 +14,16 @@ impl Position {
     pub fn new(x: f32, y: f32) -> Self {
         Position { x, y }
     }
-    pub fn mag(&self) -> f32 {
+}
+
+// this should just be the type
+impl Vector for Position {
+    fn mag(&self) -> f32 {
+        (self.x.powi(2) + self.y.powi(2)).sqrt()
+    }
+}
+impl Vector for Velocity {
+    fn mag(&self) -> f32 {
         (self.x.powi(2) + self.y.powi(2)).sqrt()
     }
 }

@@ -3,7 +3,7 @@ use femtovg::{Color, Paint, Path};
 use crate::ui::widgets::{CustomSlider, XYInput};
 
 use super::{
-    core::{Acceleration, Position, Velocity},
+    core::{Acceleration, Position, Vector, Velocity, G_KM},
     App,
 };
 
@@ -43,6 +43,8 @@ impl App for Orbital {
         !self.started
     }
     fn ui(&mut self, ctx: &egui::Context) {
+        let (kinetic, potential) = self.analyze();
+
         let panel = egui::SidePanel::left("main-ui-panel")
             .exact_width(self.ui_state.panel_width)
             .resizable(false);
@@ -50,14 +52,16 @@ impl App for Orbital {
             if self.started {
                 ui.disable();
             }
-            ui.label("Central body");
-            let x_range = 0.0..=1000.;
-            let y_range = -500.0..=500.;
+
+            // ui.label("Central body");
             // ui.add(
             //     CustomSlider::new(&mut self.central.mass, 10000.0..=5.97e24)
             //         .label("M:")
             //         .full_width(true),
             // );
+
+            let x_range = 0.0..=1000.;
+            let y_range = -500.0..=500.;
 
             ui.label("Outer body");
             ui.label("Position");
@@ -83,6 +87,11 @@ impl App for Orbital {
             if ui.button("Start").clicked() {
                 self.start();
             }
+
+            ui.monospace("Energy (MJ)");
+            ui.monospace(format!("Kinetic:    {:+.4e}", kinetic));
+            ui.monospace(format!("Potential:  {:+.4e}", potential));
+            ui.monospace(format!("Total:      {:+.4e}", kinetic + potential));
         });
     }
     fn panel_width(&self) -> f32 {
@@ -106,6 +115,21 @@ impl Orbital {
         self.trajectory.push(self.outer.pos.clone());
     }
 
+    // contains calculations not necessary for the iteration process, only for displaying
+    fn analyze(&self) -> (f32, f32) {
+        let g = G_KM;
+
+        // Ek = .5mv^2
+        let kinetic_mj = 0.5 * self.outer.mass * self.outer.v.mag().powi(2); // MJ
+
+        // Eg = -G * M * m / r
+        let grav_potential_kj = -g * self.central.mass * self.outer.mass / self.outer.pos.mag(); // KJ
+        let grav_potential_mj = grav_potential_kj * 1e-3; // MJ
+
+        (kinetic_mj, grav_potential_mj)
+    }
+
+    // run function contains calculations necessary for the iteration process
     fn run_euler(&mut self) {
         let dt = 1.;
 
@@ -116,13 +140,11 @@ impl Orbital {
             x: self.outer.pos.x,
             y: self.outer.pos.y,
         };
-        // let g = 6.674e-11; // N m^2 / kg^2
-        let g = 6.674e-11 * 1e-6; // N km^2 / kg^2 (converted to km)
 
-        let a_x = -g * self.central.mass * r.x / r.mag().powi(3); // m/s^2
+        let a_x = -G_KM * self.central.mass * r.x / r.mag().powi(3); // m/s^2
         let a_x_km = a_x * 1e-3; // km/s^2
 
-        let a_y = -g * self.central.mass * r.y / r.mag().powi(3); // m/s^2
+        let a_y = -G_KM * self.central.mass * r.y / r.mag().powi(3); // m/s^2
         let a_y_km = a_y * 1e-3; // km/s^2
 
         let cur_a = Acceleration {
