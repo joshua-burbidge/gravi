@@ -1,7 +1,10 @@
 use femtovg::{renderer::WGPURenderer, Canvas, Color, Paint, Path};
 
 use super::{
-    core::{eq_tolerance, midpoint, new_position, new_vel, Acceleration, Position, Velocity},
+    core::{
+        eq_tolerance, midpoint,
+        physics::{new_position, new_vel, Acceleration, Position, Velocity},
+    },
     App,
 };
 

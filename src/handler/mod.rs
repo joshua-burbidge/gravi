@@ -8,7 +8,11 @@ use winit::{
     window::{Window, WindowId},
 };
 
-use crate::{app::App, helpers::wgpu::WgpuWindowSurface, ui::EguiRenderer};
+use crate::{
+    app::{core::draw::get_scale, App},
+    helpers::wgpu::WgpuWindowSurface,
+    ui::EguiRenderer,
+};
 
 pub struct AppHandler<A: App> {
     mousex: f32,
@@ -217,14 +221,4 @@ fn draw_base_canvas(canvas: &mut Canvas<WGPURenderer>) {
     let width = scale + 1. / scale; // balance width when scale is small and large
 
     canvas.stroke_path(&path, &Paint::color(Color::white()).with_line_width(width));
-}
-
-fn get_scale(canvas: &Canvas<WGPURenderer>) -> f32 {
-    let transform_matrix = canvas.transform().0;
-    let scale_opt = transform_matrix.get(0);
-
-    match scale_opt {
-        Some(scale) => *scale,
-        None => 1.,
-    }
 }

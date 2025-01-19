@@ -3,7 +3,7 @@ use femtovg::{Color, Paint, Path};
 use crate::ui::widgets::{CustomSlider, XYInput};
 
 use super::{
-    core::{Acceleration, Position, Vector, Velocity, G_KM},
+    core::physics::{Acceleration, Position, Vector, Velocity, G_KM},
     App,
 };
 
