@@ -63,6 +63,14 @@ impl App for Orbital {
             //         .label("M:")
             //         .full_width(true),
             // );
+            ui.input(|i| {
+                if i.key_pressed(egui::Key::A) {
+                    self.reset();
+                }
+                if !self.started && i.key_pressed(egui::Key::Enter) {
+                    self.start();
+                }
+            });
 
             let x_range = 0.0..=1000.;
             let y_range = -500.0..=500.;
@@ -135,6 +143,7 @@ impl Orbital {
     }
 
     // run function contains calculations necessary for the iteration process
+    // uses euler method, which is one of the more inaccurate methods
     fn run_euler(&mut self) {
         let dt = self.dt;
 
@@ -173,6 +182,11 @@ impl Orbital {
         self.outer.v = next_v;
         self.outer.pos = next_r;
         self.trajectory.push(self.outer.pos.clone());
+    }
+
+    fn reset(&mut self) {
+        self.started = false;
+        self.trajectory = vec![];
     }
 }
 

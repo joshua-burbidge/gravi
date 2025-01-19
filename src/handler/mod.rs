@@ -61,12 +61,12 @@ impl<A: App> ApplicationHandler for AppHandler<A> {
         _window_id: WindowId,
         event: WindowEvent,
     ) {
-        if self.app.enable_ui() {
-            let is_consumed = self.egui.handle_input(&self.window, &event);
-            if is_consumed {
-                return ();
-            }
+        // if self.app.enable_ui() {
+        let is_consumed = self.egui.handle_input(&self.window, &event);
+        if is_consumed {
+            return ();
         }
+        // }
 
         match event {
             #[cfg(not(target_arch = "wasm32"))]
