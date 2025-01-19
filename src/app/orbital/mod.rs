@@ -80,7 +80,7 @@ impl App for Orbital {
 
             ui.label("General");
             ui.add(
-                CustomSlider::new(&mut self.dt, 0.1..=10.0)
+                CustomSlider::new(&mut self.dt, 0.01..=10.0)
                     .label("dt:")
                     .full_width(true),
             );
@@ -143,7 +143,7 @@ impl Orbital {
     pub fn new() -> Self {
         Self {
             ui_state: UiState::new(),
-            dt: 1.,
+            dt: 0.1,
             started: false,
             central: Body::earth(),
             outer: Body::outer_low(),
