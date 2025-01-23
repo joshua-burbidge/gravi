@@ -15,6 +15,7 @@ pub struct Orbital {
     dt: f32,
     num_ticks: i32,
     started: bool,
+    initial_e: f32,
     central: Body,
     outer: Body,
     trajectory: Vec<Body>,
@@ -72,67 +73,73 @@ impl App for Orbital {
         !self.started
     }
     fn ui(&mut self, ctx: &egui::Context) {
-        let (kinetic, potential) = self.analyze();
+        let (kinetic, potential, diff) = self.analyze();
 
         let panel = egui::SidePanel::left("main-ui-panel")
             .exact_width(self.ui_state.panel_width)
             .resizable(false);
         panel.show(ctx, |ui| {
-            if self.started {
-                ui.disable();
-            }
+            ui.add_enabled_ui(!self.started, |ui| {
+                ui.label("General");
+                ui.add(CustomSlider::new(&mut self.dt, 0.01..=10.0).label("dt:"));
+                ui.add(
+                    CustomSlider::new(&mut self.num_ticks, 100..=100000).label("ticks per press:"),
+                );
 
-            ui.label("General");
-            ui.add(CustomSlider::new(&mut self.dt, 0.01..=10.0).label("dt:"));
-            ui.add(CustomSlider::new(&mut self.num_ticks, 100..=100000).label("ticks per press:"));
+                // ui.label("Central body");
+                // ui.add(
+                //     CustomSlider::new(&mut self.central.mass, 10000.0..=5.97e24)
+                //         .label("M:")
+                //         .full_width(true),
+                // );
+                ui.input(|i| {
+                    if i.key_pressed(egui::Key::A) {
+                        self.reset();
+                    }
+                    if !self.started && i.key_pressed(egui::Key::Enter) {
+                        self.start();
+                    }
+                });
 
-            // ui.label("Central body");
-            // ui.add(
-            //     CustomSlider::new(&mut self.central.mass, 10000.0..=5.97e24)
-            //         .label("M:")
-            //         .full_width(true),
-            // );
-            ui.input(|i| {
-                if i.key_pressed(egui::Key::A) {
-                    self.reset();
-                }
-                if !self.started && i.key_pressed(egui::Key::Enter) {
+                let x_range = 0.0..=1000.;
+                let y_range = -500.0..=500.;
+
+                ui.label("Outer body");
+                ui.label("Position");
+                ui.add(XYInput::new(
+                    &mut self.outer.pos.x,
+                    &mut self.outer.pos.y,
+                    x_range,
+                    y_range,
+                ));
+                ui.label("Velocity");
+                ui.add(XYInput::new(
+                    &mut self.outer.v.x,
+                    &mut self.outer.v.y,
+                    0.0..=1000.0,
+                    0.0..=1.0,
+                ));
+                ui.add(
+                    CustomSlider::new(&mut self.outer.mass, 1.0..=5e5)
+                        .label("M:")
+                        .full_width(true),
+                );
+
+                if ui.button("Start").clicked() {
                     self.start();
                 }
             });
 
-            let x_range = 0.0..=1000.;
-            let y_range = -500.0..=500.;
-
-            ui.label("Outer body");
-            ui.label("Position");
-            ui.add(XYInput::new(
-                &mut self.outer.pos.x,
-                &mut self.outer.pos.y,
-                x_range,
-                y_range,
-            ));
-            ui.label("Velocity");
-            ui.add(XYInput::new(
-                &mut self.outer.v.x,
-                &mut self.outer.v.y,
-                0.0..=1000.0,
-                0.0..=1.0,
-            ));
-            ui.add(
-                CustomSlider::new(&mut self.outer.mass, 1.0..=5e5)
-                    .label("M:")
-                    .full_width(true),
-            );
-
-            if ui.button("Start").clicked() {
-                self.start();
-            }
-
+            let t = self.t();
+            let diff_perc = diff * 100.;
+            ui.monospace(format!("t: {}", t));
             ui.monospace("Energy (MJ)");
             ui.monospace(format!("Kinetic:    {:+.4e}", kinetic));
             ui.monospace(format!("Potential:  {:+.4e}", potential));
             ui.monospace(format!("Total:      {:+.4e}", kinetic + potential));
+            ui.monospace(format!("Initial:    {:+.4e}", self.initial_e));
+            ui.monospace(format!("Diff:        {:.2}%", diff_perc));
+            ui.monospace(format!("Diff per t:  {:.2e}%", (100. - diff_perc) / t));
         });
     }
     fn panel_width(&self) -> f32 {
@@ -147,19 +154,46 @@ impl Orbital {
             dt: 0.1,
             num_ticks: 10000,
             started: false,
+            initial_e: 0.,
             central: Body::earth(),
             outer: Body::outer_low(),
             trajectory: vec![],
         }
     }
 
+    fn t(&self) -> f32 {
+        let len = self.trajectory.len();
+
+        if len > 0 {
+            (len - 1) as f32 * self.dt
+        } else {
+            0.
+        }
+    }
+
     fn start(&mut self) {
         self.started = true;
         self.trajectory.push(self.outer.clone());
+
+        let (_, _, total) = self.current_e();
+
+        self.initial_e = total;
     }
 
     // contains calculations not necessary for the iteration process, only for displaying
-    fn analyze(&self) -> (f32, f32) {
+    fn analyze(&self) -> (f32, f32, f32) {
+        let (kinetic_mj, grav_potential_mj, total) = self.current_e();
+
+        let diff = if self.initial_e != 0. {
+            total / self.initial_e
+        } else {
+            0.
+        };
+
+        (kinetic_mj, grav_potential_mj, diff)
+    }
+
+    fn current_e(&self) -> (f32, f32, f32) {
         let g = G_KM;
 
         // Ek = .5mv^2
@@ -168,8 +202,9 @@ impl Orbital {
         // Eg = -G * M * m / r
         let grav_potential_kj = -g * self.central.mass * self.outer.mass / self.outer.pos.mag(); // KJ
         let grav_potential_mj = grav_potential_kj * 1e-3; // MJ
+        let total = kinetic_mj + grav_potential_mj;
 
-        (kinetic_mj, grav_potential_mj)
+        (kinetic_mj, grav_potential_mj, total)
     }
 
     // run function contains calculations necessary for the iteration process
