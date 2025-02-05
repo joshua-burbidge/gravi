@@ -33,7 +33,6 @@ impl App for Orbital {
 
     fn draw(&mut self, canvas: &mut femtovg::Canvas<femtovg::renderer::WGPURenderer>) {
         let mut circles = Path::new();
-        let paint = Paint::color(Color::rgbf(0., 1., 0.)).with_line_width(scaled_width(canvas, 1.));
 
         let central_px = convert_pos_to_canvas(&self.central.pos);
         let outer_px = convert_pos_to_canvas(&self.outer.pos);
@@ -50,23 +49,29 @@ impl App for Orbital {
             .filter(|(i, _)| i % ticks_per_graph_point == 0)
             .map(|(_, val)| val.pos.clone());
 
-        let mut path = Path::new();
+        let mut line_path = Path::new();
         let initial_pos = filtered.next();
         match initial_pos {
             Some(p) => {
                 let canvas_pos = convert_pos_to_canvas(&p);
-                path.move_to(canvas_pos.x, canvas_pos.y);
+                line_path.move_to(canvas_pos.x, canvas_pos.y);
             }
             None => {}
         }
         for pos in filtered {
             let canvas_pos = convert_pos_to_canvas(&pos);
-            path.line_to(canvas_pos.x, canvas_pos.y);
+            line_path.line_to(canvas_pos.x, canvas_pos.y);
         }
-        path.line_to(outer_px.x, outer_px.y);
+        line_path.line_to(outer_px.x, outer_px.y);
+
+        let mut radius_path = Path::new();
+        radius_path.circle(central_px.x, central_px.y, self.central.radius);
+
+        let paint = Paint::color(Color::rgbf(0., 1., 0.)).with_line_width(scaled_width(canvas, 1.));
 
         canvas.fill_path(&circles, &paint);
-        canvas.stroke_path(&path, &paint);
+        canvas.stroke_path(&line_path, &paint);
+        canvas.stroke_path(&radius_path, &paint);
     }
 
     fn enable_ui(&self) -> bool {
@@ -269,6 +274,7 @@ struct Body {
     v: Velocity,
     _a: Acceleration,
     mass: f32,
+    radius: f32,
 }
 impl Body {
     fn _mass(mut self, mass: f32) -> Self {
@@ -297,6 +303,7 @@ impl Body {
     fn earth() -> Self {
         Self {
             mass: 5.97e24, // kg
+            radius: 6378., // km
             ..Default::default()
         }
     }
