@@ -15,6 +15,7 @@ pub struct Orbital {
     dt: f32,
     num_ticks: i32,
     started: bool,
+    stopped: bool,
     initial_e: f32,
     central: Body,
     outer: Body,
@@ -23,7 +24,7 @@ pub struct Orbital {
 
 impl App for Orbital {
     fn run(&mut self) {
-        if !self.started {
+        if !self.started || self.stopped {
             return;
         }
         for _ in 1..self.num_ticks {
@@ -117,6 +118,7 @@ impl App for Orbital {
                     x_range,
                     y_range,
                 ));
+                ui.label(format!("|r|: {}", self.outer.pos.mag()));
                 ui.label("Velocity");
                 ui.add(XYInput::new(
                     &mut self.outer.v.x,
@@ -159,6 +161,7 @@ impl Orbital {
             dt: 0.1,
             num_ticks: 10000,
             started: false,
+            stopped: false,
             initial_e: 0.,
             central: Body::earth(),
             outer: Body::outer_low(),
@@ -220,10 +223,7 @@ impl Orbital {
         // a = -G * m_central * r_vec / (|r_vec|^3)
 
         // put central body at (0,0) that way r vector is equal to the position of the outer body
-        let r = Position {
-            x: self.outer.pos.x,
-            y: self.outer.pos.y,
-        };
+        let r = self.outer.pos.clone();
 
         let a_x = -G_KM * self.central.mass * r.x / r.mag().powi(3); // m/s^2
         let a_x_km = a_x * 1e-3; // km/s^2
@@ -249,6 +249,11 @@ impl Orbital {
             y: self.outer.pos.y + self.outer.v.y * dt,
         };
 
+        if next_r.mag() <= self.central.radius {
+            self.stopped = true;
+            return;
+        }
+
         self.outer.v = next_v;
         self.outer.pos = next_r;
         self.trajectory.push(self.outer.clone());
@@ -265,6 +270,7 @@ impl Orbital {
         }
         self.trajectory = vec![];
         self.started = false;
+        self.stopped = false;
     }
 }
 
