@@ -235,14 +235,10 @@ impl Orbital {
         // println!("{:?}", cur_a);
 
         // v(t + dt) = v(t) + a(t)*dt
-        let next_v =
-            Vector::<Velocity>::new(self.outer.v.x + cur_a.x * dt, self.outer.v.y + cur_a.y * dt);
+        let next_v = self.outer.v.update(&cur_a, dt);
 
         // r(t + dt) = r(t) + v(t)*dt
-        let next_r = Vector::<Position>::new(
-            self.outer.pos.x + self.outer.v.x * dt,
-            self.outer.pos.y + self.outer.v.y * dt,
-        );
+        let next_r = self.outer.pos.update_const_v(&self.outer.v, dt);
 
         if next_r.mag() <= self.central.radius {
             self.stopped = true;
