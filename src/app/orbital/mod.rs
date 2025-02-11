@@ -236,8 +236,14 @@ impl Orbital {
         // v(t + dt) = v(t) + a(t)*dt
         let next_v = self.outer.v.update(&cur_a, dt);
 
+        // standard euler:
         // r(t + dt) = r(t) + v(t)*dt
-        let next_r = self.outer.pos.update_const_v(&self.outer.v, dt);
+        // let next_r = self.outer.pos.update_const_v(&self.outer.v, dt);
+
+        // symplectic euler: use **next_v** when calculating next_r.
+        // This incorporates some information about acceleration into the position update.
+        // This leads to makes it closer to conserving energy than the standard euler method.
+        let next_r = self.outer.pos.update_const_v(&next_v, dt);
 
         if next_r.mag() <= self.central.radius {
             self.stopped = true;
