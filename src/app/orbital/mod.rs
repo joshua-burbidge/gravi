@@ -231,23 +231,18 @@ impl Orbital {
         let a_y = -G_KM * self.central.mass * r.y / r.mag().powi(3); // m/s^2
         let a_y_km = a_y * 1e-3; // km/s^2
 
-        let cur_a = Acceleration {
-            x: a_x_km,
-            y: a_y_km,
-        };
+        let cur_a = Vector::<Acceleration>::new(a_x_km, a_y_km);
         // println!("{:?}", cur_a);
 
         // v(t + dt) = v(t) + a(t)*dt
-        let next_v = Velocity {
-            x: self.outer.v.x + cur_a.x * dt,
-            y: self.outer.v.y + cur_a.y * dt,
-        };
+        let next_v =
+            Vector::<Velocity>::new(self.outer.v.x + cur_a.x * dt, self.outer.v.y + cur_a.y * dt);
 
         // r(t + dt) = r(t) + v(t)*dt
-        let next_r = Position {
-            x: self.outer.pos.x + self.outer.v.x * dt,
-            y: self.outer.pos.y + self.outer.v.y * dt,
-        };
+        let next_r = Vector::<Position>::new(
+            self.outer.pos.x + self.outer.v.x * dt,
+            self.outer.pos.y + self.outer.v.y * dt,
+        );
 
         if next_r.mag() <= self.central.radius {
             self.stopped = true;
@@ -276,9 +271,9 @@ impl Orbital {
 
 #[derive(Default, Clone)]
 struct Body {
-    pos: Position,
-    v: Velocity,
-    _a: Acceleration,
+    pos: Vector<Position>,
+    v: Vector<Velocity>,
+    // _a: Acceleration,
     mass: f32,
     radius: f32,
 }
@@ -290,19 +285,19 @@ impl Body {
     fn outer_low() -> Self {
         Self {
             mass: 400000., // kg
-            pos: Position {
-                x: 0.,
-                y: 400. + 6378., // km, radius of earth = 6378
-            },
-            v: Velocity { x: 7.8, y: 0. }, // km/s
+            pos: Vector::<Position>::new(
+                0.,
+                400. + 6378., // km, radius of earth = 6378
+            ),
+            v: Vector::<Velocity>::new(7.8, 0.), // km/s
             ..Default::default()
         }
     }
     fn _outer_med() -> Self {
         Self {
             mass: 5000.,
-            pos: Position { x: 0., y: 20000. },
-            v: Velocity { x: 3.9, y: 0. },
+            pos: Vector::<Position>::new(0., 20000.),
+            v: Vector::<Velocity>::new(3.9, 0.),
             ..Default::default()
         }
     }
@@ -323,9 +318,6 @@ impl UiState {
     }
 }
 
-fn convert_pos_to_canvas(pos: &Position) -> Position {
-    Position {
-        x: pos.x,
-        y: -pos.y,
-    }
+fn convert_pos_to_canvas(pos: &Vector<Position>) -> Vector<Position> {
+    Vector::<Position>::new(pos.x, -pos.y)
 }
