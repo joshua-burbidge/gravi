@@ -35,20 +35,15 @@ impl Vector<Position> {
     }
 
     // position after t seconds given constant acceleration
-    pub fn update(
-        &self,
-        v: &Vector<Velocity>,
-        a: &Vector<Acceleration>,
-        t: f32,
-    ) -> Vector<Position> {
+    pub fn update(&self, v: &Vector<Velocity>, a: &Vector<Acceleration>, t: f32) -> Self {
         // px + vx t + 1/2 ax t^2
-        Vector::<Position>::new(
+        Self::new(
             self.x + v.x * t + 0.5 * a.x * t.powi(2),
             self.y + v.y * t + 0.5 * a.x * t.powi(2),
         )
     }
 
-    pub fn update_const_v(&self, v: &Vector<Velocity>, t: f32) -> Vector<Position> {
+    pub fn update_const_v(&self, v: &Vector<Velocity>, t: f32) -> Self {
         let zero_a = Vector::<Acceleration>::default();
 
         self.update(v, &zero_a, t)
@@ -61,9 +56,9 @@ impl Vector<Velocity> {
     }
 
     // velocity update after t seconds given constant acceleration
-    pub fn update(&self, a: &Vector<Acceleration>, t: f32) -> Vector<Velocity> {
+    pub fn update(&self, a: &Vector<Acceleration>, t: f32) -> Self {
         // vx + ax t
-        Vector::<Velocity>::new(self.x + a.x * t, self.y + a.y * t)
+        Self::new(self.x + a.x * t, self.y + a.y * t)
     }
 }
 
