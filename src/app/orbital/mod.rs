@@ -124,13 +124,22 @@ impl App for Orbital {
 
                 ui.label("Velocity");
                 ui.checkbox(
-                    &mut self.ui_state.lock_velocity,
+                    &mut self.ui_state.lock_circular_velocity,
                     "lock to circular velocity",
                 );
+                ui.checkbox(
+                    &mut self.ui_state.lock_escape_velocity,
+                    "lock to escape velocity",
+                );
 
-                ui.add_enabled_ui(!self.ui_state.lock_velocity, |ui| {
-                    if self.ui_state.lock_velocity {
+                let enabled =
+                    !self.ui_state.lock_circular_velocity && !self.ui_state.lock_escape_velocity;
+                ui.add_enabled_ui(enabled, |ui| {
+                    if !self.started && self.ui_state.lock_circular_velocity {
                         self.outer.v = circular_velocity(self.central.mass, self.outer.pos.clone());
+                    }
+                    if !self.started && self.ui_state.lock_escape_velocity {
+                        self.outer.v = escape_velocity(self.central.mass, self.outer.pos.clone());
                     }
                     ui.add(XYInput::new(
                         &mut self.outer.v.x,
@@ -170,7 +179,8 @@ impl App for Orbital {
 #[derive(Default)]
 struct UiState {
     panel_width: f32,
-    lock_velocity: bool,
+    lock_circular_velocity: bool,
+    lock_escape_velocity: bool,
 }
 impl UiState {
     fn new() -> Self {
@@ -322,8 +332,8 @@ impl Body {
         Self {
             mass: 400000., // kg
             pos: position.clone(),
-            // v: escape_velocity(earth_mass, position), // km/s
-            v: circular_velocity(earth_mass, position), // km/s
+            v: escape_velocity(earth_mass, position), // km/s
+            // v: circular_velocity(earth_mass, position), // km/s
             ..Default::default()
         }
     }
