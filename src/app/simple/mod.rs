@@ -3,7 +3,7 @@ use femtovg::{renderer::WGPURenderer, Canvas, Color, Paint, Path};
 use super::{
     core::{
         eq_tolerance, midpoint,
-        physics::{new_position, new_vel, Acceleration, Position, Velocity},
+        physics::{Acceleration, Position, Velocity},
     },
     App,
 };
@@ -19,9 +19,9 @@ pub struct ConstAcceleration {
 impl App for ConstAcceleration {
     fn run(&mut self) {
         if self.started {
-            while self.hist.len() < 500 && self.current().y >= 0. {
-                let new_pos = new_position(self.current(), &self.v, &self.a, self.t_per_tick);
-                let new_vel = new_vel(&self.v, &self.a, self.t_per_tick);
+            while self.hist.len() < 500 && self.current_pos().y >= 0. {
+                let new_pos = self.current_pos().update(&self.v, &self.a, self.t_per_tick);
+                let new_vel = self.v.update(&self.a, self.t_per_tick);
 
                 self.hist.push(new_pos);
                 self.v = new_vel;
@@ -111,18 +111,18 @@ impl ConstAcceleration {
             ui_state: UiState::default(),
             started: false,
             hist: vec![],
-            v: Velocity { x: 0., y: 0. },
-            a: Acceleration { x: 0., y: -9.8 },
+            v: Velocity::new(0., 0.),
+            a: Acceleration::new(0., -9.8),
             t_per_tick: 0.25,
         }
     }
 
     fn analyze(&self) {
-        if self.current().y <= 0. {
+        if self.current_pos().y <= 0. {
             println!(
                 "final pos: x: {}, y: {}",
-                self.current().x,
-                self.current().y
+                self.current_pos().x,
+                self.current_pos().y
             );
             println!("final time: {}", self.hist.len() as f32 * self.t_per_tick);
             // 0 = p.y + v.y * t + 0.5 * a.y * t^2
@@ -138,7 +138,7 @@ impl ConstAcceleration {
         let v = &self.v;
         let a = &self.a;
         let overall_end_t = self.hist.len() as f32 * self.t_per_tick;
-        let overall_end_pos = self.current();
+        let overall_end_pos = self.current_pos();
 
         let mut end_t = overall_end_t;
         let mut start_t = end_t - self.t_per_tick;
@@ -149,7 +149,7 @@ impl ConstAcceleration {
 
             let mid_t = midpoint(start_t, end_t);
             let delta_t_from_end = mid_t - overall_end_t;
-            let mid_pos = new_position(overall_end_pos, v, a, delta_t_from_end);
+            let mid_pos = overall_end_pos.update(v, a, delta_t_from_end);
 
             println!(
                 "looping. start {}, end {}, mid {}, pos {}",
@@ -178,25 +178,16 @@ impl ConstAcceleration {
         self.hist = vec![start_pos];
         self.started = true;
 
-        self.a = Acceleration {
-            x: self.a.x,
-            y: self.a.y + self.ui_state.accel,
-        };
-        self.v = Velocity {
-            x: self.ui_state.vx,
-            y: self.ui_state.vy,
-        }
+        self.a = Acceleration::new(self.a.x, self.a.y + self.ui_state.accel);
+        self.v = Velocity::new(self.ui_state.vx, self.ui_state.vy)
     }
 
-    fn current(&self) -> &Position {
+    fn current_pos(&self) -> &Position {
         let index = self.hist.len() - 1;
         &self.hist[index]
     }
 }
 
 fn convert_pos_to_canvas(pos: &Position) -> Position {
-    Position {
-        x: pos.x,
-        y: -pos.y,
-    }
+    Position::new(pos.x, -pos.y)
 }
