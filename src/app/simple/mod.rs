@@ -3,7 +3,7 @@ use femtovg::{renderer::WGPURenderer, Canvas, Color, Paint, Path};
 use super::{
     core::{
         eq_tolerance, midpoint,
-        physics::{Acceleration, Position, Vector, Velocity},
+        physics::{Acceleration, Position, Velocity},
     },
     App,
 };
@@ -11,9 +11,9 @@ use super::{
 pub struct ConstAcceleration {
     pub ui_state: UiState,
     started: bool,
-    hist: Vec<Vector<Position>>,
-    v: Vector<Velocity>,
-    a: Vector<Acceleration>,
+    hist: Vec<Position>,
+    v: Velocity,
+    a: Acceleration,
     t_per_tick: f32,
 }
 impl App for ConstAcceleration {
@@ -111,8 +111,8 @@ impl ConstAcceleration {
             ui_state: UiState::default(),
             started: false,
             hist: vec![],
-            v: Vector::<Velocity>::new(0., 0.),
-            a: Vector::<Acceleration>::new(0., -9.8),
+            v: Velocity::new(0., 0.),
+            a: Acceleration::new(0., -9.8),
             t_per_tick: 0.25,
         }
     }
@@ -174,20 +174,20 @@ impl ConstAcceleration {
     }
 
     pub fn start(&mut self) {
-        let start_pos = Vector::<Position>::new(self.ui_state.start_pos as f32, 0.);
+        let start_pos = Position::new(self.ui_state.start_pos as f32, 0.);
         self.hist = vec![start_pos];
         self.started = true;
 
-        self.a = Vector::<Acceleration>::new(self.a.x, self.a.y + self.ui_state.accel);
-        self.v = Vector::<Velocity>::new(self.ui_state.vx, self.ui_state.vy)
+        self.a = Acceleration::new(self.a.x, self.a.y + self.ui_state.accel);
+        self.v = Velocity::new(self.ui_state.vx, self.ui_state.vy)
     }
 
-    fn current_pos(&self) -> &Vector<Position> {
+    fn current_pos(&self) -> &Position {
         let index = self.hist.len() - 1;
         &self.hist[index]
     }
 }
 
-fn convert_pos_to_canvas(pos: &Vector<Position>) -> Vector<Position> {
-    Vector::<Position>::new(pos.x, -pos.y)
+fn convert_pos_to_canvas(pos: &Position) -> Position {
+    Position::new(pos.x, -pos.y)
 }

@@ -5,7 +5,7 @@ use crate::ui::widgets::{CustomSlider, XYInput};
 use super::{
     core::{
         draw::scaled_width,
-        physics::{Acceleration, Position, Vector, Velocity, G_KM},
+        physics::{Acceleration, Position, Velocity, G_KM},
     },
     App,
 };
@@ -231,8 +231,7 @@ impl Orbital {
         let a_y = -G_KM * self.central.mass * r.y / r.mag().powi(3); // m/s^2
         let a_y_km = a_y * 1e-3; // km/s^2
 
-        let cur_a = Vector::<Acceleration>::new(a_x_km, a_y_km);
-        // println!("{:?}", cur_a);
+        let cur_a = Acceleration::new(a_x_km, a_y_km);
 
         // v(t + dt) = v(t) + a(t)*dt
         let next_v = self.outer.v.update(&cur_a, dt);
@@ -267,9 +266,8 @@ impl Orbital {
 
 #[derive(Default, Clone)]
 struct Body {
-    pos: Vector<Position>,
-    v: Vector<Velocity>,
-    // _a: Acceleration,
+    pos: Position,
+    v: Velocity,
     mass: f32,
     radius: f32,
 }
@@ -281,19 +279,19 @@ impl Body {
     fn outer_low() -> Self {
         Self {
             mass: 400000., // kg
-            pos: Vector::<Position>::new(
+            pos: Position::new(
                 0.,
                 400. + 6378., // km, radius of earth = 6378
             ),
-            v: Vector::<Velocity>::new(7.8, 0.), // km/s
+            v: Velocity::new(7.8, 0.), // km/s
             ..Default::default()
         }
     }
     fn _outer_med() -> Self {
         Self {
             mass: 5000.,
-            pos: Vector::<Position>::new(0., 20000.),
-            v: Vector::<Velocity>::new(3.9, 0.),
+            pos: Position::new(0., 20000.),
+            v: Velocity::new(3.9, 0.),
             ..Default::default()
         }
     }
@@ -314,6 +312,6 @@ impl UiState {
     }
 }
 
-fn convert_pos_to_canvas(pos: &Vector<Position>) -> Vector<Position> {
-    Vector::<Position>::new(pos.x, -pos.y)
+fn convert_pos_to_canvas(pos: &Position) -> Position {
+    Position::new(pos.x, -pos.y)
 }
