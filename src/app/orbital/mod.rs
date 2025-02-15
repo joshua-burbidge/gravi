@@ -5,7 +5,9 @@ use crate::ui::widgets::{CustomSlider, XYInput};
 use super::{
     core::{
         draw::scaled_width,
-        physics::{Acceleration, Position, Velocity, G_KM},
+        physics::{
+            circular_velocity, escape_velocity, Acceleration, Position, Velocity, G_KM, R_EARTH_KM,
+        },
     },
     App,
 };
@@ -282,14 +284,21 @@ impl Body {
         self.mass = mass;
         self
     }
+
+    // starting conditions for a low earth orbit, modeled after the ISS
     fn outer_low() -> Self {
+        let earth_mass = Self::earth().mass;
+
+        let r = 400. + R_EARTH_KM;
+        let x = 3000_f32;
+        let y = (r.powi(2) - x.powi(2)).sqrt();
+        let position = Position::new(x, y);
+
         Self {
             mass: 400000., // kg
-            pos: Position::new(
-                0.,
-                400. + 6378., // km, radius of earth = 6378
-            ),
-            v: Velocity::new(7.8, 0.), // km/s
+            pos: position.clone(),
+            // v: escape_velocity(earth_mass, position), // km/s
+            v: circular_velocity(earth_mass, position), // km/s
             ..Default::default()
         }
     }
@@ -303,8 +312,8 @@ impl Body {
     }
     fn earth() -> Self {
         Self {
-            mass: 5.97e24, // kg
-            radius: 6378., // km
+            mass: 5.97e24,      // kg
+            radius: R_EARTH_KM, // km
             ..Default::default()
         }
     }
