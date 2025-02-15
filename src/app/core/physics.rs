@@ -9,23 +9,31 @@ pub struct Velocity;
 pub struct Acceleration;
 // type VecType = Position | Velocity | Acceleration;
 
+pub trait VectorType {}
+impl VectorType for Position {}
+impl VectorType for Velocity {}
+impl VectorType for Acceleration {}
+
 #[derive(Clone, Debug, Default)]
-pub struct Vector<T> {
-    vec_type: T,
+pub struct Vector<T: VectorType> {
+    _type: T,
     pub x: f32,
     pub y: f32,
 }
-// TODO define trait VectorType, then do <T: VectorType> to restrict <T> to be only the valid vector types
 
 // TODO do this
 // pub type P = Vector<Position>;
 
-impl<T> Vector<T> {
+impl<T: VectorType> Vector<T> {
     pub fn mag(&self) -> f32 {
         (self.x.powi(2) + self.y.powi(2)).sqrt()
     }
     fn new_vec(vec_type: T, x: f32, y: f32) -> Self {
-        Self { vec_type, x, y }
+        Self {
+            _type: vec_type,
+            x,
+            y,
+        }
     }
 }
 
