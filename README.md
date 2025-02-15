@@ -9,6 +9,5 @@ Created from my boilerplate here: https://github.com/joshua-burbidge/femtovg-wgp
 #### TODO
 - disable/don't render ui after starting to improve performance?
   - don't clear canvas?
+- use types for units
 
-##### Validate
-- energy drift
