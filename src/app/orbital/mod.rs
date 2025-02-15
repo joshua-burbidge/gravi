@@ -109,8 +109,8 @@ impl App for Orbital {
                     }
                 });
 
-                let x_range = 0.0..=1000.;
-                let y_range = -500.0..=500.;
+                let x_range = -10000.0..=10000.;
+                let y_range = -10000.0..=10000.;
 
                 ui.label("Outer body");
                 ui.label("Position");
@@ -121,13 +121,24 @@ impl App for Orbital {
                     y_range,
                 ));
                 ui.label(format!("|r|: {}", self.outer.pos.mag()));
+
                 ui.label("Velocity");
-                ui.add(XYInput::new(
-                    &mut self.outer.v.x,
-                    &mut self.outer.v.y,
-                    0.0..=1000.0,
-                    0.0..=1.0,
-                ));
+                ui.checkbox(
+                    &mut self.ui_state.lock_velocity,
+                    "lock to circular velocity",
+                );
+
+                ui.add_enabled_ui(!self.ui_state.lock_velocity, |ui| {
+                    if self.ui_state.lock_velocity {
+                        self.outer.v = circular_velocity(self.central.mass, self.outer.pos.clone());
+                    }
+                    ui.add(XYInput::new(
+                        &mut self.outer.v.x,
+                        &mut self.outer.v.y,
+                        -50.0..=50.0,
+                        -50.0..=50.0,
+                    ));
+                });
                 ui.add(
                     CustomSlider::new(&mut self.outer.mass, 1.0..=5e5)
                         .label("M:")
@@ -153,6 +164,20 @@ impl App for Orbital {
     }
     fn panel_width(&self) -> f32 {
         self.ui_state.panel_width
+    }
+}
+
+#[derive(Default)]
+struct UiState {
+    panel_width: f32,
+    lock_velocity: bool,
+}
+impl UiState {
+    fn new() -> Self {
+        Self {
+            panel_width: 300.,
+            ..Default::default()
+        }
     }
 }
 
@@ -316,14 +341,6 @@ impl Body {
             radius: R_EARTH_KM, // km
             ..Default::default()
         }
-    }
-}
-struct UiState {
-    panel_width: f32,
-}
-impl UiState {
-    fn new() -> Self {
-        Self { panel_width: 300. }
     }
 }
 
