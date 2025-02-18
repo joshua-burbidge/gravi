@@ -210,11 +210,11 @@ impl<A: App> ApplicationHandler for AppHandler<A> {
 
 fn draw_base_canvas(canvas: &mut Canvas<WGPURenderer>) {
     let mut path = Path::new();
-    path.move_to(-10000., 0.);
-    path.line_to(10000., 0.);
+    path.move_to(-100000., 0.);
+    path.line_to(100000., 0.);
 
-    path.move_to(0., -10000.);
-    path.line_to(0., 10000.);
+    path.move_to(0., -100000.);
+    path.line_to(0., 100000.);
 
     let width = scaled_width(canvas, 1.);
 
