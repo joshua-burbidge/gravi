@@ -68,7 +68,11 @@ impl App for Orbital {
         line_path.line_to(outer_px.x, outer_px.y);
 
         let mut radius_path = Path::new();
-        radius_path.circle(central_px.x, central_px.y, self.central.radius);
+        radius_path.circle(
+            central_px.x,
+            central_px.y,
+            convert_length(self.central.radius),
+        );
 
         let paint = Paint::color(Color::rgbf(0., 1., 0.)).with_line_width(scaled_width(canvas, 1.));
 
@@ -355,5 +359,9 @@ impl Body {
 }
 
 fn convert_pos_to_canvas(pos: &Position) -> Position {
-    Position::new(pos.x, -pos.y)
+    Position::new(pos.x / 10., -pos.y / 10.)
+}
+
+fn convert_length(length: f32) -> f32 {
+    length / 10.
 }
