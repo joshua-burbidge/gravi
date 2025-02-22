@@ -1,6 +1,6 @@
 use femtovg::{renderer::WGPURenderer, Canvas};
 
-fn get_scale(canvas: &Canvas<WGPURenderer>) -> f32 {
+pub fn get_scale(canvas: &Canvas<WGPURenderer>) -> f32 {
     let transform_matrix = canvas.transform().0;
     let scale_opt = transform_matrix.get(0);
 

@@ -9,7 +9,10 @@ use winit::{
 };
 
 use crate::{
-    app::{core::draw::scaled_width, App},
+    app::{
+        core::draw::{get_scale, scaled_width},
+        App,
+    },
     helpers::wgpu::WgpuWindowSurface,
     ui::EguiRenderer,
 };
@@ -112,12 +115,22 @@ impl<A: App> ApplicationHandler for AppHandler<A> {
                     MouseScrollDelta::PixelDelta(delta) => (delta.y * 0.01) as f32,
                 };
 
+                let scale_factor = 1.0 + (y / 10.0);
+                let new_scale = scale_factor * get_scale(canvas);
+                if new_scale <= 0.001 {
+                    return;
+                }
+
                 let pt = canvas
                     .transform()
                     .inverse()
                     .transform_point(self.mousex, self.mousey);
+                // when the determinant is close to 0, inverse() fails and returns the identity matrix
+                // -> when a * d is close to 0 -> when scale is < 0.001
+
+                // translate the canvas to center on the mouse, then scale, then translate back
                 canvas.translate(pt.0, pt.1);
-                canvas.scale(1.0 + (y / 10.0), 1.0 + (y / 10.0));
+                canvas.scale(scale_factor, scale_factor);
                 canvas.translate(-pt.0, -pt.1);
 
                 self.window.request_redraw();
