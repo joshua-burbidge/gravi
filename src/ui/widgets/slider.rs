@@ -38,13 +38,13 @@ fn custom_formatter(
     if num <= 100000. {
         default_formatter.format(num, range)
     } else {
-        let exponent = num.log10().floor() as i32;
+        let pow_of_10 = num.log10().floor() as i32;
 
-        let decimal = num / (10_f64.powi(exponent));
+        let decimal = num / (10_f64.powi(pow_of_10));
 
         let rounded = round_to_decimals(decimal, 3);
 
-        String::from(format!("{}e{}", rounded, exponent))
+        String::from(format!("{}e{}", rounded, pow_of_10))
     }
 }
 
@@ -61,7 +61,7 @@ impl<'a, Num: emath::Numeric> egui::Widget for CustomSlider<'a, Num> {
             };
 
             // scope to change width of this slider only
-            ui.scope(|ui| {
+            ui.scope(|ui: &mut egui::Ui| {
                 let available_width = ui.available_width();
                 let style = ui.style_mut();
 
@@ -70,9 +70,9 @@ impl<'a, Num: emath::Numeric> egui::Widget for CustomSlider<'a, Num> {
                 }
 
                 let def_formatter = &style.number_formatter.clone();
-
-                let formatter =
-                    |num, range| -> String { custom_formatter(&def_formatter, num, range) };
+                let formatter = |num, decimal_places_range| -> String {
+                    custom_formatter(def_formatter, num, decimal_places_range)
+                };
 
                 let slider = egui::Slider::new(self.value, self.range)
                     .clamping(egui::SliderClamping::Never)
@@ -90,12 +90,53 @@ impl<'a, Num: emath::Numeric> egui::Widget for CustomSlider<'a, Num> {
 mod tests {
     use super::*;
 
+    static DEFAULT_RANGE: RangeInclusive<usize> = 0..=0;
+    fn def_formatter() -> egui::style::NumberFormatter {
+        egui::style::NumberFormatter::new(|num, _| num.to_string())
+    }
+
     #[test]
-    fn formatter() {
-        let num = 0_f64;
+    fn should_use_default_if_num_lt_100000() {
+        let num = 99999.9_f64;
 
-        let exponent = num.log10().floor() as i32;
+        let actual = custom_formatter(&def_formatter(), num, DEFAULT_RANGE.clone());
 
-        assert_eq!(exponent, 1);
+        assert_eq!(actual, num.to_string());
+    }
+
+    #[test]
+    fn should_use_default_if_num_eq_100000() {
+        let num = 100000_f64;
+
+        let actual = custom_formatter(&def_formatter(), num, DEFAULT_RANGE.clone());
+
+        assert_eq!(actual, num.to_string());
+    }
+
+    #[test]
+    fn should_use_e_if_num_gt_100000() {
+        let num = 100001_f64;
+
+        let actual = custom_formatter(&def_formatter(), num, DEFAULT_RANGE.clone());
+
+        assert_eq!(actual, "1e5");
+    }
+
+    #[test]
+    fn should_have_3_decimals() {
+        let num = 123456_f64;
+
+        let actual = custom_formatter(&def_formatter(), num, DEFAULT_RANGE.clone());
+
+        assert_eq!(actual, "1.235e5");
+    }
+
+    #[test]
+    fn should_display_big_number() {
+        let num = 2394871239847290000000000_f64;
+
+        let actual = custom_formatter(&def_formatter(), num, DEFAULT_RANGE.clone());
+
+        assert_eq!(actual, "2.395e24");
     }
 }
