@@ -85,7 +85,7 @@ impl App for Orbital {
         !self.started
     }
     fn ui(&mut self, ctx: &egui::Context) {
-        let (kinetic, potential, diff, cur_a) = self.analyze();
+        let (kinetic, potential, diff_percent, cur_a) = self.analyze();
 
         let panel = egui::SidePanel::left("main-ui-panel")
             .exact_width(self.ui_state.panel_width)
@@ -164,7 +164,6 @@ impl App for Orbital {
             });
 
             let t = self.t();
-            let diff_perc = diff * 100.;
             let days = t / (60 * 60 * 24) as f32;
             ui.monospace(format!("t: {:.4e} s, {:.2} d", t, days));
             ui.monospace(format!("Ax:    {:+.4e}", cur_a.x));
@@ -174,8 +173,8 @@ impl App for Orbital {
             ui.monospace(format!("Potential:  {:+.4e}", potential));
             ui.monospace(format!("Total:      {:+.4e}", kinetic + potential));
             ui.monospace(format!("Initial:    {:+.4e}", self.initial_e));
-            ui.monospace(format!("Diff:        {:.2}%", diff_perc));
-            ui.monospace(format!("Diff per t:  {:.2e}%", (100. - diff_perc) / t));
+            ui.monospace(format!("Diff:        {:.2}%", diff_percent));
+            ui.monospace(format!("Diff per t:  {:.2e}%", (100. - diff_percent) / t));
         });
     }
     fn panel_width(&self) -> f32 {
@@ -237,8 +236,8 @@ impl Orbital {
     fn analyze(&self) -> (f32, f32, f32, Acceleration) {
         let (kinetic_mj, grav_potential_mj, total) = self.current_e();
 
-        let diff = if self.initial_e != 0. {
-            total / self.initial_e
+        let diff_percentage = if self.initial_e != 0. {
+            (total / self.initial_e) * 100.
         } else {
             0.
         };
@@ -253,7 +252,7 @@ impl Orbital {
 
         let cur_a = Acceleration::new(a_x_km, a_y_km);
 
-        (kinetic_mj, grav_potential_mj, diff, cur_a)
+        (kinetic_mj, grav_potential_mj, diff_percentage, cur_a)
     }
 
     fn current_e(&self) -> (f32, f32, f32) {
