@@ -83,6 +83,7 @@ impl EguiRenderer {
             label: None,
             format: None,
             dimension: None,
+            usage: None,
             aspect: wgpu::TextureAspect::All, // this is default
             base_mip_level: 0,
             mip_level_count: None,
@@ -124,9 +125,6 @@ impl EguiRenderer {
     pub fn handle_input(&mut self, window: &Window, event: &WindowEvent) -> bool {
         let egui_winit_state = &mut self.state;
         let event_response = egui_winit_state.on_window_event(window, &event);
-
-        // println!("{:?}", event);
-        // println!("{:?}", event_response);
 
         if event_response.repaint {
             window.request_redraw();

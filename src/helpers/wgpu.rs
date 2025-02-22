@@ -12,10 +12,10 @@ use winit::{
 use crate::{app::App, handler::AppHandler, ui::EguiRenderer};
 
 pub struct WgpuWindowSurface {
-    device: Arc<wgpu::Device>,
+    device: wgpu::Device,
     surface_config: wgpu::SurfaceConfiguration,
     surface: wgpu::Surface<'static>,
-    queue: Arc<wgpu::Queue>,
+    queue: wgpu::Queue,
 }
 
 impl WgpuWindowSurface {
@@ -42,10 +42,10 @@ impl WgpuWindowSurface {
         surface_texture
     }
 
-    pub fn get_device(&self) -> &Arc<wgpu::Device> {
+    pub fn get_device(&self) -> &wgpu::Device {
         &self.device
     }
-    pub fn get_queue(&self) -> &Arc<wgpu::Queue> {
+    pub fn get_queue(&self) -> &wgpu::Queue {
         &self.queue
     }
 }
@@ -123,15 +123,19 @@ pub async fn start_wgpu<A: App>(
 
     let window = Arc::new(window);
 
-    let backends = wgpu::util::backend_bits_from_env().unwrap_or_default();
-    let dx12_shader_compiler = wgpu::util::dx12_shader_compiler_from_env().unwrap_or_default();
-    let gles_minor_version = wgpu::util::gles_minor_version_from_env().unwrap_or_default();
+    let backends = wgpu::Backends::from_env().unwrap_or_default();
+    let dx12_shader_compiler = wgpu::Dx12Compiler::from_env().unwrap_or_default();
+    let gles_minor_version = wgpu::Gles3MinorVersion::from_env().unwrap_or_default();
 
-    let instance = wgpu::util::new_instance_with_webgpu_detection(wgpu::InstanceDescriptor {
+    let instance = wgpu::util::new_instance_with_webgpu_detection(&wgpu::InstanceDescriptor {
         backends,
         flags: wgpu::InstanceFlags::from_build_config().with_env(),
-        dx12_shader_compiler,
-        gles_minor_version,
+        backend_options: wgpu::BackendOptions {
+            dx12: wgpu::Dx12BackendOptions {
+                shader_compiler: dx12_shader_compiler,
+            },
+            gl: wgpu::GlBackendOptions { gles_minor_version },
+        },
     })
     .await;
 
@@ -168,9 +172,6 @@ pub async fn start_wgpu<A: App>(
         .unwrap_or_else(|| swapchain_capabilities.formats[0]);
     surface_config.format = swapchain_format;
     surface.configure(&device, &surface_config);
-
-    let device = Arc::new(device);
-    let queue = Arc::new(queue);
 
     let demo_surface = WgpuWindowSurface {
         device: device.clone(),
