@@ -29,7 +29,7 @@ impl App for Orbital {
         if !self.started || self.stopped {
             return;
         }
-        for _ in 1..self.num_ticks {
+        for _ in 0..self.num_ticks {
             self.run_euler();
         }
     }
