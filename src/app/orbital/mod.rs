@@ -85,7 +85,7 @@ impl App for Orbital {
         !self.started
     }
     fn ui(&mut self, ctx: &egui::Context) {
-        let (kinetic, potential, diff) = self.analyze();
+        let (kinetic, potential, diff, cur_a) = self.analyze();
 
         let panel = egui::SidePanel::left("main-ui-panel")
             .exact_width(self.ui_state.panel_width)
@@ -153,7 +153,7 @@ impl App for Orbital {
                     ));
                 });
                 ui.add(
-                    CustomSlider::new(&mut self.outer.mass, 1.0..=5e5)
+                    CustomSlider::new(&mut self.outer.mass, 1.0..=5e10)
                         .label("M:")
                         .full_width(true),
                 );
@@ -165,7 +165,10 @@ impl App for Orbital {
 
             let t = self.t();
             let diff_perc = diff * 100.;
-            ui.monospace(format!("t: {}", t));
+            let days = t / (60 * 60 * 24) as f32;
+            ui.monospace(format!("t: {:.4e} s, {:.2} d", t, days));
+            ui.monospace(format!("Ax:    {:+.4e}", cur_a.x));
+            ui.monospace(format!("Ay:    {:+.4e}", cur_a.y));
             ui.monospace("Energy (MJ)");
             ui.monospace(format!("Kinetic:    {:+.4e}", kinetic));
             ui.monospace(format!("Potential:  {:+.4e}", potential));
@@ -199,13 +202,14 @@ impl Orbital {
     pub fn new() -> Self {
         Self {
             ui_state: UiState::new(),
-            dt: 0.1,
-            num_ticks: 10000,
+            dt: 10.,
+            num_ticks: 100000,
             started: false,
             stopped: false,
             initial_e: 0.,
             central: Body::earth(),
-            outer: Body::outer_low(),
+            // outer: Body::outer_low(),
+            outer: Body::moon(),
             trajectory: vec![],
         }
     }
@@ -230,7 +234,7 @@ impl Orbital {
     }
 
     // contains calculations not necessary for the iteration process, only for displaying
-    fn analyze(&self) -> (f32, f32, f32) {
+    fn analyze(&self) -> (f32, f32, f32, Acceleration) {
         let (kinetic_mj, grav_potential_mj, total) = self.current_e();
 
         let diff = if self.initial_e != 0. {
@@ -239,7 +243,17 @@ impl Orbital {
             0.
         };
 
-        (kinetic_mj, grav_potential_mj, diff)
+        let r = self.outer.pos.clone();
+
+        let a_x = -G_KM * self.central.mass * r.x / r.mag().powi(3); // m/s^2
+        let a_x_km = a_x * 1e-3; // km/s^2
+
+        let a_y = -G_KM * self.central.mass * r.y / r.mag().powi(3); // m/s^2
+        let a_y_km = a_y * 1e-3; // km/s^2
+
+        let cur_a = Acceleration::new(a_x_km, a_y_km);
+
+        (kinetic_mj, grav_potential_mj, diff, cur_a)
     }
 
     fn current_e(&self) -> (f32, f32, f32) {
@@ -336,8 +350,8 @@ impl Body {
         Self {
             mass: 400000., // kg
             pos: position.clone(),
-            v: escape_velocity(earth_mass, position), // km/s
-            // v: circular_velocity(earth_mass, position), // km/s
+            // v: escape_velocity(earth_mass, position), // km/s
+            v: circular_velocity(earth_mass, position), // km/s
             ..Default::default()
         }
     }
@@ -353,6 +367,17 @@ impl Body {
         Self {
             mass: 5.97e24,      // kg
             radius: R_EARTH_KM, // km
+            ..Default::default()
+        }
+    }
+    fn moon() -> Self {
+        let earth_mass = Self::earth().mass;
+        let position = Position::new(0., 3.844e5 + R_EARTH_KM);
+
+        Self {
+            mass: 7.34e22,
+            pos: position.clone(),
+            v: circular_velocity(earth_mass, position), // km/s
             ..Default::default()
         }
     }
