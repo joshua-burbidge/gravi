@@ -30,7 +30,8 @@ impl WgpuWindowSurface {
         canvas: &mut Canvas<WGPURenderer>,
         surface_texture: &wgpu::SurfaceTexture,
     ) {
-        canvas.flush_to_surface(&surface_texture.texture);
+        let commands = canvas.flush_to_surface(&surface_texture.texture);
+        self.queue.submit(Some(commands));
     }
 
     pub fn get_surface_texture(&self) -> wgpu::SurfaceTexture {
