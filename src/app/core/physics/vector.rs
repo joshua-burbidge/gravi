@@ -1,7 +1,3 @@
-pub const G: f32 = 6.674e-11; // N m^2 / kg^2
-pub const G_KM: f32 = G * 1e-6; // N km^2 / kg^2 (converted to km)
-pub const R_EARTH_KM: f32 = 6378.;
-
 #[derive(Clone, Debug, Default)]
 pub struct Pos;
 #[derive(Clone, Debug, Default)]
@@ -75,40 +71,4 @@ impl Vector<Acc> {
     pub fn new(x: f32, y: f32) -> Self {
         Vector::new_vec(Acc, x, y)
     }
-}
-
-// calculate the magnitude of the circular velocity
-// v = sqrt(GM/r)
-fn circular_velocity_magnitude(central_mass: f32, r: f32) -> f32 {
-    (G * central_mass / (r * 1e9)).sqrt()
-}
-// The velocity that results in a perfect circular orbit
-// given the central mass and the radius
-pub fn circular_velocity(central_mass: f32, r: Position) -> Velocity {
-    let r_mag = r.mag();
-    let circular_velocity_magnitude = circular_velocity_magnitude(central_mass, r_mag);
-
-    // the y component is based on the x position, and vice versa
-    let y_vel = if r.x == 0. {
-        0.
-    } else {
-        // take the magnitude and multiply by the proportion that should go in each dimension
-        -circular_velocity_magnitude * r.x / r_mag // negative y makes it go clockwise
-    };
-    let x_vel = if r.y == 0. {
-        0.
-    } else {
-        circular_velocity_magnitude * r.y / r_mag
-    };
-    Velocity::new(x_vel, y_vel)
-}
-
-// escape velocity = sqrt(2) * circular_velocity
-pub fn escape_velocity(central_mass: f32, r: Position) -> Velocity {
-    let circular_velocity = circular_velocity(central_mass, r);
-
-    Velocity::new(
-        2_f32.sqrt() * circular_velocity.x,
-        2_f32.sqrt() * circular_velocity.y,
-    )
 }
