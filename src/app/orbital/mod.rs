@@ -4,8 +4,8 @@ use super::{
     core::{
         draw::{draw_circle_fixed, draw_circle_scaled, draw_line_thru_points},
         physics::{
-            circular_velocity, escape_velocity, gravitational_acceleration, Acceleration, Position,
-            Velocity, G_KM, R_EARTH_KM,
+            circular_velocity, escape_velocity, gravitational_acceleration, symplectic_euler_calc,
+            Acceleration, Position, Velocity, G_KM, R_EARTH_KM,
         },
     },
     App,
@@ -104,9 +104,9 @@ impl App for Orbital {
                     "lock to escape velocity",
                 );
 
-                let enabled =
+                let enable_vel_inputs =
                     !self.ui_state.lock_circular_velocity && !self.ui_state.lock_escape_velocity;
-                ui.add_enabled_ui(enabled, |ui| {
+                ui.add_enabled_ui(enable_vel_inputs, |ui| {
                     if !self.started && self.ui_state.lock_circular_velocity {
                         self.outer.v = circular_velocity(self.central.mass, self.outer.pos);
                     }
@@ -232,23 +232,14 @@ impl Orbital {
     }
 
     // run function contains calculations necessary for the iteration process
-    // uses euler method, which is one of the more inaccurate methods
     fn run_euler(&mut self) {
         let dt = self.dt;
 
         let cur_a = gravitational_acceleration(self.central.pos, self.outer.pos, self.central.mass);
 
-        // v(t + dt) = v(t) + a(t)*dt
-        let next_v = self.outer.v.update(&cur_a, dt);
-
-        // standard euler:
-        // r(t + dt) = r(t) + v(t)*dt
-        // let next_r = self.outer.pos.update_const_v(&self.outer.v, dt);
-
-        // symplectic euler: use **next_v** when calculating next_r.
-        // This incorporates some information about acceleration into the position update.
-        // This leads to makes it closer to conserving energy than the standard euler method.
-        let next_r = self.outer.pos.update_const_v(&next_v, dt);
+        let cur_v = self.outer.v;
+        let cur_r = self.outer.pos;
+        let (next_r, next_v) = symplectic_euler_calc(cur_r, cur_v, cur_a, dt);
 
         if next_r.mag() <= self.central.radius {
             self.stopped = true;

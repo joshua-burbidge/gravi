@@ -61,3 +61,39 @@ pub fn gravitational_acceleration(
 
     cur_a
 }
+
+// normal euler method
+// Use current acc to update vel, and current vel to update pos.
+pub fn _euler_update(
+    cur_r: Position,
+    cur_v: Velocity,
+    cur_a: Acceleration,
+    dt: f32,
+) -> (Position, Velocity) {
+    // v(t + dt) = v(t) + a(t)*dt
+    let next_v = cur_v.update(&cur_a, dt);
+
+    // r(t + dt) = r(t) + v(t)*dt
+    let next_r = cur_r.update_const_v(&cur_v, dt);
+
+    (next_r, next_v)
+}
+
+// symplectic euler method
+// Use current acc to update vel, and NEXT vel to update pos.
+// This incorporates some information about acceleration into the position update,
+// making it conserve energy better over long periods than the standard euler method.
+pub fn symplectic_euler_calc(
+    cur_r: Position,
+    cur_v: Velocity,
+    cur_a: Acceleration,
+    dt: f32,
+) -> (Position, Velocity) {
+    // v(t + dt) = v(t) + a(t)*dt
+    let next_v = cur_v.update(&cur_a, dt);
+
+    // r(t + dt) = r(t) + v(t + dt)*dt
+    let next_r = cur_r.update_const_v(&next_v, dt);
+
+    (next_r, next_v)
+}
