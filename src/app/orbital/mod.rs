@@ -1,3 +1,5 @@
+use egui::RichText;
+
 use crate::ui::widgets::{CustomSlider, XYInput};
 
 use super::{
@@ -57,11 +59,12 @@ impl App for Orbital {
             .resizable(false);
         panel.show(ctx, |ui| {
             ui.add_enabled_ui(!self.started, |ui| {
-                ui.label("General");
+                ui.label(RichText::new("General").heading());
                 ui.add(CustomSlider::new(&mut self.dt, 0.01..=10.0).label("dt:"));
                 ui.add(
                     CustomSlider::new(&mut self.num_ticks, 100..=100000).label("ticks per press:"),
                 );
+                ui.add_space(20.);
 
                 ui.input(|i| {
                     if i.key_pressed(egui::Key::A) {
@@ -72,48 +75,67 @@ impl App for Orbital {
                     }
                 });
 
+                let len = self.bodies.len();
+
                 for (i, body) in self.bodies.iter_mut().enumerate() {
                     let x_range = -10000.0..=10000.;
                     let y_range = -10000.0..=10000.;
 
-                    ui.label(format!("Item {}:", i));
-                    ui.label("Position");
-                    ui.add(XYInput::new(
-                        &mut body.pos.x,
-                        &mut body.pos.y,
-                        x_range,
-                        y_range,
-                    ));
-                    ui.label(format!("|r|: {}", body.pos.mag()));
-
-                    ui.label("Velocity");
-                    // ui.checkbox(
-                    //     &mut self.ui_state.lock_circular_velocity,
-                    //     "lock to circular velocity",
-                    // );
-                    // ui.checkbox(
-                    //     &mut self.ui_state.lock_escape_velocity,
-                    //     "lock to escape velocity",
-                    // );
-                    // let enable_vel_inputs = !self.ui_state.lock_circular_velocity
-                    //     && !self.ui_state.lock_escape_velocity;
-                    ui.add_enabled_ui(true, |ui| {
-                        // if !self.started && self.ui_state.lock_circular_velocity {
-                        //     outer.v = circular_velocity(central.mass, outer.pos);
-                        // }
-                        // if !self.started && self.ui_state.lock_escape_velocity {
-                        //     outer.v = escape_velocity(central.mass, outer.pos);
-                        // }
+                    egui::CollapsingHeader::new(
+                        RichText::new(format!("Body {}:", i + 1)).heading(),
+                    )
+                    .show(ui, |ui| {
+                        ui.label("Position");
                         ui.add(XYInput::new(
-                            &mut body.v.x,
-                            &mut body.v.y,
-                            -50.0..=50.0,
-                            -50.0..=50.0,
+                            &mut body.pos.x,
+                            &mut body.pos.y,
+                            x_range,
+                            y_range,
                         ));
-                    });
+                        ui.label(format!("|r|: {}", body.pos.mag()));
 
-                    ui.label("Mass");
-                    ui.add(CustomSlider::new(&mut body.mass, 1.0..=5e10).label("M:"));
+                        if !body.is_fixed {
+                            ui.label("Velocity");
+                            ui.checkbox(
+                                &mut body.lock_to_circular_velocity,
+                                "lock to circular velocity",
+                            );
+
+                            // ui.checkbox(
+                            //     &mut self.ui_state.lock_escape_velocity,
+                            //     "lock to escape velocity",
+                            // );
+
+                            let vel_lock_enabled = body.lock_to_circular_velocity;
+                            // && !self.ui_state.lock_escape_velocity;
+                            ui.add_enabled_ui(vel_lock_enabled, |ui| {
+                                egui::ComboBox::from_label("Around body").show_index(
+                                    ui,
+                                    &mut body.selected_vel_lock,
+                                    len,
+                                    |i| format!("Body {}", i + 1),
+                                );
+                            });
+                            ui.add_enabled_ui(!vel_lock_enabled, |ui| {
+                                // if !self.started && self.ui_state.lock_circular_velocity {
+                                //     body.v = circular_velocity(central.mass, body.pos);
+                                // }
+                                // if !self.started && self.ui_state.lock_escape_velocity {
+                                //     outer.v = escape_velocity(central.mass, outer.pos);
+                                // }
+                                ui.add(XYInput::new(
+                                    &mut body.v.x,
+                                    &mut body.v.y,
+                                    -50.0..=50.0,
+                                    -50.0..=50.0,
+                                ));
+                            });
+                        }
+
+                        ui.label("Mass");
+                        ui.add(CustomSlider::new(&mut body.mass, 1.0..=5e10).label("M:"));
+                    });
+                    ui.add_space(20.);
                 }
 
                 if ui.button("Start").clicked() {
@@ -312,6 +334,9 @@ struct Body {
     mass: f32,
     radius: f32,
     trajectory: Vec<Body>,
+    is_fixed: bool,
+    lock_to_circular_velocity: bool,
+    selected_vel_lock: usize,
 }
 impl Body {
     fn _mass(mut self, mass: f32) -> Self {
@@ -327,6 +352,9 @@ impl Body {
             v: self.v,
             mass: self.mass,
             radius: self.radius,
+            is_fixed: self.is_fixed,
+            lock_to_circular_velocity: self.lock_to_circular_velocity,
+            selected_vel_lock: self.selected_vel_lock,
             trajectory: vec![],
         }
     }
@@ -362,6 +390,7 @@ impl Body {
         Self {
             mass: 5.97e24,      // kg
             radius: R_EARTH_KM, // km
+            is_fixed: true,
             ..Default::default()
         }
     }
