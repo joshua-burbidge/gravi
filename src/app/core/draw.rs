@@ -76,7 +76,7 @@ pub fn draw_line_thru_points<T: Renderer>(
         .iter()
         .enumerate()
         .filter(|(i, _)| i % graph_frequency == 0)
-        .map(|(_, pos)| pos.clone());
+        .map(|(_, pos)| pos);
 
     let mut line_path = Path::new();
     let initial_pos = points_to_draw.next();

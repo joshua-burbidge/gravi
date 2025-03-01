@@ -47,7 +47,7 @@ impl App for Orbital {
         let graph_frequency = (sec_per_graph / self.dt).round() as usize;
         // draw a point every X number of ticks
 
-        let points: Vec<Position> = self.trajectory.iter().map(|b| b.pos.clone()).collect();
+        let points: Vec<Position> = self.trajectory.iter().map(|b| b.pos).collect();
 
         draw_line_thru_points(canvas, points, graph_frequency, self.distance_per_px);
     }
@@ -108,10 +108,10 @@ impl App for Orbital {
                     !self.ui_state.lock_circular_velocity && !self.ui_state.lock_escape_velocity;
                 ui.add_enabled_ui(enabled, |ui| {
                     if !self.started && self.ui_state.lock_circular_velocity {
-                        self.outer.v = circular_velocity(self.central.mass, self.outer.pos.clone());
+                        self.outer.v = circular_velocity(self.central.mass, self.outer.pos);
                     }
                     if !self.started && self.ui_state.lock_escape_velocity {
-                        self.outer.v = escape_velocity(self.central.mass, self.outer.pos.clone());
+                        self.outer.v = escape_velocity(self.central.mass, self.outer.pos);
                     }
                     ui.add(XYInput::new(
                         &mut self.outer.v.x,
@@ -194,7 +194,7 @@ impl Orbital {
 
     fn start(&mut self) {
         self.started = true;
-        self.trajectory.push(self.outer.clone());
+        self.trajectory.push(self.outer);
 
         let (_, _, total) = self.current_e();
 
@@ -211,7 +211,7 @@ impl Orbital {
             0.
         };
 
-        let r = self.outer.pos.clone();
+        let r = self.outer.pos;
 
         let a_x = -G_KM * self.central.mass * r.x / r.mag().powi(3); // m/s^2
         let a_x_km = a_x * 1e-3; // km/s^2
@@ -264,13 +264,13 @@ impl Orbital {
 
         self.outer.v = next_v;
         self.outer.pos = next_r;
-        self.trajectory.push(self.outer.clone());
+        self.trajectory.push(self.outer);
     }
 
     fn reset(&mut self) {
         match self.trajectory.get(0) {
             Some(initial_body) => {
-                self.outer = initial_body.clone();
+                self.outer = *initial_body;
             }
             None => {
                 self.outer = Body::outer_low();
@@ -282,7 +282,7 @@ impl Orbital {
     }
 }
 
-#[derive(Default, Clone)]
+#[derive(Default, Copy, Clone)]
 struct Body {
     pos: Position,
     v: Velocity,
@@ -306,7 +306,7 @@ impl Body {
 
         Self {
             mass: 400000., // kg
-            pos: position.clone(),
+            pos: position,
             // v: escape_velocity(earth_mass, position), // km/s
             v: circular_velocity(earth_mass, position), // km/s
             ..Default::default()
@@ -333,7 +333,7 @@ impl Body {
 
         Self {
             mass: 7.34e22,
-            pos: position.clone(),
+            pos: position,
             v: circular_velocity(earth_mass, position), // km/s
             ..Default::default()
         }
