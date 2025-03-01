@@ -58,3 +58,35 @@ pub fn draw_circle_scaled<T: Renderer>(
 
     draw_circle(canvas, position, r);
 }
+
+pub fn draw_line_thru_points<T: Renderer>(
+    canvas: &mut Canvas<T>,
+    points: Vec<Position>,
+    graph_frequency: usize, // number of array elements per graphed point
+) {
+    let dist_per_px = 10.;
+
+    let mut points_to_draw = points
+        .iter()
+        .enumerate()
+        .filter(|(i, _)| i % graph_frequency == 0)
+        .map(|(_, pos)| pos.clone());
+
+    let mut line_path = Path::new();
+    let initial_pos = points_to_draw.next();
+    match initial_pos {
+        Some(p) => {
+            let canvas_pos = pos_to_canvas(&p, dist_per_px);
+            line_path.move_to(canvas_pos.x, canvas_pos.y);
+        }
+        None => {}
+    }
+    for pos in points_to_draw {
+        let canvas_pos = pos_to_canvas(&pos, dist_per_px);
+        line_path.line_to(canvas_pos.x, canvas_pos.y);
+    }
+
+    let paint = Paint::color(Color::rgbf(0., 1., 0.)).with_line_width(scaled_width(canvas, 1.));
+
+    canvas.stroke_path(&line_path, &paint);
+}

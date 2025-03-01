@@ -1,10 +1,8 @@
-use femtovg::{Color, Paint, Path};
-
 use crate::ui::widgets::{CustomSlider, XYInput};
 
 use super::{
     core::{
-        draw::{draw_circle_fixed, draw_circle_scaled, scaled_width},
+        draw::{draw_circle_fixed, draw_circle_scaled, draw_line_thru_points},
         physics::{
             circular_velocity, escape_velocity, Acceleration, Position, Velocity, G_KM, R_EARTH_KM,
         },
@@ -41,30 +39,9 @@ impl App for Orbital {
         let sec_per_graph = 100.; // graph a point every 100 seconds
         let ticks_per_graph_point = (sec_per_graph / self.dt).round() as usize;
 
-        let mut filtered = self
-            .trajectory
-            .iter()
-            .enumerate()
-            .filter(|(i, _)| i % ticks_per_graph_point == 0)
-            .map(|(_, val)| val.pos.clone());
+        let points: Vec<Position> = self.trajectory.iter().map(|b| b.pos.clone()).collect();
 
-        let mut line_path = Path::new();
-        let initial_pos = filtered.next();
-        match initial_pos {
-            Some(p) => {
-                let canvas_pos = convert_pos_to_canvas(&p);
-                line_path.move_to(canvas_pos.x, canvas_pos.y);
-            }
-            None => {}
-        }
-        for pos in filtered {
-            let canvas_pos = convert_pos_to_canvas(&pos);
-            line_path.line_to(canvas_pos.x, canvas_pos.y);
-        }
-
-        let paint = Paint::color(Color::rgbf(0., 1., 0.)).with_line_width(scaled_width(canvas, 1.));
-
-        canvas.stroke_path(&line_path, &paint);
+        draw_line_thru_points(canvas, points, ticks_per_graph_point);
     }
 
     fn enable_ui(&self) -> bool {
@@ -366,8 +343,4 @@ impl Body {
             ..Default::default()
         }
     }
-}
-
-fn convert_pos_to_canvas(pos: &Position) -> Position {
-    Position::new(pos.x / 10., -pos.y / 10.)
 }
