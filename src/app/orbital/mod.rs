@@ -21,7 +21,6 @@ pub struct Orbital {
     initial_e: f32,
     central: Body,
     outer: Body,
-    trajectory: Vec<Body>,
 }
 
 impl App for Orbital {
@@ -47,7 +46,7 @@ impl App for Orbital {
         let graph_frequency = (sec_per_graph / self.dt).round() as usize;
         // draw a point every X number of ticks
 
-        let points: Vec<Position> = self.trajectory.iter().map(|b| b.pos).collect();
+        let points: Vec<Position> = self.outer.trajectory.iter().map(|b| b.pos).collect();
 
         draw_line_thru_points(canvas, points, graph_frequency, self.distance_per_px);
     }
@@ -179,12 +178,12 @@ impl Orbital {
             central: Body::earth(),
             outer: Body::outer_low(),
             // outer: Body::moon(),
-            trajectory: vec![],
+            // bodies: vec![],
         }
     }
 
     fn t(&self) -> f32 {
-        let len = self.trajectory.len();
+        let len = self.outer.trajectory.len();
 
         if len > 0 {
             (len - 1) as f32 * self.dt
@@ -195,7 +194,7 @@ impl Orbital {
 
     fn start(&mut self) {
         self.started = true;
-        self.trajectory.push(self.outer);
+        self.outer.trajectory.push(self.outer.store());
 
         let (_, _, total) = self.current_e();
 
@@ -248,35 +247,48 @@ impl Orbital {
 
         self.outer.v = next_v;
         self.outer.pos = next_r;
-        self.trajectory.push(self.outer);
+        self.outer.trajectory.push(self.outer.store());
     }
 
     fn reset(&mut self) {
-        match self.trajectory.get(0) {
+        match self.outer.trajectory.get(0) {
             Some(initial_body) => {
-                self.outer = *initial_body;
+                self.outer = initial_body.clone();
             }
             None => {
                 self.outer = Body::outer_low();
             }
         }
-        self.trajectory = vec![];
+        self.outer.trajectory = vec![];
         self.started = false;
         self.stopped = false;
     }
 }
 
-#[derive(Default, Copy, Clone)]
+#[derive(Default, Clone)]
 struct Body {
     pos: Position,
     v: Velocity,
     mass: f32,
     radius: f32,
+    trajectory: Vec<Body>,
 }
 impl Body {
     fn _mass(mut self, mass: f32) -> Self {
         self.mass = mass;
         self
+    }
+
+    // returns a version of this struct to be used for the trajectory history
+    // maybe make this a separate struct?
+    fn store(&self) -> Self {
+        Self {
+            pos: self.pos,
+            v: self.v,
+            mass: self.mass,
+            radius: self.radius,
+            trajectory: vec![],
+        }
     }
 
     // starting conditions for a low earth orbit, modeled after the ISS
