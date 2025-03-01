@@ -13,8 +13,15 @@ fn circular_velocity_magnitude(central_mass: f32, r: f32) -> f32 {
 }
 // The velocity that results in a perfect circular orbit
 // given the central mass and the radius
-pub fn circular_velocity(central_mass: f32, r: Position) -> Velocity {
+pub fn circular_velocity(
+    central_pos: Position,
+    central_mass: f32,
+    orbital_pos: Position,
+) -> Velocity {
+    // let r_mag = r.mag();
+    let r = orbital_pos.minus(central_pos);
     let r_mag = r.mag();
+
     let circular_velocity_magnitude = circular_velocity_magnitude(central_mass, r_mag);
 
     // the y component is based on the x position, and vice versa
@@ -33,8 +40,12 @@ pub fn circular_velocity(central_mass: f32, r: Position) -> Velocity {
 }
 
 // escape velocity = sqrt(2) * circular_velocity
-pub fn escape_velocity(central_mass: f32, r: Position) -> Velocity {
-    let circular_velocity = circular_velocity(central_mass, r);
+pub fn escape_velocity(
+    central_pos: Position,
+    central_mass: f32,
+    orbital_pos: Position,
+) -> Velocity {
+    let circular_velocity = circular_velocity(central_pos, central_mass, orbital_pos);
 
     Velocity::new(
         2_f32.sqrt() * circular_velocity.x,

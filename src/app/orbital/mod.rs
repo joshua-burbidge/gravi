@@ -121,9 +121,9 @@ impl App for Orbital {
                 }
             });
 
-            // let t = self.t();
-            // let days = t / (60 * 60 * 24) as f32;
-            // ui.monospace(format!("t: {:.4e} s, {:.2} d", t, days));
+            let t = self.t();
+            let days = t / (60 * 60 * 24) as f32;
+            ui.monospace(format!("t: {:.4e} s, {:.2} d", t, days));
             // ui.monospace("Acceleration (km/s^2)");
             // ui.monospace(format!("Ax:    {:+.4e}", cur_a.x));
             // ui.monospace(format!("Ay:    {:+.4e}", cur_a.y));
@@ -334,6 +334,7 @@ impl Body {
     // starting conditions for a low earth orbit, modeled after the ISS
     fn outer_low() -> Self {
         let earth_mass = Self::earth().mass;
+        let earth_pos = Self::earth().pos;
 
         let r = 400. + R_EARTH_KM;
         let x = 3000_f32;
@@ -344,7 +345,7 @@ impl Body {
             mass: 400000., // kg
             pos: position,
             // v: escape_velocity(earth_mass, position), // km/s
-            v: circular_velocity(earth_mass, position), // km/s
+            v: circular_velocity(earth_pos, earth_mass, position), // km/s
             trajectory: Vec::new(),
             ..Default::default()
         }
@@ -366,12 +367,13 @@ impl Body {
     }
     fn moon() -> Self {
         let earth_mass = Self::earth().mass;
+        let earth_pos = Self::earth().pos;
         let position = Position::new(0., 3.844e5 + R_EARTH_KM);
 
         Self {
             mass: 7.34e22,
             pos: position,
-            v: circular_velocity(earth_mass, position), // km/s
+            v: circular_velocity(earth_pos, earth_mass, position), // km/s
             ..Default::default()
         }
     }
