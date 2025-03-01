@@ -1,8 +1,8 @@
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Copy, Debug, Default)]
 pub struct Pos;
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Copy, Debug, Default)]
 pub struct Vel;
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Copy, Debug, Default)]
 pub struct Acc;
 
 pub trait VectorType {}
@@ -14,7 +14,7 @@ pub type Position = Vector<Pos>;
 pub type Velocity = Vector<Vel>;
 pub type Acceleration = Vector<Acc>;
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Copy, Debug, Default)]
 pub struct Vector<T: VectorType> {
     _type: T,
     pub x: f32,
@@ -25,11 +25,14 @@ impl<T: VectorType> Vector<T> {
     pub fn mag(&self) -> f32 {
         (self.x.powi(2) + self.y.powi(2)).sqrt()
     }
-    fn _times(self, factor: f32) -> Self {
+    pub fn scale(self, factor: f32) -> Self {
         Self::new_vec(self._type, self.x * factor, self.y * factor)
     }
-    fn _plus(self, amount: f32) -> Self {
-        Self::new_vec(self._type, self.x + amount, self.y + amount)
+    pub fn add(self, vec2: Vector<T>) -> Self {
+        Self::new_vec(self._type, self.x + vec2.x, self.y + vec2.y)
+    }
+    pub fn minus(self, vec2: Vector<T>) -> Self {
+        self.add(vec2.scale(-1.))
     }
     fn new_vec(vec_type: T, x: f32, y: f32) -> Self {
         Self {

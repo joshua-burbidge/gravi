@@ -4,7 +4,8 @@ use super::{
     core::{
         draw::{draw_circle_fixed, draw_circle_scaled, draw_line_thru_points},
         physics::{
-            circular_velocity, escape_velocity, Acceleration, Position, Velocity, G_KM, R_EARTH_KM,
+            circular_velocity, escape_velocity, gravitational_acceleration, Acceleration, Position,
+            Velocity, G_KM, R_EARTH_KM,
         },
     },
     App,
@@ -242,18 +243,7 @@ impl Orbital {
     fn run_euler(&mut self) {
         let dt = self.dt;
 
-        // a = -G * m_central * r_vec / (|r_vec|^3)
-
-        // put central body at (0,0) that way r vector is equal to the position of the outer body
-        let r = self.outer.pos.clone();
-
-        let a_x = -G_KM * self.central.mass * r.x / r.mag().powi(3); // m/s^2
-        let a_x_km = a_x * 1e-3; // km/s^2
-
-        let a_y = -G_KM * self.central.mass * r.y / r.mag().powi(3); // m/s^2
-        let a_y_km = a_y * 1e-3; // km/s^2
-
-        let cur_a = Acceleration::new(a_x_km, a_y_km);
+        let cur_a = gravitational_acceleration(self.central.pos, self.outer.pos, self.central.mass);
 
         // v(t + dt) = v(t) + a(t)*dt
         let next_v = self.outer.v.update(&cur_a, dt);

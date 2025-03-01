@@ -41,3 +41,23 @@ pub fn escape_velocity(central_mass: f32, r: Position) -> Velocity {
         2_f32.sqrt() * circular_velocity.y,
     )
 }
+
+pub fn gravitational_acceleration(
+    central_pos: Position,
+    orbital_pos: Position,
+    central_mass: f32,
+) -> Acceleration {
+    // a = -G * m_central * r_vec / (|r_vec|^3)
+
+    let r = orbital_pos.minus(central_pos);
+
+    let a_x = -G_KM * central_mass * r.x / r.mag().powi(3); // m/s^2
+    let a_x_km = a_x * 1e-3; // km/s^2
+
+    let a_y = -G_KM * central_mass * r.y / r.mag().powi(3); // m/s^2
+    let a_y_km = a_y * 1e-3; // km/s^2
+
+    let cur_a = Acceleration::new(a_x_km, a_y_km);
+
+    cur_a
+}
