@@ -134,6 +134,7 @@ impl App for Orbital {
             let t = self.t();
             let days = t / (60 * 60 * 24) as f32;
             ui.monospace(format!("t: {:.4e} s, {:.2} d", t, days));
+            ui.monospace("Acceleration (km/s^2)");
             ui.monospace(format!("Ax:    {:+.4e}", cur_a.x));
             ui.monospace(format!("Ay:    {:+.4e}", cur_a.y));
             ui.monospace("Energy (MJ)");
@@ -211,15 +212,7 @@ impl Orbital {
             0.
         };
 
-        let r = self.outer.pos;
-
-        let a_x = -G_KM * self.central.mass * r.x / r.mag().powi(3); // m/s^2
-        let a_x_km = a_x * 1e-3; // km/s^2
-
-        let a_y = -G_KM * self.central.mass * r.y / r.mag().powi(3); // m/s^2
-        let a_y_km = a_y * 1e-3; // km/s^2
-
-        let cur_a = Acceleration::new(a_x_km, a_y_km);
+        let cur_a = gravitational_acceleration(self.central.pos, self.outer.pos, self.central.mass);
 
         (kinetic_mj, grav_potential_mj, diff_percentage, cur_a)
     }
