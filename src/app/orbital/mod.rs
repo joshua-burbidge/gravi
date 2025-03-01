@@ -14,6 +14,7 @@ pub struct Orbital {
     ui_state: UiState,
     dt: f32,
     num_ticks: i32,
+    distance_per_px: f32,
     started: bool,
     stopped: bool,
     initial_e: f32,
@@ -33,15 +34,21 @@ impl App for Orbital {
     }
 
     fn draw(&mut self, canvas: &mut femtovg::Canvas<femtovg::renderer::WGPURenderer>) {
-        draw_circle_fixed(canvas, &self.central.pos, self.central.radius);
-        draw_circle_scaled(canvas, &self.outer.pos, 4.);
+        draw_circle_fixed(
+            canvas,
+            &self.central.pos,
+            self.central.radius,
+            self.distance_per_px,
+        );
+        draw_circle_scaled(canvas, &self.outer.pos, 4., self.distance_per_px);
 
         let sec_per_graph = 100.; // graph a point every 100 seconds
-        let ticks_per_graph_point = (sec_per_graph / self.dt).round() as usize;
+        let graph_frequency = (sec_per_graph / self.dt).round() as usize;
+        // draw a point every X number of ticks
 
         let points: Vec<Position> = self.trajectory.iter().map(|b| b.pos.clone()).collect();
 
-        draw_line_thru_points(canvas, points, ticks_per_graph_point);
+        draw_line_thru_points(canvas, points, graph_frequency, self.distance_per_px);
     }
 
     fn ui(&mut self, ctx: &egui::Context) {
@@ -163,6 +170,7 @@ impl Orbital {
             ui_state: UiState::new(),
             dt: 10.,
             num_ticks: 100000,
+            distance_per_px: 4.,
             started: false,
             stopped: false,
             initial_e: 0.,

@@ -28,9 +28,12 @@ fn convert_length(length: f32, distance_per_px: f32) -> f32 {
     length / distance_per_px
 }
 
-fn draw_circle<T: Renderer>(canvas: &mut Canvas<T>, position: &Position, r: f32) {
-    let distance_per_px = 10.;
-
+fn draw_circle<T: Renderer>(
+    canvas: &mut Canvas<T>,
+    position: &Position,
+    r: f32,
+    distance_per_px: f32,
+) {
     let mut path = Path::new();
     let px = pos_to_canvas(position, distance_per_px);
 
@@ -41,31 +44,34 @@ fn draw_circle<T: Renderer>(canvas: &mut Canvas<T>, position: &Position, r: f32)
 }
 
 // draws a circle with a fixed radius
-pub fn draw_circle_fixed<T: Renderer>(canvas: &mut Canvas<T>, position: &Position, r: f32) {
-    let distance_per_px = 10.;
-
+pub fn draw_circle_fixed<T: Renderer>(
+    canvas: &mut Canvas<T>,
+    position: &Position,
+    r: f32,
+    distance_per_px: f32,
+) {
     let scaled_r = convert_length(r, distance_per_px);
 
-    draw_circle(canvas, position, scaled_r);
+    draw_circle(canvas, position, scaled_r, distance_per_px);
 }
 // draws a circle with a radius that scales up and down as you zoom in and out
 pub fn draw_circle_scaled<T: Renderer>(
     canvas: &mut Canvas<T>,
     position: &Position,
     width_factor: f32,
+    distance_per_px: f32,
 ) {
     let r = scaled_width(canvas, width_factor);
 
-    draw_circle(canvas, position, r);
+    draw_circle(canvas, position, r, distance_per_px);
 }
 
 pub fn draw_line_thru_points<T: Renderer>(
     canvas: &mut Canvas<T>,
     points: Vec<Position>,
     graph_frequency: usize, // number of array elements per graphed point
+    distance_per_px: f32,
 ) {
-    let dist_per_px = 10.;
-
     let mut points_to_draw = points
         .iter()
         .enumerate()
@@ -76,13 +82,13 @@ pub fn draw_line_thru_points<T: Renderer>(
     let initial_pos = points_to_draw.next();
     match initial_pos {
         Some(p) => {
-            let canvas_pos = pos_to_canvas(&p, dist_per_px);
+            let canvas_pos = pos_to_canvas(&p, distance_per_px);
             line_path.move_to(canvas_pos.x, canvas_pos.y);
         }
         None => {}
     }
     for pos in points_to_draw {
-        let canvas_pos = pos_to_canvas(&pos, dist_per_px);
+        let canvas_pos = pos_to_canvas(&pos, distance_per_px);
         line_path.line_to(canvas_pos.x, canvas_pos.y);
     }
 
