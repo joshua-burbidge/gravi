@@ -44,9 +44,6 @@ impl App for Orbital {
         draw_line_thru_points(canvas, points, ticks_per_graph_point);
     }
 
-    fn enable_ui(&self) -> bool {
-        !self.started
-    }
     fn ui(&mut self, ctx: &egui::Context) {
         let (kinetic, potential, diff_percent, cur_a) = self.analyze();
 

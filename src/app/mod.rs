@@ -8,5 +8,4 @@ pub trait App {
     fn draw(&mut self, canvas: &mut Canvas<WGPURenderer>);
     fn ui(&mut self, ctx: &egui::Context);
     fn panel_width(&self) -> f32;
-    fn enable_ui(&self) -> bool;
 }
