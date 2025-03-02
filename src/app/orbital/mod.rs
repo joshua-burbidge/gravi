@@ -100,14 +100,13 @@ impl App for Orbital {
                                 &mut body.lock_to_circular_velocity,
                                 "lock to circular velocity",
                             );
+                            ui.checkbox(
+                                &mut body.lock_to_escape_velocity,
+                                "lock to escape velocity",
+                            );
 
-                            // ui.checkbox(
-                            //     &mut self.ui_state.lock_escape_velocity,
-                            //     "lock to escape velocity",
-                            // );
-
-                            let vel_lock_enabled = body.lock_to_circular_velocity;
-                            // && !self.ui_state.lock_escape_velocity;
+                            let vel_lock_enabled =
+                                body.lock_to_circular_velocity || body.lock_to_escape_velocity;
                             ui.add_enabled_ui(vel_lock_enabled, |ui| {
                                 egui::ComboBox::from_label("Around body").show_index(
                                     ui,
@@ -117,12 +116,6 @@ impl App for Orbital {
                                 );
                             });
                             ui.add_enabled_ui(!vel_lock_enabled, |ui| {
-                                // if !self.started && self.ui_state.lock_circular_velocity {
-                                //     body.v = circular_velocity(central.mass, body.pos);
-                                // }
-                                // if !self.started && self.ui_state.lock_escape_velocity {
-                                //     outer.v = escape_velocity(central.mass, outer.pos);
-                                // }
                                 ui.add(XYInput::new(
                                     &mut body.v.x,
                                     &mut body.v.y,
@@ -137,6 +130,8 @@ impl App for Orbital {
                     });
                     ui.add_space(20.);
                 }
+
+                self.set_velocities();
 
                 if ui.button("Start").clicked() {
                     self.start();
@@ -197,8 +192,6 @@ impl Orbital {
             started: false,
             stopped: false,
             initial_e: 0.,
-            // central: Body::earth(),
-            // outer: Body::outer_low(),
             bodies: vec![Body::earth(), Body::outer_low()],
             relationships: vec![],
         }
@@ -212,6 +205,30 @@ impl Orbital {
             (len - 1) as f32 * self.dt
         } else {
             0.
+        }
+    }
+
+    fn set_velocities(&mut self) {
+        if self.started {
+            return;
+        }
+
+        let positions: Vec<(Position, f32)> = self.bodies.iter().map(|b| (b.pos, b.mass)).collect();
+
+        for body in self.bodies.iter_mut() {
+            if body.lock_to_circular_velocity {
+                let (locked_body_pos, locked_body_m) =
+                    positions.get(body.selected_vel_lock).unwrap();
+
+                let circ_vel = circular_velocity(*locked_body_pos, *locked_body_m, body.pos);
+                body.v = circ_vel;
+            } else if body.lock_to_escape_velocity {
+                let (locked_body_pos, locked_body_m) =
+                    positions.get(body.selected_vel_lock).unwrap();
+
+                let esc_vel = escape_velocity(*locked_body_pos, *locked_body_m, body.pos);
+                body.v = esc_vel;
+            }
         }
     }
 
@@ -307,6 +324,7 @@ impl Orbital {
         self.bodies[1] = new_outer;
     }
 
+    // TODO get this working
     fn reset(&mut self) {
         // match self.outer.trajectory.get(0) {
         //     Some(initial_body) => {
@@ -336,6 +354,7 @@ struct Body {
     trajectory: Vec<Body>,
     is_fixed: bool,
     lock_to_circular_velocity: bool,
+    lock_to_escape_velocity: bool,
     selected_vel_lock: usize,
 }
 impl Body {
@@ -354,6 +373,7 @@ impl Body {
             radius: self.radius,
             is_fixed: self.is_fixed,
             lock_to_circular_velocity: self.lock_to_circular_velocity,
+            lock_to_escape_velocity: self.lock_to_escape_velocity,
             selected_vel_lock: self.selected_vel_lock,
             trajectory: vec![],
         }
