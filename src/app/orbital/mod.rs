@@ -153,8 +153,6 @@ impl App for Orbital {
             ui.monospace(format!("Diff:        {:.2}%", diff_percent));
             ui.monospace(format!("Diff per t:  {:.2e}%", (100. - diff_percent) / t));
         });
-
-        // self.bodies[1] = outer; // this line is the problem
     }
     fn panel_width(&self) -> f32 {
         self.ui_state.panel_width
@@ -327,16 +325,20 @@ impl Orbital {
             return;
         }
 
-        let mut new_trajectory = outer.trajectory.clone();
-        new_trajectory.push(outer.store());
-
         let new_outer = Body {
             v: next_v,
             pos: next_r,
-            trajectory: new_trajectory,
-            ..outer.clone()
+            mass: outer.mass,
+            radius: outer.radius,
+            is_fixed: outer.is_fixed,
+            lock_to_circular_velocity: outer.lock_to_circular_velocity,
+            lock_to_escape_velocity: outer.lock_to_escape_velocity,
+            selected_vel_lock: outer.selected_vel_lock,
+            trajectory: vec![],
         };
-        self.bodies[1] = new_outer;
+        self.bodies[1].v = new_outer.v;
+        self.bodies[1].pos = new_outer.pos;
+        self.bodies[1].trajectory.push(new_outer);
     }
 
     fn reset(&mut self) {
