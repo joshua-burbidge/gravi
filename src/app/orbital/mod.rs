@@ -324,21 +324,16 @@ impl Orbital {
         self.bodies[1] = new_outer;
     }
 
-    // TODO get this working
     fn reset(&mut self) {
-        // match self.outer.trajectory.get(0) {
-        //     Some(initial_body) => {
-        //         self.outer = initial_body.clone();
-        //     }
-        //     None => {
-        //         self.outer = Body::outer_low();
-        //     }
-        // }
-        // self.outer.trajectory = vec![];
-
-        self.bodies.clear();
-        self.bodies.push(Body::earth());
-        self.bodies.push(Body::outer_low());
+        let initial_bodies: Vec<Body> = self
+            .bodies
+            .iter()
+            .map(|body| match body.trajectory.get(0) {
+                Some(initial_body) => initial_body.clone(),
+                None => body.clone(),
+            })
+            .collect();
+        self.bodies = initial_bodies;
 
         self.started = false;
         self.stopped = false;
