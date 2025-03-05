@@ -6,8 +6,9 @@ use super::{
     core::{
         draw::{draw_circle_fixed, draw_circle_scaled, draw_line_thru_points},
         physics::{
-            circular_velocity, escape_velocity, gravitational_acceleration, symplectic_euler_calc,
-            Acceleration, Position, Velocity, G_KM, R_EARTH_KM,
+            circular_velocity, escape_velocity, gravitational_acceleration,
+            gravitational_potential_energy, kinetic_energy, symplectic_euler_calc, Position,
+            Velocity, R_EARTH_KM,
         },
     },
     App,
@@ -52,7 +53,7 @@ impl App for Orbital {
     }
 
     fn ui(&mut self, ctx: &egui::Context) {
-        // let (kinetic, potential, diff_percent, cur_a) = self.analyze();
+        let (kinetic, potential, diff_percent) = self.analyze();
 
         let panel = egui::SidePanel::left("main-ui-panel")
             .exact_width(self.ui_state.panel_width)
@@ -144,13 +145,13 @@ impl App for Orbital {
             // ui.monospace("Acceleration (km/s^2)");
             // ui.monospace(format!("Ax:    {:+.4e}", cur_a.x));
             // ui.monospace(format!("Ay:    {:+.4e}", cur_a.y));
-            // ui.monospace("Energy (MJ)");
-            // ui.monospace(format!("Kinetic:    {:+.4e}", kinetic));
-            // ui.monospace(format!("Potential:  {:+.4e}", potential));
-            // ui.monospace(format!("Total:      {:+.4e}", kinetic + potential));
-            // ui.monospace(format!("Initial:    {:+.4e}", self.initial_e));
-            // ui.monospace(format!("Diff:        {:.2}%", diff_percent));
-            // ui.monospace(format!("Diff per t:  {:.2e}%", (100. - diff_percent) / t));
+            ui.monospace("Energy (MJ)");
+            ui.monospace(format!("Kinetic:    {:+.4e}", kinetic));
+            ui.monospace(format!("Potential:  {:+.4e}", potential));
+            ui.monospace(format!("Total:      {:+.4e}", kinetic + potential));
+            ui.monospace(format!("Initial:    {:+.4e}", self.initial_e));
+            ui.monospace(format!("Diff:        {:.2}%", diff_percent));
+            ui.monospace(format!("Diff per t:  {:.2e}%", (100. - diff_percent) / t));
         });
 
         // self.bodies[1] = outer; // this line is the problem
@@ -260,39 +261,53 @@ impl Orbital {
         self.started = true;
         outer.trajectory.push(outer.store());
 
-        // let (_, _, total) = self.current_e();
+        let (_, _, total) = self.current_e();
 
-        // self.initial_e = total;
+        self.initial_e = total;
     }
 
     // contains calculations not necessary for the iteration process, only for displaying
-    // fn analyze(&self) -> (f32, f32, f32, Acceleration) {
-    //     let (kinetic_mj, grav_potential_mj, total) = self.current_e();
+    fn analyze(&self) -> (f32, f32, f32) {
+        let (kinetic_mj, grav_potential_mj, total) = self.current_e();
 
-    //     let diff_percentage = if self.initial_e != 0. {
-    //         (total / self.initial_e) * 100.
-    //     } else {
-    //         0.
-    //     };
+        let diff_percentage = if self.initial_e != 0. {
+            (total / self.initial_e) * 100.
+        } else {
+            0.
+        };
 
-    //     let cur_a = gravitational_acceleration(self.central.pos, self.outer.pos, self.central.mass);
+        // TODO calc acceleration for each body
+        // let cur_a = gravitational_acceleration(self.central.pos, self.outer.pos, self.central.mass);
 
-    //     (kinetic_mj, grav_potential_mj, diff_percentage, cur_a)
-    // }
+        // (kinetic_mj, grav_potential_mj, diff_percentage, cur_a)
+        (kinetic_mj, grav_potential_mj, diff_percentage)
+    }
 
-    // fn current_e(&self) -> (f32, f32, f32) {
-    //     let g = G_KM;
+    fn current_e(&self) -> (f32, f32, f32) {
+        let (total_kinetic, total_gravitational) = self
+            .bodies
+            .iter()
+            .enumerate()
+            .map(|(i, b)| {
+                let body_kinetic_mj = kinetic_energy(b.mass, b.v);
 
-    //     // Ek = .5mv^2
-    //     let kinetic_mj = 0.5 * self.outer.mass * self.outer.v.mag().powi(2); // MJ
+                // loop over all other bodies, so start at the next index
+                let body_gravitational_mj = self.bodies[i + 1..].iter().fold(0., |acc, b2| {
+                    let grav_potential_mj =
+                        gravitational_potential_energy(b.mass, b2.mass, b.pos, b2.pos);
 
-    //     // Eg = -G * M * m / r
-    //     let grav_potential_kj = -g * self.central.mass * self.outer.mass / self.outer.pos.mag(); // KJ
-    //     let grav_potential_mj = grav_potential_kj * 1e-3; // MJ
-    //     let total = kinetic_mj + grav_potential_mj;
+                    acc + grav_potential_mj
+                });
 
-    //     (kinetic_mj, grav_potential_mj, total)
-    // }
+                (body_kinetic_mj, body_gravitational_mj)
+            })
+            .fold((0., 0.), |(acc_k, acc_g), (kinet, grav)| {
+                (acc_k + kinet, acc_g + grav)
+            });
+
+        let total = total_kinetic + total_gravitational;
+        (total_kinetic, total_gravitational, total)
+    }
 
     // run function contains calculations necessary for the iteration process
     fn run_euler(&mut self) {
@@ -396,7 +411,7 @@ impl Body {
     fn _outer_med() -> Self {
         Self {
             mass: 5000.,
-            pos: Position::new(0., 20000.),
+            pos: Position::new(5000., 15000.),
             v: Velocity::new(3.9, 0.),
             ..Default::default()
         }
@@ -409,7 +424,7 @@ impl Body {
             ..Default::default()
         }
     }
-    fn moon() -> Self {
+    fn _moon() -> Self {
         let earth_mass = Self::earth().mass;
         let earth_pos = Self::earth().pos;
         let position = Position::new(0., 3.844e5 + R_EARTH_KM);
