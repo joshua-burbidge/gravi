@@ -9,7 +9,7 @@ use super::{
         physics::{
             circular_velocity, escape_velocity, gravitational_acceleration,
             gravitational_potential_energy, kinetic_energy, symplectic_euler_calc, Acceleration,
-            Position, Velocity, R_EARTH_KM,
+            Position, Velocity, R_EARTH_KM, R_MOON_KM,
         },
     },
     App,
@@ -38,19 +38,20 @@ impl App for Orbital {
     }
 
     fn draw(&self, canvas: &mut femtovg::Canvas<femtovg::renderer::WGPURenderer>) {
-        let central = self.bodies.get(0).unwrap();
-        let outer = self.bodies.get(1).unwrap();
-
-        draw_circle_fixed(canvas, &central.pos, central.radius, self.distance_per_px);
-        draw_circle_scaled(canvas, &outer.pos, 4., self.distance_per_px);
-
         let sec_per_graph = 100.; // graph a point every 100 seconds
         let graph_frequency = (sec_per_graph / self.dt).ceil() as usize;
-        // draw a point every X number of ticks
 
-        let points: Vec<Position> = outer.trajectory.iter().map(|b| b.pos).collect();
+        for b in self.bodies.iter() {
+            if b.radius == 0. {
+                draw_circle_scaled(canvas, &b.pos, 4., self.distance_per_px);
+            } else {
+                draw_circle_fixed(canvas, &b.pos, b.radius, self.distance_per_px);
+            }
 
-        draw_line_thru_points(canvas, points, graph_frequency, self.distance_per_px);
+            let points: Vec<Position> = b.trajectory.iter().map(|b| b.pos).collect();
+
+            draw_line_thru_points(canvas, points, graph_frequency, self.distance_per_px);
+        }
     }
 
     fn ui(&mut self, ctx: &egui::Context) {
@@ -192,7 +193,7 @@ impl Orbital {
             started: false,
             stopped: false,
             initial_e: 0.,
-            bodies: vec![Body::earth(), Body::outer_low()],
+            bodies: vec![Body::earth(), Body::outer_low(), Body::_moon()],
             relationships: HashMap::new(),
         }
     }
@@ -451,6 +452,7 @@ impl Body {
 
         Self {
             mass: 7.34e22,
+            radius: R_MOON_KM,
             pos: position,
             v: circular_velocity(earth_pos, earth_mass, position), // km/s
             ..Default::default()

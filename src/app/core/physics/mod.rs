@@ -5,6 +5,7 @@ mod vector;
 pub const G: f32 = 6.674e-11; // N m^2 / kg^2
 pub const G_KM: f32 = G * 1e-6; // N km^2 / kg^2 (converted to km)
 pub const R_EARTH_KM: f32 = 6378.;
+pub const R_MOON_KM: f32 = 1740.;
 
 // calculate the magnitude of the circular velocity
 // v = sqrt(GM/r)
