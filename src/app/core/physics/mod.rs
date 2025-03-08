@@ -24,18 +24,10 @@ pub fn circular_velocity(
 
     let circular_velocity_magnitude = circular_velocity_magnitude(central_mass, r_mag);
 
-    // the y component is based on the x position, and vice versa
-    let y_vel = if r.x == 0. {
-        0.
-    } else {
-        // take the magnitude and multiply by the proportion that should go in each dimension
-        -circular_velocity_magnitude * r.x / r_mag // negative y makes it go clockwise
-    };
-    let x_vel = if r.y == 0. {
-        0.
-    } else {
-        circular_velocity_magnitude * r.y / r_mag
-    };
+    // take the magnitude and multiply by the proportion that should go in each dimension
+    // negative y makes it go clockwise
+    let y_vel = -circular_velocity_magnitude * r.x / r_mag;
+    let x_vel = circular_velocity_magnitude * r.y / r_mag;
     Velocity::new(x_vel, y_vel)
 }
 
