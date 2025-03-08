@@ -130,6 +130,10 @@ impl App for Orbital {
 
                         ui.label("Mass");
                         ui.add(CustomSlider::new(&mut body.mass, 1.0..=5e10).label("M:"));
+
+                        ui.monospace("Acceleration (km/s^2)");
+                        ui.monospace(format!("Ax:    {:+.4e}", body.computed_a.x));
+                        ui.monospace(format!("Ay:    {:+.4e}", body.computed_a.y));
                     });
                     ui.add_space(20.);
                 }
@@ -144,9 +148,6 @@ impl App for Orbital {
             let t = self.t();
             let days = t / (60 * 60 * 24) as f32;
             ui.monospace(format!("t: {:.4e} s, {:.2} d", t, days));
-            // ui.monospace("Acceleration (km/s^2)");
-            // ui.monospace(format!("Ax:    {:+.4e}", cur_a.x));
-            // ui.monospace(format!("Ay:    {:+.4e}", cur_a.y));
             ui.monospace("Energy (MJ)");
             ui.monospace(format!("Kinetic:    {:+.4e}", kinetic));
             ui.monospace(format!("Potential:  {:+.4e}", potential));
@@ -279,10 +280,6 @@ impl Orbital {
             0.
         };
 
-        // TODO calc acceleration for each body
-        // let cur_a = gravitational_acceleration(self.central.pos, self.outer.pos, self.central.mass);
-
-        // (kinetic_mj, grav_potential_mj, diff_percentage, cur_a)
         (kinetic_mj, grav_potential_mj, diff_percentage)
     }
 
@@ -331,7 +328,7 @@ impl Orbital {
                 })
                 .fold(Acceleration::new(0., 0.), |acc, a| acc.add(a));
 
-            println!("{:?}", total_a_for_body);
+            // println!("{:?}", total_a_for_body);
 
             let cur_v = affected.v;
             let cur_r = affected.pos;
@@ -345,6 +342,7 @@ impl Orbital {
             let new_affected = Body {
                 v: next_v,
                 pos: next_r,
+                computed_a: total_a_for_body,
                 mass: affected.mass,
                 radius: affected.radius,
                 is_fixed: affected.is_fixed,
@@ -356,6 +354,7 @@ impl Orbital {
 
             self.bodies[*affected_i].v = new_affected.v;
             self.bodies[*affected_i].pos = new_affected.pos;
+            self.bodies[*affected_i].computed_a = new_affected.computed_a;
             self.bodies[*affected_i].trajectory.push(new_affected);
         }
     }
@@ -383,6 +382,7 @@ struct Body {
     mass: f32,
     radius: f32,
     trajectory: Vec<Body>,
+    computed_a: Acceleration,
     is_fixed: bool,
     lock_to_circular_velocity: bool,
     lock_to_escape_velocity: bool,
@@ -402,6 +402,7 @@ impl Body {
             v: self.v,
             mass: self.mass,
             radius: self.radius,
+            computed_a: self.computed_a,
             is_fixed: self.is_fixed,
             lock_to_circular_velocity: self.lock_to_circular_velocity,
             lock_to_escape_velocity: self.lock_to_escape_velocity,
