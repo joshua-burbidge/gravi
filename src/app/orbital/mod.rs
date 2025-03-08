@@ -7,11 +7,11 @@ use body::{is_mass_significant, Body, Preset};
 
 use super::{
     core::{
-        draw::{draw_circle_fixed, draw_circle_scaled, draw_line_thru_points},
+        draw::{draw_barycenter, draw_circle_fixed, draw_circle_scaled, draw_line_thru_points},
         physics::{
-            circ_velocity_barycenter, escape_velocity_barycenter, gravitational_acceleration,
-            gravitational_potential_energy, kinetic_energy, symplectic_euler_calc, Acceleration,
-            Position,
+            barycenter, circ_velocity_barycenter, escape_velocity_barycenter,
+            gravitational_acceleration, gravitational_potential_energy, kinetic_energy,
+            symplectic_euler_calc, Acceleration, Position,
         },
     },
     App,
@@ -55,6 +55,10 @@ impl App for Orbital {
             let points: Vec<Position> = b.trajectory.iter().map(|b| b.pos).collect();
 
             draw_line_thru_points(canvas, points, graph_frequency, self.distance_per_px);
+        }
+
+        for bary in &self.analysis.barycenters {
+            draw_barycenter(canvas, &bary, 3., self.distance_per_px);
         }
     }
 
@@ -260,24 +264,27 @@ struct Analysis {
     kinetic_e: f32,
     gravitational_e: f32,
     diff_percentage: f32,
+    barycenters: Vec<Position>,
 }
 
 // contains calculations not necessary for the iteration process, only for displaying
 impl Analysis {
     fn analyze(&self, app: &Orbital) -> Analysis {
         let (kinetic_mj, grav_potential_mj, total) = self.current_e(app);
-
         let diff_percentage = if self.initial_e != 0. {
             (total / self.initial_e) * 100.
         } else {
             0.
         };
 
+        let barycenters = self.barycenters(app);
+
         Analysis {
             kinetic_e: kinetic_mj,
             gravitational_e: grav_potential_mj,
             diff_percentage,
             initial_e: self.initial_e,
+            barycenters,
         }
     }
 
@@ -305,6 +312,24 @@ impl Analysis {
 
         let total = total_kinetic + total_gravitational;
         (total_kinetic, total_gravitational, total)
+    }
+
+    fn barycenters(&self, app: &Orbital) -> Vec<Position> {
+        let mut barycenters = vec![];
+
+        for (affected_i, sources) in app.relationships.iter() {
+            let affected = app.bodies.get(*affected_i).unwrap();
+
+            for source_i in sources.iter() {
+                let source = app.bodies.get(*source_i).unwrap();
+
+                let barycenter = barycenter(affected.mass, source.mass, affected.pos, source.pos);
+                barycenters.push(barycenter);
+            }
+        }
+
+        println!("{:?}", barycenters);
+        barycenters
     }
 
     fn initialize(&self, app: &Orbital) -> Analysis {

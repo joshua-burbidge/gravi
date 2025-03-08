@@ -150,12 +150,12 @@ pub fn gravitational_potential_energy(m1: f32, m2: f32, pos1: Position, pos2: Po
 
 // Compute the barycenter - the point around which two bodies both orbit
 // Same as center of mass for spherical bodies in normal conditions.
-pub fn _barycenter(m1: f32, m2: f32, pos1: Position, pos2: Position) -> f32 {
+pub fn barycenter(m1: f32, m2: f32, pos1: Position, pos2: Position) -> Position {
     // barycenter of two masses, distance d apart
     // Rb = m2 / (m1 + m2) * d
-    let d: f32 = pos1.minus(pos2).mag();
+    let distance_vector = pos2.minus(pos1);
 
-    let barycenter_position = m2 / (m1 + m2) * d;
-
-    barycenter_position
+    let bary_from_p1 = distance_vector.scale(m2 / (m1 + m2));
+    let bary = pos1.add(bary_from_p1);
+    bary
 }

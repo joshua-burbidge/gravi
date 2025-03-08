@@ -28,19 +28,30 @@ fn convert_length(length: f32, distance_per_px: f32) -> f32 {
     length / distance_per_px
 }
 
-fn draw_circle<T: Renderer>(
+fn draw_circle_paint<T: Renderer>(
     canvas: &mut Canvas<T>,
     position: &Position,
     r: f32,
     distance_per_px: f32,
+    paint: Paint,
 ) {
     let mut path = Path::new();
     let px = pos_to_canvas(position, distance_per_px);
 
     path.circle(px.x, px.y, r);
 
-    let paint = Paint::color(Color::rgbf(0., 1., 0.));
     canvas.fill_path(&path, &paint);
+}
+
+fn draw_circle_green<T: Renderer>(
+    canvas: &mut Canvas<T>,
+    position: &Position,
+    r: f32,
+    distance_per_px: f32,
+) {
+    let paint = Paint::color(Color::rgbf(0., 1., 0.));
+
+    draw_circle_paint(canvas, position, r, distance_per_px, paint);
 }
 
 // draws a circle with a fixed radius
@@ -52,7 +63,7 @@ pub fn draw_circle_fixed<T: Renderer>(
 ) {
     let scaled_r = convert_length(r, distance_per_px);
 
-    draw_circle(canvas, position, scaled_r, distance_per_px);
+    draw_circle_green(canvas, position, scaled_r, distance_per_px);
 }
 // draws a circle with a radius that scales up and down as you zoom in and out
 pub fn draw_circle_scaled<T: Renderer>(
@@ -63,7 +74,19 @@ pub fn draw_circle_scaled<T: Renderer>(
 ) {
     let r = scaled_width(canvas, width_factor);
 
-    draw_circle(canvas, position, r, distance_per_px);
+    draw_circle_green(canvas, position, r, distance_per_px);
+}
+
+pub fn draw_barycenter<T: Renderer>(
+    canvas: &mut Canvas<T>,
+    position: &Position,
+    width_factor: f32,
+    distance_per_px: f32,
+) {
+    let paint = Paint::color(Color::rgbf(0., 0., 1.));
+    let r = scaled_width(canvas, width_factor);
+
+    draw_circle_paint(canvas, position, r, distance_per_px, paint);
 }
 
 pub fn draw_line_thru_points<T: Renderer>(
