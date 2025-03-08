@@ -24,10 +24,10 @@ pub struct Orbital {
     distance_per_px: f32,
     started: bool,
     stopped: bool,
-    initial_e: f32,
     bodies: Vec<Body>,
     relationships: HashMap<usize, Vec<usize>>,
     presets: Vec<Preset>,
+    analysis: Analysis,
 }
 
 impl App for Orbital {
@@ -38,6 +38,7 @@ impl App for Orbital {
         for _ in 0..self.num_ticks {
             self.run_euler();
         }
+        self.analysis = self.analysis.analyze(self);
     }
 
     fn draw(&self, canvas: &mut femtovg::Canvas<femtovg::renderer::WGPURenderer>) {
@@ -74,10 +75,10 @@ impl Orbital {
             distance_per_px: 4.,
             started: false,
             stopped: false,
-            initial_e: 0.,
             bodies: vec![Body::earth()],
             relationships: HashMap::new(),
             presets: Preset::defaults(),
+            analysis: Analysis::default(),
         }
     }
 
@@ -166,48 +167,7 @@ impl Orbital {
             b.trajectory.push(b.new_history_entry());
         }
 
-        let (_, _, total) = self.current_e();
-
-        self.initial_e = total;
-    }
-
-    // contains calculations not necessary for the iteration process, only for displaying
-    fn analyze(&self) -> (f32, f32, f32) {
-        let (kinetic_mj, grav_potential_mj, total) = self.current_e();
-
-        let diff_percentage = if self.initial_e != 0. {
-            (total / self.initial_e) * 100.
-        } else {
-            0.
-        };
-
-        (kinetic_mj, grav_potential_mj, diff_percentage)
-    }
-
-    fn current_e(&self) -> (f32, f32, f32) {
-        let (total_kinetic, total_gravitational) = self
-            .bodies
-            .iter()
-            .enumerate()
-            .map(|(i, b)| {
-                let body_kinetic_mj = kinetic_energy(b.mass, b.v);
-
-                // loop over all other bodies, so start at the next index
-                let body_gravitational_mj = self.bodies[i + 1..].iter().fold(0., |acc, b2| {
-                    let grav_potential_mj =
-                        gravitational_potential_energy(b.mass, b2.mass, b.pos, b2.pos);
-
-                    acc + grav_potential_mj
-                });
-
-                (body_kinetic_mj, body_gravitational_mj)
-            })
-            .fold((0., 0.), |(acc_k, acc_g), (kinet, grav)| {
-                (acc_k + kinet, acc_g + grav)
-            });
-
-        let total = total_kinetic + total_gravitational;
-        (total_kinetic, total_gravitational, total)
+        self.analysis = self.analysis.initialize(self);
     }
 
     // run function contains calculations necessary for the iteration process
@@ -291,5 +251,68 @@ impl UiState {
             panel_width: 300.,
             ..Default::default()
         }
+    }
+}
+
+#[derive(Default)]
+struct Analysis {
+    initial_e: f32,
+    kinetic_e: f32,
+    gravitational_e: f32,
+    diff_percentage: f32,
+}
+
+// contains calculations not necessary for the iteration process, only for displaying
+impl Analysis {
+    fn analyze(&self, app: &Orbital) -> Analysis {
+        let (kinetic_mj, grav_potential_mj, total) = self.current_e(app);
+
+        let diff_percentage = if self.initial_e != 0. {
+            (total / self.initial_e) * 100.
+        } else {
+            0.
+        };
+
+        Analysis {
+            kinetic_e: kinetic_mj,
+            gravitational_e: grav_potential_mj,
+            diff_percentage,
+            initial_e: self.initial_e,
+        }
+    }
+
+    fn current_e(&self, app: &Orbital) -> (f32, f32, f32) {
+        let (total_kinetic, total_gravitational) = app
+            .bodies
+            .iter()
+            .enumerate()
+            .map(|(i, b)| {
+                let body_kinetic_mj = kinetic_energy(b.mass, b.v);
+
+                // loop over all other bodies, so start at the next index
+                let body_gravitational_mj = app.bodies[i + 1..].iter().fold(0., |acc, b2| {
+                    let grav_potential_mj =
+                        gravitational_potential_energy(b.mass, b2.mass, b.pos, b2.pos);
+
+                    acc + grav_potential_mj
+                });
+
+                (body_kinetic_mj, body_gravitational_mj)
+            })
+            .fold((0., 0.), |(acc_k, acc_g), (kinet, grav)| {
+                (acc_k + kinet, acc_g + grav)
+            });
+
+        let total = total_kinetic + total_gravitational;
+        (total_kinetic, total_gravitational, total)
+    }
+
+    fn initialize(&self, app: &Orbital) -> Analysis {
+        let mut initial_analysis = self.analyze(app);
+        let total_e = initial_analysis.kinetic_e + initial_analysis.gravitational_e;
+
+        initial_analysis.initial_e = total_e;
+
+        initial_analysis
     }
 }

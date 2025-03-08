@@ -5,7 +5,11 @@ use crate::ui::widgets::{CustomSlider, XYInput};
 use super::Orbital;
 
 pub fn ui(app: &mut Orbital, ctx: &egui::Context) {
-    let (kinetic, potential, diff_percent) = app.analyze();
+    let (kinetic, potential, diff_percent) = (
+        app.analysis.kinetic_e,
+        app.analysis.gravitational_e,
+        app.analysis.diff_percentage,
+    );
     let presets: Vec<String> = app.presets.iter().map(|p| p.name.clone()).collect();
 
     let panel = egui::SidePanel::left("main-ui-panel")
@@ -54,7 +58,7 @@ pub fn ui(app: &mut Orbital, ctx: &egui::Context) {
                             x_range,
                             y_range,
                         ));
-                        ui.label(format!("|r|: {}", body.pos.mag()));
+                        ui.label(format!("|r|: {} km", body.pos.mag()));
 
                         if !body.is_fixed {
                             ui.label("Velocity");
@@ -111,7 +115,7 @@ pub fn ui(app: &mut Orbital, ctx: &egui::Context) {
         ui.monospace(format!("Kinetic:    {:+.4e}", kinetic));
         ui.monospace(format!("Potential:  {:+.4e}", potential));
         ui.monospace(format!("Total:      {:+.4e}", kinetic + potential));
-        ui.monospace(format!("Initial:    {:+.4e}", app.initial_e));
+        ui.monospace(format!("Initial:    {:+.4e}", app.analysis.initial_e));
         ui.monospace(format!("Diff:        {:.2}%", diff_percent));
         ui.monospace(format!("Diff per t:  {:.2e}%", (100. - diff_percent) / t));
     });
