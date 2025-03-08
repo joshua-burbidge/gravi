@@ -165,8 +165,6 @@ impl App for Orbital {
 #[derive(Default)]
 struct UiState {
     panel_width: f32,
-    lock_circular_velocity: bool,
-    lock_escape_velocity: bool,
 }
 impl UiState {
     fn new() -> Self {
@@ -194,7 +192,7 @@ impl Orbital {
             started: false,
             stopped: false,
             initial_e: 0.,
-            bodies: vec![Body::earth(), Body::outer_low(), Body::_moon()],
+            bodies: vec![Body::earth(), Body::_moon()],
             relationships: HashMap::new(),
         }
     }
@@ -315,6 +313,10 @@ impl Orbital {
 
     // run function contains calculations necessary for the iteration process
     fn run_euler(&mut self) {
+        if self.stopped {
+            return;
+        }
+
         let dt = self.dt;
 
         for (affected_i, sources) in self.relationships.iter() {
@@ -342,13 +344,26 @@ impl Orbital {
             let cur_r = affected.pos;
             let (next_r, next_v) = symplectic_euler_calc(cur_r, cur_v, total_a_for_body, dt);
 
-            // if next_r.mag() <= central.radius {
-            //     self.stopped = true;
-            //     return;
-            // }
-
             self.bodies[*affected_i].update(next_r, next_v, total_a_for_body);
         }
+
+        self.check_collisions();
+    }
+
+    fn check_collisions(&mut self) -> bool {
+        for (i, b) in self.bodies.iter().enumerate() {
+            for b2 in self.bodies[i + 1..].iter() {
+                let distance_between = b.pos.minus(b2.pos).mag();
+
+                let is_collided = distance_between <= (b.radius + b2.radius);
+
+                if is_collided {
+                    self.stopped = true;
+                    return true;
+                }
+            }
+        }
+        false
     }
 
     fn reset(&mut self) {
@@ -443,7 +458,7 @@ impl Body {
         Self {
             mass: 5.97e24,      // kg
             radius: R_EARTH_KM, // km
-            is_fixed: true,
+            // is_fixed: true,
             ..Default::default()
         }
     }

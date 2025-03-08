@@ -19,7 +19,6 @@ pub fn circular_velocity(
     central_mass: f32,
     orbital_pos: Position,
 ) -> Velocity {
-    // let r_mag = r.mag();
     let r = orbital_pos.minus(central_pos);
     let r_mag = r.mag();
 
@@ -125,4 +124,16 @@ pub fn gravitational_potential_energy(m1: f32, m2: f32, pos1: Position, pos2: Po
     let grav_potential_mj = grav_potential_kj * 1e-3; // MJ
 
     grav_potential_mj
+}
+
+// Compute the barycenter - the point around which two bodies both orbit
+// Same as center of mass for spherical bodies in normal conditions.
+pub fn _barycenter(m1: f32, m2: f32, pos1: Position, pos2: Position) -> f32 {
+    // barycenter of two masses, distance d apart
+    // Rb = m2 / (m1 + m2) * d
+    let d: f32 = pos1.minus(pos2).mag();
+
+    let barycenter_position = m2 / (m1 + m2) * d;
+
+    barycenter_position
 }
