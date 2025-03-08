@@ -10,10 +10,11 @@ pub const R_MOON_KM: f32 = 1740.;
 // calculate the magnitude of the circular velocity
 // v = sqrt(GM/r)
 fn circular_velocity_magnitude(central_mass: f32, r: f32) -> f32 {
+    // 1e9 converts from m/s to km/s
     (G * central_mass / (r * 1e9)).sqrt()
 }
-// The velocity that results in a perfect circular orbit
-// given the central mass and the radius
+// The velocity that results in a perfect circular orbit given the central mass and the radius,
+// assumes that the central mass will not move
 pub fn circular_velocity(
     central_pos: Position,
     central_mass: f32,
@@ -31,13 +32,42 @@ pub fn circular_velocity(
     Velocity::new(x_vel, y_vel)
 }
 
+// return circular velocity of body 1, based on the influence of body 2
+pub fn circ_velocity_barycenter(
+    m1: f32,
+    pos1: Position,
+    m2: f32,
+    pos2: Position,
+) -> (Velocity, Velocity) {
+    // calculate Vc of the whole sytem orbiting around the barycenter
+    let overall_vc = circular_velocity(pos2, m1 + m2, pos1);
+
+    // println!("{:?}", overall_vc);
+
+    // split the whole vc based on mass ratio to get individual velocities
+    let v1 = overall_vc.scale(m2 / (m1 + m2));
+    let v2 = overall_vc.scale(m1 / (m1 + m2));
+
+    (v1, v2)
+}
+
 // escape velocity = sqrt(2) * circular_velocity
-pub fn escape_velocity(
+pub fn _escape_velocity(
     central_pos: Position,
     central_mass: f32,
     orbital_pos: Position,
 ) -> Velocity {
     let circular_velocity = circular_velocity(central_pos, central_mass, orbital_pos);
+
+    Velocity::new(
+        2_f32.sqrt() * circular_velocity.x,
+        2_f32.sqrt() * circular_velocity.y,
+    )
+}
+
+// escape velocity = sqrt(2) * circular_velocity
+pub fn escape_velocity_barycenter(m1: f32, pos1: Position, m2: f32, pos2: Position) -> Velocity {
+    let (circular_velocity, _) = circ_velocity_barycenter(m1, pos1, m2, pos2);
 
     Velocity::new(
         2_f32.sqrt() * circular_velocity.x,

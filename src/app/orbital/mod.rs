@@ -7,9 +7,9 @@ use super::{
     core::{
         draw::{draw_circle_fixed, draw_circle_scaled, draw_line_thru_points},
         physics::{
-            circular_velocity, escape_velocity, gravitational_acceleration,
-            gravitational_potential_energy, kinetic_energy, symplectic_euler_calc, Acceleration,
-            Position, Velocity, R_EARTH_KM, R_MOON_KM,
+            circ_velocity_barycenter, circular_velocity, escape_velocity_barycenter,
+            gravitational_acceleration, gravitational_potential_energy, kinetic_energy,
+            symplectic_euler_calc, Acceleration, Position, Velocity, R_EARTH_KM, R_MOON_KM,
         },
     },
     App,
@@ -192,7 +192,7 @@ impl Orbital {
             started: false,
             stopped: false,
             initial_e: 0.,
-            bodies: vec![Body::earth(), Body::outer_low()],
+            bodies: vec![Body::earth(), Body::_moon()],
             relationships: HashMap::new(),
         }
     }
@@ -225,13 +225,19 @@ impl Orbital {
                 let (locked_body_pos, locked_body_m) =
                     positions.get(body.selected_vel_lock).unwrap();
 
-                let circ_vel = circular_velocity(*locked_body_pos, *locked_body_m, body.pos);
+                let (circ_vel, _) =
+                    circ_velocity_barycenter(body.mass, body.pos, *locked_body_m, *locked_body_pos);
                 body.v = circ_vel;
             } else if body.lock_to_escape_velocity {
                 let (locked_body_pos, locked_body_m) =
                     positions.get(body.selected_vel_lock).unwrap();
 
-                let esc_vel = escape_velocity(*locked_body_pos, *locked_body_m, body.pos);
+                let esc_vel = escape_velocity_barycenter(
+                    body.mass,
+                    body.pos,
+                    *locked_body_m,
+                    *locked_body_pos,
+                );
                 body.v = esc_vel;
             }
         }
@@ -466,12 +472,13 @@ impl Body {
         let earth_mass = Self::earth().mass;
         let earth_pos = Self::earth().pos;
         let position = Position::new(0., 3.844e5 + R_EARTH_KM);
+        let moon_mass = 7.34e22;
 
         Self {
-            mass: 7.34e22,
+            mass: moon_mass,
             radius: R_MOON_KM,
             pos: position,
-            v: circular_velocity(earth_pos, earth_mass, position), // km/s
+            v: circ_velocity_barycenter(moon_mass, position, earth_mass, earth_pos).0, // km/s
             ..Default::default()
         }
     }
