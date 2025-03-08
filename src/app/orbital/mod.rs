@@ -1,4 +1,5 @@
 use egui::RichText;
+use std::collections::HashMap;
 
 use crate::ui::widgets::{CustomSlider, XYInput};
 
@@ -7,8 +8,8 @@ use super::{
         draw::{draw_circle_fixed, draw_circle_scaled, draw_line_thru_points},
         physics::{
             circular_velocity, escape_velocity, gravitational_acceleration,
-            gravitational_potential_energy, kinetic_energy, symplectic_euler_calc, Position,
-            Velocity, R_EARTH_KM,
+            gravitational_potential_energy, kinetic_energy, symplectic_euler_calc, Acceleration,
+            Position, Velocity, R_EARTH_KM,
         },
     },
     App,
@@ -23,7 +24,7 @@ pub struct Orbital {
     stopped: bool,
     initial_e: f32,
     bodies: Vec<Body>,
-    relationships: Vec<(usize, usize)>,
+    relationships: HashMap<usize, Vec<usize>>,
 }
 
 impl App for Orbital {
@@ -192,13 +193,16 @@ impl Orbital {
             stopped: false,
             initial_e: 0.,
             bodies: vec![Body::earth(), Body::outer_low()],
-            relationships: vec![],
+            relationships: HashMap::new(),
         }
     }
 
     fn t(&self) -> f32 {
-        let outer = &self.bodies[1];
-        let len = outer.trajectory.len();
+        let body = self.bodies.first();
+        let len = match body {
+            Some(b) => b.trajectory.len(),
+            None => 0,
+        };
 
         if len > 0 {
             (len - 1) as f32 * self.dt
@@ -207,6 +211,8 @@ impl Orbital {
         }
     }
 
+    // Set circular or orbital velocity for any body that is locked to one of those.
+    // Only applies when setting initial conditions before starting.
     fn set_velocities(&mut self) {
         if self.started {
             return;
@@ -232,30 +238,28 @@ impl Orbital {
     }
 
     fn start(&mut self) {
-        let relationships_to_calculate: Vec<(usize, usize)> = self
-            .bodies
-            .iter()
-            .enumerate()
-            .flat_map(|(source_index, source_body)| {
-                let relationships_for_source: Vec<(usize, usize)> = self
-                    .bodies
-                    .iter()
-                    .enumerate()
-                    .filter(|(i, body_under_effect)| {
-                        *i != source_index && is_mass_significant(source_body, body_under_effect)
-                    })
-                    .map(|(i, _)| (source_index, i))
-                    .collect();
+        // map of a body to the list of bodies that have a gravitational effect on it
+        let mut map_body_to_sources: HashMap<usize, Vec<usize>> = HashMap::new();
 
-                relationships_for_source
-            })
-            .collect();
+        for (effected_i, affected_body) in self.bodies.iter().enumerate() {
+            let significant_sources: Vec<usize> = self
+                .bodies
+                .iter()
+                .enumerate()
+                .filter(|(source_i, source_body)| {
+                    *source_i != effected_i && is_mass_significant(source_body, affected_body)
+                })
+                .map(|(source_i, _)| (source_i))
+                .collect();
 
-        println!("{:?}", relationships_to_calculate);
+            map_body_to_sources.insert(effected_i, significant_sources);
+        }
+
+        println!("{:?}", map_body_to_sources);
 
         let outer = &mut self.bodies[1];
 
-        self.relationships = relationships_to_calculate;
+        self.relationships = map_body_to_sources;
         self.started = true;
         outer.trajectory.push(outer.store());
 
@@ -311,34 +315,48 @@ impl Orbital {
     fn run_euler(&mut self) {
         let dt = self.dt;
 
-        let central = self.bodies.get(0).unwrap();
-        let outer = self.bodies.get(1).unwrap();
+        for (affected_i, sources) in self.relationships.iter() {
+            let affected = self.bodies.get(*affected_i).unwrap();
 
-        let cur_a = gravitational_acceleration(central.pos, outer.pos, central.mass);
+            let total_a_for_body = sources
+                .iter()
+                .map(|source_i| {
+                    let source = self.bodies.get(*source_i).unwrap();
+                    let a_from_source =
+                        gravitational_acceleration(source.pos, affected.pos, source.mass);
 
-        let cur_v = outer.v;
-        let cur_r = outer.pos;
-        let (next_r, next_v) = symplectic_euler_calc(cur_r, cur_v, cur_a, dt);
+                    // println!("{:?}", (affected_i, source_i, a_from_source));
+                    a_from_source
+                })
+                .fold(Acceleration::new(0., 0.), |acc, a| acc.add(a));
 
-        if next_r.mag() <= central.radius {
-            self.stopped = true;
-            return;
+            println!("{:?}", total_a_for_body);
+
+            let cur_v = affected.v;
+            let cur_r = affected.pos;
+            let (next_r, next_v) = symplectic_euler_calc(cur_r, cur_v, total_a_for_body, dt);
+
+            // if next_r.mag() <= central.radius {
+            //     self.stopped = true;
+            //     return;
+            // }
+
+            let new_affected = Body {
+                v: next_v,
+                pos: next_r,
+                mass: affected.mass,
+                radius: affected.radius,
+                is_fixed: affected.is_fixed,
+                lock_to_circular_velocity: affected.lock_to_circular_velocity,
+                lock_to_escape_velocity: affected.lock_to_escape_velocity,
+                selected_vel_lock: affected.selected_vel_lock,
+                trajectory: vec![],
+            };
+
+            self.bodies[*affected_i].v = new_affected.v;
+            self.bodies[*affected_i].pos = new_affected.pos;
+            self.bodies[*affected_i].trajectory.push(new_affected);
         }
-
-        let new_outer = Body {
-            v: next_v,
-            pos: next_r,
-            mass: outer.mass,
-            radius: outer.radius,
-            is_fixed: outer.is_fixed,
-            lock_to_circular_velocity: outer.lock_to_circular_velocity,
-            lock_to_escape_velocity: outer.lock_to_escape_velocity,
-            selected_vel_lock: outer.selected_vel_lock,
-            trajectory: vec![],
-        };
-        self.bodies[1].v = new_outer.v;
-        self.bodies[1].pos = new_outer.pos;
-        self.bodies[1].trajectory.push(new_outer);
     }
 
     fn reset(&mut self) {
