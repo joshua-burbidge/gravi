@@ -25,6 +25,7 @@ pub struct Orbital {
     initial_e: f32,
     bodies: Vec<Body>,
     relationships: HashMap<usize, Vec<usize>>,
+    presets: Vec<Preset>,
 }
 
 impl App for Orbital {
@@ -56,11 +57,24 @@ impl App for Orbital {
 
     fn ui(&mut self, ctx: &egui::Context) {
         let (kinetic, potential, diff_percent) = self.analyze();
+        let presets: Vec<String> = self.presets.iter().map(|p| p.name.clone()).collect();
 
         let panel = egui::SidePanel::left("main-ui-panel")
             .exact_width(self.ui_state.panel_width)
             .resizable(false);
         panel.show(ctx, |ui| {
+            egui::CollapsingHeader::new(RichText::new("Select preset simulation").heading())
+                .default_open(true)
+                .show(ui, |ui| {
+                    for (i, preset) in presets.iter().enumerate() {
+                        if ui.button(preset).clicked() {
+                            self.load_preset(i);
+                        }
+                    }
+                });
+
+            ui.add_space(20.);
+
             ui.add_enabled_ui(!self.started, |ui| {
                 ui.label(RichText::new("General").heading());
                 ui.add(CustomSlider::new(&mut self.dt, 0.01..=10.0).label("dt:"));
@@ -182,6 +196,36 @@ fn is_mass_significant(source_body: &Body, body_under_effect: &Body) -> bool {
     (body_under_effect.mass / source_body.mass) < ratio_threshold
 }
 
+fn build_presets() -> Vec<Preset> {
+    let fixed_earth = Body {
+        is_fixed: true,
+        lock_to_circular_velocity: false,
+        lock_to_escape_velocity: false,
+        ..Body::earth()
+    };
+    let barycenter_earth = Body {
+        is_fixed: false,
+        lock_to_circular_velocity: true,
+        selected_vel_lock: 1,
+        ..Body::earth()
+    };
+    vec![
+        Preset {
+            bodies: vec![fixed_earth, Body::outer_low()],
+            name: String::from("Small object orbiting Earth"),
+        },
+        Preset {
+            bodies: vec![barycenter_earth, Body::moon()],
+            name: String::from("Moon orbiting Earth"),
+        },
+    ]
+}
+
+struct Preset {
+    bodies: Vec<Body>,
+    name: String,
+}
+
 impl Orbital {
     pub fn new() -> Self {
         Self {
@@ -192,8 +236,9 @@ impl Orbital {
             started: false,
             stopped: false,
             initial_e: 0.,
-            bodies: vec![Body::earth(), Body::_moon()],
+            bodies: vec![Body::earth()],
             relationships: HashMap::new(),
+            presets: build_presets(),
         }
     }
 
@@ -209,6 +254,15 @@ impl Orbital {
         } else {
             0.
         }
+    }
+
+    fn load_preset(&mut self, preset_num: usize) {
+        let preset = self.presets.get(preset_num);
+
+        match preset {
+            Some(preset) => self.bodies = preset.bodies.clone(),
+            None => {}
+        };
     }
 
     // Set circular or orbital velocity for any body that is locked to one of those.
@@ -464,11 +518,10 @@ impl Body {
         Self {
             mass: 5.97e24,      // kg
             radius: R_EARTH_KM, // km
-            // is_fixed: true,
             ..Default::default()
         }
     }
-    fn _moon() -> Self {
+    fn moon() -> Self {
         let earth_mass = Self::earth().mass;
         let earth_pos = Self::earth().pos;
         let position = Position::new(0., 3.844e5 + R_EARTH_KM);
