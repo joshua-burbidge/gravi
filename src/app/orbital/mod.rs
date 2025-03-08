@@ -44,7 +44,7 @@ impl App for Orbital {
         draw_circle_scaled(canvas, &outer.pos, 4., self.distance_per_px);
 
         let sec_per_graph = 100.; // graph a point every 100 seconds
-        let graph_frequency = (sec_per_graph / self.dt).round() as usize;
+        let graph_frequency = (sec_per_graph / self.dt).ceil() as usize;
         // draw a point every X number of ticks
 
         let points: Vec<Position> = outer.trajectory.iter().map(|b| b.pos).collect();
