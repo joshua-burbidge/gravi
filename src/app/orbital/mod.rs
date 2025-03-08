@@ -192,7 +192,7 @@ impl Orbital {
             started: false,
             stopped: false,
             initial_e: 0.,
-            bodies: vec![Body::earth(), Body::_moon()],
+            bodies: vec![Body::earth(), Body::outer_low()],
             relationships: HashMap::new(),
         }
     }
