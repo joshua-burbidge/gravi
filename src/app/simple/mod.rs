@@ -31,7 +31,7 @@ impl App for ConstAcceleration {
         }
     }
 
-    fn draw(&mut self, canvas: &mut Canvas<WGPURenderer>) {
+    fn draw(&self, canvas: &mut Canvas<WGPURenderer>) {
         let mut dots = Path::new();
         let history = &self.hist;
 
