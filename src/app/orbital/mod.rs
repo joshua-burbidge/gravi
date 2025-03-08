@@ -257,13 +257,17 @@ impl Orbital {
             map_body_to_sources.insert(effected_i, significant_sources);
         }
 
-        println!("{:?}", map_body_to_sources);
-
-        let outer = &mut self.bodies[1];
+        println!(
+            "significant gravitational relationships: {:?}",
+            map_body_to_sources
+        );
 
         self.relationships = map_body_to_sources;
         self.started = true;
-        outer.trajectory.push(outer.store());
+
+        for b in self.bodies.iter_mut() {
+            b.trajectory.push(b.new_history_entry());
+        }
 
         let (_, _, total) = self.current_e();
 
@@ -323,12 +327,16 @@ impl Orbital {
                     let a_from_source =
                         gravitational_acceleration(source.pos, affected.pos, source.mass);
 
-                    // println!("{:?}", (affected_i, source_i, a_from_source));
+                    // if *affected_i == 1 {
+                    //     println!("{:?}", (affected_i, source_i, a_from_source));
+                    // }
                     a_from_source
                 })
                 .fold(Acceleration::new(0., 0.), |acc, a| acc.add(a));
 
-            // println!("{:?}", total_a_for_body);
+            // if *affected_i == 1 {
+            //     println!("{:?}", total_a_for_body);
+            // }
 
             let cur_v = affected.v;
             let cur_r = affected.pos;
@@ -339,23 +347,7 @@ impl Orbital {
             //     return;
             // }
 
-            let new_affected = Body {
-                v: next_v,
-                pos: next_r,
-                computed_a: total_a_for_body,
-                mass: affected.mass,
-                radius: affected.radius,
-                is_fixed: affected.is_fixed,
-                lock_to_circular_velocity: affected.lock_to_circular_velocity,
-                lock_to_escape_velocity: affected.lock_to_escape_velocity,
-                selected_vel_lock: affected.selected_vel_lock,
-                trajectory: vec![],
-            };
-
-            self.bodies[*affected_i].v = new_affected.v;
-            self.bodies[*affected_i].pos = new_affected.pos;
-            self.bodies[*affected_i].computed_a = new_affected.computed_a;
-            self.bodies[*affected_i].trajectory.push(new_affected);
+            self.bodies[*affected_i].update(next_r, next_v, total_a_for_body);
         }
     }
 
@@ -396,7 +388,7 @@ impl Body {
 
     // returns a version of this struct to be used for the trajectory history
     // maybe make this a separate struct?
-    fn store(&self) -> Self {
+    fn new_history_entry(&self) -> Self {
         Self {
             pos: self.pos,
             v: self.v,
@@ -409,6 +401,15 @@ impl Body {
             selected_vel_lock: self.selected_vel_lock,
             trajectory: vec![],
         }
+    }
+
+    fn update(&mut self, new_pos: Position, new_vel: Velocity, new_acc: Acceleration) -> &mut Self {
+        self.pos = new_pos;
+        self.v = new_vel;
+        self.computed_a = new_acc;
+        self.trajectory.push(self.new_history_entry());
+
+        self
     }
 
     // starting conditions for a low earth orbit, modeled after the ISS
