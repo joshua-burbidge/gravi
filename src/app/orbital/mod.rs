@@ -1,15 +1,17 @@
-use egui::RichText;
+mod body;
+mod ui;
+
 use std::collections::HashMap;
 
-use crate::ui::widgets::{CustomSlider, XYInput};
+use body::{is_mass_significant, Body, Preset};
 
 use super::{
     core::{
         draw::{draw_circle_fixed, draw_circle_scaled, draw_line_thru_points},
         physics::{
-            circ_velocity_barycenter, circular_velocity, escape_velocity_barycenter,
-            gravitational_acceleration, gravitational_potential_energy, kinetic_energy,
-            symplectic_euler_calc, Acceleration, Position, Velocity, R_EARTH_KM, R_MOON_KM,
+            circ_velocity_barycenter, escape_velocity_barycenter, gravitational_acceleration,
+            gravitational_potential_energy, kinetic_energy, symplectic_euler_calc, Acceleration,
+            Position,
         },
     },
     App,
@@ -56,174 +58,11 @@ impl App for Orbital {
     }
 
     fn ui(&mut self, ctx: &egui::Context) {
-        let (kinetic, potential, diff_percent) = self.analyze();
-        let presets: Vec<String> = self.presets.iter().map(|p| p.name.clone()).collect();
-
-        let panel = egui::SidePanel::left("main-ui-panel")
-            .exact_width(self.ui_state.panel_width)
-            .resizable(false);
-        panel.show(ctx, |ui| {
-            egui::CollapsingHeader::new(RichText::new("Select preset simulation").heading())
-                .default_open(true)
-                .show(ui, |ui| {
-                    for (i, preset) in presets.iter().enumerate() {
-                        if ui.button(preset).clicked() {
-                            self.load_preset(i);
-                        }
-                    }
-                });
-
-            ui.add_space(20.);
-
-            ui.add_enabled_ui(!self.started, |ui| {
-                ui.label(RichText::new("General").heading());
-                ui.add(CustomSlider::new(&mut self.dt, 0.01..=10.0).label("dt:"));
-                ui.add(
-                    CustomSlider::new(&mut self.num_ticks, 100..=100000).label("ticks per press:"),
-                );
-                ui.add_space(20.);
-
-                ui.input(|i| {
-                    if i.key_pressed(egui::Key::A) {
-                        self.reset();
-                    }
-                    if !self.started && i.key_pressed(egui::Key::Enter) {
-                        self.start();
-                    }
-                });
-
-                let len = self.bodies.len();
-
-                for (i, body) in self.bodies.iter_mut().enumerate() {
-                    let x_range = -10000.0..=10000.;
-                    let y_range = -10000.0..=10000.;
-
-                    egui::CollapsingHeader::new(
-                        RichText::new(format!("Body {}:", i + 1)).heading(),
-                    )
-                    .show(ui, |ui| {
-                        ui.label("Position");
-                        ui.add(XYInput::new(
-                            &mut body.pos.x,
-                            &mut body.pos.y,
-                            x_range,
-                            y_range,
-                        ));
-                        ui.label(format!("|r|: {}", body.pos.mag()));
-
-                        if !body.is_fixed {
-                            ui.label("Velocity");
-                            ui.checkbox(
-                                &mut body.lock_to_circular_velocity,
-                                "lock to circular velocity",
-                            );
-                            ui.checkbox(
-                                &mut body.lock_to_escape_velocity,
-                                "lock to escape velocity",
-                            );
-
-                            let vel_lock_enabled =
-                                body.lock_to_circular_velocity || body.lock_to_escape_velocity;
-                            ui.add_enabled_ui(vel_lock_enabled, |ui| {
-                                egui::ComboBox::from_label("Around body").show_index(
-                                    ui,
-                                    &mut body.selected_vel_lock,
-                                    len,
-                                    |i| format!("Body {}", i + 1),
-                                );
-                            });
-                            ui.add_enabled_ui(!vel_lock_enabled, |ui| {
-                                ui.add(XYInput::new(
-                                    &mut body.v.x,
-                                    &mut body.v.y,
-                                    -50.0..=50.0,
-                                    -50.0..=50.0,
-                                ));
-                            });
-                        }
-
-                        ui.label("Mass");
-                        ui.add(CustomSlider::new(&mut body.mass, 1.0..=5e10).label("M:"));
-
-                        ui.monospace("Acceleration (km/s^2)");
-                        ui.monospace(format!("Ax:    {:+.4e}", body.computed_a.x));
-                        ui.monospace(format!("Ay:    {:+.4e}", body.computed_a.y));
-                    });
-                    ui.add_space(20.);
-                }
-
-                self.set_velocities();
-
-                if ui.button("Start").clicked() {
-                    self.start();
-                }
-            });
-
-            let t = self.t();
-            let days = t / (60 * 60 * 24) as f32;
-            ui.monospace(format!("t: {:.4e} s, {:.2} d", t, days));
-            ui.monospace("Energy (MJ)");
-            ui.monospace(format!("Kinetic:    {:+.4e}", kinetic));
-            ui.monospace(format!("Potential:  {:+.4e}", potential));
-            ui.monospace(format!("Total:      {:+.4e}", kinetic + potential));
-            ui.monospace(format!("Initial:    {:+.4e}", self.initial_e));
-            ui.monospace(format!("Diff:        {:.2}%", diff_percent));
-            ui.monospace(format!("Diff per t:  {:.2e}%", (100. - diff_percent) / t));
-        });
+        ui::ui(self, ctx);
     }
     fn panel_width(&self) -> f32 {
         self.ui_state.panel_width
     }
-}
-
-#[derive(Default)]
-struct UiState {
-    panel_width: f32,
-}
-impl UiState {
-    fn new() -> Self {
-        Self {
-            panel_width: 300.,
-            ..Default::default()
-        }
-    }
-}
-
-// if the object being pulled is 1000x more massive than the source of the gravity,
-// then the gravitational force is negligible
-fn is_mass_significant(source_body: &Body, body_under_effect: &Body) -> bool {
-    let ratio_threshold = 1000.;
-    (body_under_effect.mass / source_body.mass) < ratio_threshold
-}
-
-fn build_presets() -> Vec<Preset> {
-    let fixed_earth = Body {
-        is_fixed: true,
-        lock_to_circular_velocity: false,
-        lock_to_escape_velocity: false,
-        ..Body::earth()
-    };
-    let barycenter_earth = Body {
-        is_fixed: false,
-        lock_to_circular_velocity: true,
-        selected_vel_lock: 1,
-        ..Body::earth()
-    };
-    vec![
-        Preset {
-            bodies: vec![fixed_earth, Body::outer_low()],
-            name: String::from("Small object orbiting Earth"),
-        },
-        Preset {
-            bodies: vec![barycenter_earth, Body::moon()],
-            name: String::from("Moon orbiting Earth"),
-        },
-    ]
-}
-
-struct Preset {
-    bodies: Vec<Body>,
-    name: String,
 }
 
 impl Orbital {
@@ -238,7 +77,7 @@ impl Orbital {
             initial_e: 0.,
             bodies: vec![Body::earth()],
             relationships: HashMap::new(),
-            presets: build_presets(),
+            presets: Preset::defaults(),
         }
     }
 
@@ -442,96 +281,14 @@ impl Orbital {
     }
 }
 
-#[derive(Default, Clone, Debug)]
-struct Body {
-    pos: Position,
-    v: Velocity,
-    mass: f32,
-    radius: f32,
-    trajectory: Vec<Body>,
-    computed_a: Acceleration,
-    is_fixed: bool,
-    lock_to_circular_velocity: bool,
-    lock_to_escape_velocity: bool,
-    selected_vel_lock: usize,
+#[derive(Default)]
+struct UiState {
+    panel_width: f32,
 }
-impl Body {
-    fn _mass(mut self, mass: f32) -> Self {
-        self.mass = mass;
-        self
-    }
-
-    // returns a version of this struct to be used for the trajectory history
-    // maybe make this a separate struct?
-    fn new_history_entry(&self) -> Self {
+impl UiState {
+    fn new() -> Self {
         Self {
-            pos: self.pos,
-            v: self.v,
-            mass: self.mass,
-            radius: self.radius,
-            computed_a: self.computed_a,
-            is_fixed: self.is_fixed,
-            lock_to_circular_velocity: self.lock_to_circular_velocity,
-            lock_to_escape_velocity: self.lock_to_escape_velocity,
-            selected_vel_lock: self.selected_vel_lock,
-            trajectory: vec![],
-        }
-    }
-
-    fn update(&mut self, new_pos: Position, new_vel: Velocity, new_acc: Acceleration) -> &mut Self {
-        self.pos = new_pos;
-        self.v = new_vel;
-        self.computed_a = new_acc;
-        self.trajectory.push(self.new_history_entry());
-
-        self
-    }
-
-    // starting conditions for a low earth orbit, modeled after the ISS
-    fn outer_low() -> Self {
-        let earth_mass = Self::earth().mass;
-        let earth_pos = Self::earth().pos;
-
-        let r = 400. + R_EARTH_KM;
-        let x = 3000_f32;
-        let y = (r.powi(2) - x.powi(2)).sqrt();
-        let position = Position::new(x, y);
-
-        Self {
-            mass: 400000., // kg
-            pos: position,
-            // v: escape_velocity(earth_mass, position), // km/s
-            v: circular_velocity(earth_pos, earth_mass, position), // km/s
-            trajectory: Vec::new(),
-            ..Default::default()
-        }
-    }
-    fn _outer_med() -> Self {
-        Self {
-            mass: 5000.,
-            pos: Position::new(5000., 15000.),
-            v: Velocity::new(3.9, 0.),
-            ..Default::default()
-        }
-    }
-    fn earth() -> Self {
-        Self {
-            mass: 5.97e24,      // kg
-            radius: R_EARTH_KM, // km
-            ..Default::default()
-        }
-    }
-    fn moon() -> Self {
-        let earth_mass = Self::earth().mass;
-        let earth_pos = Self::earth().pos;
-        let position = Position::new(0., 3.844e5 + R_EARTH_KM);
-        let moon_mass = 7.34e22;
-
-        Self {
-            mass: moon_mass,
-            radius: R_MOON_KM,
-            pos: position,
-            v: circ_velocity_barycenter(moon_mass, position, earth_mass, earth_pos).0, // km/s
+            panel_width: 300.,
             ..Default::default()
         }
     }
