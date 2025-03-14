@@ -11,6 +11,8 @@ use winit::{
 
 use crate::{app::App, handler::AppHandler, ui::EguiRenderer};
 
+use super::init_canvas;
+
 pub struct WgpuWindowSurface {
     device: wgpu::Device,
     surface_config: wgpu::SurfaceConfiguration,
@@ -53,7 +55,7 @@ impl WgpuWindowSurface {
 pub fn init_wgpu_app<A: App>(
     app: A,
     event_loop: EventLoop<()>,
-    canvas: Canvas<WGPURenderer>,
+    mut canvas: Canvas<WGPURenderer>,
     surface: WgpuWindowSurface,
     window: Arc<Window>,
 ) {
@@ -61,6 +63,7 @@ pub fn init_wgpu_app<A: App>(
     let device = &surface.device;
 
     let egui = EguiRenderer::new(&window, device, surface_config.format);
+    init_canvas(&mut canvas);
 
     let mut app_handler = AppHandler::<A>::new(canvas, surface, window, egui, app);
 

@@ -1,3 +1,6 @@
+use femtovg::{Canvas, Renderer};
+use resource::resource;
+
 use crate::app::App;
 
 pub mod wgpu;
@@ -14,4 +17,10 @@ pub fn start<A: App>(
     spin_on::spin_on(async_start(app, width, height, title));
     #[cfg(target_arch = "wasm32")]
     wasm_bindgen_futures::spawn_local(async_start(app));
+}
+
+fn init_canvas<T: Renderer>(canvas: &mut Canvas<T>) {
+    canvas
+        .add_font_mem(&resource!("assets/Roboto-Regular.ttf"))
+        .expect("Cannot add font");
 }

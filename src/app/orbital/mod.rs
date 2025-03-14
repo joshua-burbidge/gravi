@@ -7,7 +7,10 @@ use body::{is_mass_significant, Body, Preset};
 
 use super::{
     core::{
-        draw::{draw_barycenter, draw_circle_fixed, draw_circle_scaled, draw_line_thru_points},
+        draw::{
+            draw_barycenter, draw_circle_fixed, draw_circle_scaled, draw_line_thru_points,
+            draw_text,
+        },
         physics::{
             barycenter, circ_velocity_barycenter, escape_velocity_barycenter,
             gravitational_acceleration, gravitational_potential_energy, kinetic_energy,
@@ -55,6 +58,8 @@ impl App for Orbital {
             let points: Vec<Position> = b.trajectory.iter().map(|b| b.pos).collect();
 
             draw_line_thru_points(canvas, points, graph_frequency, self.distance_per_px);
+
+            draw_text(canvas, b.name.clone(), &b.pos, self.distance_per_px);
         }
 
         for bary in &self.analysis.barycenters {
@@ -333,7 +338,6 @@ impl Analysis {
             }
         }
 
-        println!("{:?}", barycenters);
         barycenters
     }
 

@@ -49,55 +49,54 @@ pub fn ui(app: &mut Orbital, ctx: &egui::Context) {
                 let x_range = -10000.0..=10000.;
                 let y_range = -10000.0..=10000.;
 
-                egui::CollapsingHeader::new(RichText::new(format!("Body {}:", i + 1)).heading())
-                    .show(ui, |ui| {
-                        ui.label("Position");
-                        ui.add(XYInput::new(
-                            &mut body.pos.x,
-                            &mut body.pos.y,
-                            x_range,
-                            y_range,
-                        ));
-                        ui.label(format!("|r|: {} km", body.pos.mag()));
+                egui::CollapsingHeader::new(
+                    RichText::new(format!("Body {}: {}", i + 1, body.name)).heading(),
+                )
+                .show(ui, |ui| {
+                    ui.label("Position");
+                    ui.add(XYInput::new(
+                        &mut body.pos.x,
+                        &mut body.pos.y,
+                        x_range,
+                        y_range,
+                    ));
+                    ui.label(format!("|r|: {} km", body.pos.mag()));
 
-                        if !body.is_fixed {
-                            ui.label("Velocity");
-                            ui.checkbox(
-                                &mut body.lock_to_circular_velocity,
-                                "lock to circular velocity",
+                    if !body.is_fixed {
+                        ui.label("Velocity");
+                        ui.checkbox(
+                            &mut body.lock_to_circular_velocity,
+                            "lock to circular velocity",
+                        );
+                        ui.checkbox(&mut body.lock_to_escape_velocity, "lock to escape velocity");
+
+                        let vel_lock_enabled =
+                            body.lock_to_circular_velocity || body.lock_to_escape_velocity;
+                        ui.add_enabled_ui(vel_lock_enabled, |ui| {
+                            egui::ComboBox::from_label("Around body").show_index(
+                                ui,
+                                &mut body.selected_vel_lock,
+                                len,
+                                |i| format!("Body {}", i + 1),
                             );
-                            ui.checkbox(
-                                &mut body.lock_to_escape_velocity,
-                                "lock to escape velocity",
-                            );
+                        });
+                        ui.add_enabled_ui(!vel_lock_enabled, |ui| {
+                            ui.add(XYInput::new(
+                                &mut body.v.x,
+                                &mut body.v.y,
+                                -50.0..=50.0,
+                                -50.0..=50.0,
+                            ));
+                        });
+                    }
 
-                            let vel_lock_enabled =
-                                body.lock_to_circular_velocity || body.lock_to_escape_velocity;
-                            ui.add_enabled_ui(vel_lock_enabled, |ui| {
-                                egui::ComboBox::from_label("Around body").show_index(
-                                    ui,
-                                    &mut body.selected_vel_lock,
-                                    len,
-                                    |i| format!("Body {}", i + 1),
-                                );
-                            });
-                            ui.add_enabled_ui(!vel_lock_enabled, |ui| {
-                                ui.add(XYInput::new(
-                                    &mut body.v.x,
-                                    &mut body.v.y,
-                                    -50.0..=50.0,
-                                    -50.0..=50.0,
-                                ));
-                            });
-                        }
+                    ui.label("Mass");
+                    ui.add(CustomSlider::new(&mut body.mass, 1.0..=5e10).label("M:"));
 
-                        ui.label("Mass");
-                        ui.add(CustomSlider::new(&mut body.mass, 1.0..=5e10).label("M:"));
-
-                        ui.monospace("Acceleration (km/s^2)");
-                        ui.monospace(format!("Ax:    {:+.4e}", body.computed_a.x));
-                        ui.monospace(format!("Ay:    {:+.4e}", body.computed_a.y));
-                    });
+                    ui.monospace("Acceleration (km/s^2)");
+                    ui.monospace(format!("Ax:    {:+.4e}", body.computed_a.x));
+                    ui.monospace(format!("Ay:    {:+.4e}", body.computed_a.y));
+                });
                 ui.add_space(20.);
             }
 

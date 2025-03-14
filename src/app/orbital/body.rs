@@ -15,6 +15,7 @@ pub struct Body {
     pub lock_to_circular_velocity: bool,
     pub lock_to_escape_velocity: bool,
     pub selected_vel_lock: usize,
+    pub name: String,
 }
 impl Body {
     // returns a version of this struct to be used for the trajectory history
@@ -30,6 +31,7 @@ impl Body {
             lock_to_circular_velocity: self.lock_to_circular_velocity,
             lock_to_escape_velocity: self.lock_to_escape_velocity,
             selected_vel_lock: self.selected_vel_lock,
+            name: self.name.clone(),
             trajectory: vec![],
         }
     }
@@ -59,6 +61,7 @@ impl Body {
         let position = Position::new(x, y);
 
         Self {
+            name: "Orbiting Object".to_string(),
             mass: 400000., // kg
             pos: position,
             v: circular_velocity(earth_pos, earth_mass, position), // km/s
@@ -76,6 +79,7 @@ impl Body {
     }
     pub fn earth() -> Self {
         Self {
+            name: "Earth".to_string(),
             mass: 5.97e24,      // kg
             radius: R_EARTH_KM, // km
             ..Default::default()
@@ -88,6 +92,7 @@ impl Body {
         let moon_mass = 7.34e22;
 
         Self {
+            name: "Moon".to_string(),
             mass: moon_mass,
             radius: R_MOON_KM,
             pos: position,

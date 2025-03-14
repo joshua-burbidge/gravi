@@ -99,6 +99,8 @@ pub fn draw_line_thru_points<T: Renderer>(
         .iter()
         .enumerate()
         .filter(|(i, _)| i % graph_frequency == 0)
+        // .rev()
+        // .take(10000)
         .map(|(_, pos)| pos);
 
     let mut line_path = Path::new();
@@ -118,4 +120,19 @@ pub fn draw_line_thru_points<T: Renderer>(
     let paint = Paint::color(Color::rgbf(0., 1., 0.)).with_line_width(scaled_width(canvas, 1.));
 
     canvas.stroke_path(&line_path, &paint);
+}
+
+pub fn draw_text<T: Renderer>(
+    canvas: &mut Canvas<T>,
+    text: String,
+    pos: &Position,
+    distance_per_px: f32,
+) {
+    let text_paint = Paint::color(Color::white()).with_font_size(300.0);
+
+    let px = pos_to_canvas(pos, distance_per_px);
+
+    canvas
+        .fill_text(px.x, px.y, text, &text_paint)
+        .expect("failed to write text");
 }
