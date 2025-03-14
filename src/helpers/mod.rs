@@ -1,5 +1,6 @@
 use crate::app::App;
 
+pub mod opengl;
 pub mod wgpu;
 
 pub fn start<A: App>(
