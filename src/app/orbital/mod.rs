@@ -64,6 +64,7 @@ impl App for Orbital {
 
     fn ui(&mut self, ctx: &egui::Context) {
         ui::ui(self, ctx);
+        self.analysis = self.analysis.analyze(self);
     }
     fn panel_width(&self) -> f32 {
         self.ui_state.panel_width
