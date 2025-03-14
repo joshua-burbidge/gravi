@@ -38,7 +38,7 @@ impl App for Orbital {
         for _ in 0..self.num_ticks {
             self.run_euler();
         }
-        self.analysis = self.analysis.analyze(self);
+        self.analyze();
     }
 
     fn draw(&self, canvas: &mut femtovg::Canvas<femtovg::renderer::WGPURenderer>) {
@@ -64,7 +64,7 @@ impl App for Orbital {
 
     fn ui(&mut self, ctx: &egui::Context) {
         ui::ui(self, ctx);
-        self.analysis = self.analysis.analyze(self);
+        self.analyze();
     }
     fn panel_width(&self) -> f32 {
         self.ui_state.panel_width
@@ -243,6 +243,10 @@ impl Orbital {
 
         self.started = false;
         self.stopped = false;
+    }
+
+    fn analyze(&mut self) {
+        self.analysis = self.analysis.analyze(self);
     }
 }
 

@@ -10,4 +10,9 @@ Created from my boilerplate here: https://github.com/joshua-burbidge/femtovg-wgp
 - disable/don't render ui after starting to improve performance?
   - don't clear canvas?
 - use types for units
+- why is the frame time so low even when it's lagging
+- Binary system - 2 equally-sized bodies
 
+
+#### Verify
+- new energy implementation
