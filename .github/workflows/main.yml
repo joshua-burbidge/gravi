@@ -42,8 +42,7 @@ jobs:
       run: |
         chmod u+x build-release.sh
         ./build-release.sh
-        ls web
-        ls web/generated
-        aws s3 sync ./web s3://$BUCKET_NAME
+        aws s3 sync ./web s3://$BUCKET_NAME/web
+        aws s3 sync ./assets s3://$BUCKET_NAME/assets
       
       
