@@ -53,6 +53,7 @@ pub fn ui(app: &mut Orbital, ctx: &egui::Context) {
             egui::CollapsingHeader::new(
                 RichText::new(format!("Body {}: {}", i + 1, body.name)).heading(),
             )
+            .default_open(body.default_expanded)
             .show(ui, |ui| {
                 ui.add_enabled_ui(!app.started, |ui| {
                     text_sized(ui, "Position (km)", 14.);

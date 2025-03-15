@@ -16,6 +16,7 @@ pub struct Body {
     pub lock_to_escape_velocity: bool,
     pub selected_vel_lock: usize,
     pub name: String,
+    pub default_expanded: bool,
 }
 impl Body {
     // returns a version of this struct to be used for the trajectory history
@@ -32,6 +33,7 @@ impl Body {
             lock_to_escape_velocity: self.lock_to_escape_velocity,
             selected_vel_lock: self.selected_vel_lock,
             name: self.name.clone(),
+            default_expanded: self.default_expanded,
             trajectory: vec![],
         }
     }
@@ -66,6 +68,7 @@ impl Body {
             pos: position,
             v: circular_velocity(earth_pos, earth_mass, position), // km/s
             trajectory: Vec::new(),
+            default_expanded: true,
             ..Default::default()
         }
     }
@@ -74,6 +77,7 @@ impl Body {
             mass: 5000.,
             pos: Position::new(5000., 15000.),
             v: Velocity::new(3.9, 0.),
+            default_expanded: true,
             ..Default::default()
         }
     }
@@ -97,6 +101,7 @@ impl Body {
             radius: R_MOON_KM,
             pos: position,
             v: circ_velocity_barycenter(moon_mass, position, earth_mass, earth_pos).0, // km/s
+            default_expanded: true,
             ..Default::default()
         }
     }
