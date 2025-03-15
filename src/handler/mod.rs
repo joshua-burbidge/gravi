@@ -59,7 +59,6 @@ impl<A: App> ApplicationHandler for AppHandler<A> {
         let midpoint_y = (self.canvas.height() / 2) as f32;
         let midpoint_x = (self.app.panel_width() + self.canvas.width() as f32) / 2.;
         self.canvas.translate(midpoint_x, midpoint_y);
-        self.canvas.scale(0.07, 0.07);
     }
 
     fn window_event(

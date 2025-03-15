@@ -82,7 +82,7 @@ impl Orbital {
             ui_state: UiState::new(),
             dt: 1.,
             num_ticks: 1000,
-            distance_per_px: 4.,
+            distance_per_px: 30.,
             started: false,
             stopped: false,
             bodies: vec![Body::earth()],
@@ -110,7 +110,10 @@ impl Orbital {
         let preset = self.presets.get(preset_num);
 
         match preset {
-            Some(preset) => self.bodies = preset.bodies.clone(),
+            Some(preset) => {
+                self.bodies = preset.bodies.clone();
+                self.distance_per_px = preset.distance_per_px as f32;
+            }
             None => {}
         };
     }

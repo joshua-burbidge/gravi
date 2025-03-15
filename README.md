@@ -23,7 +23,6 @@ python3 -m http.server
 - use types for units
 - why is the frame time so low even when it's lagging
 - Binary system - 2 equally-sized bodies
-- wgpu + WASM and/or OpenGL + WASM
 
 #### Verify
 - new energy implementation
