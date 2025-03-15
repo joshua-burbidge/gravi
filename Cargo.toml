@@ -18,7 +18,7 @@ egui = "0.31.0"
 resource = "0.6.0"
 
 [patch.crates-io]
-femtovg = { git = "https://github.com/joshua-burbidge/femtovg.git", branch = "v13-override-change" }
+femtovg = { git = "https://github.com/joshua-burbidge/femtovg.git", branch = "replace-overrides-with-uniform" }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 glutin = "0.32.2"

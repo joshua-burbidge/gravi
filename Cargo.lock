@@ -524,7 +524,7 @@ dependencies = [
 [[package]]
 name = "femtovg"
 version = "0.13.0"
-source = "git+https://github.com/joshua-burbidge/femtovg.git?branch=v13-override-change#d2c48ecdedcd43c6e2e9c5bf9131050e92b8903d"
+source = "git+https://github.com/joshua-burbidge/femtovg.git?branch=replace-overrides-with-uniform#97cb231eabb1b30fc3532cde6cb16968042ed41a"
 dependencies = [
  "bitflags 2.8.0",
  "bytemuck",
