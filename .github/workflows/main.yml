@@ -12,7 +12,7 @@ jobs:
   deploy:
     name: deploy
     concurrency: deploy
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     environment: production
     defaults:
       run:
