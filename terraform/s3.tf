@@ -35,6 +35,6 @@ resource "aws_s3_bucket_acl" "example" {
     aws_s3_bucket_public_access_block.public_access,
   ]
 
-  bucket = aws_s3_bucket.website_bucket
+  bucket = aws_s3_bucket.website_bucket.id
   acl    = "public-read"
 }
