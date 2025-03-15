@@ -33,7 +33,7 @@ jobs:
         terraform plan -input=false -out=tfplan
       working-directory: ./terraform
     - name: Terraform Apply
-      if: github.ref == 'refs/heads/"deploy-to-s3"' && github.event_name == 'push'
+      if: github.ref == 'refs/heads/deploy-to-s3' && github.event_name == 'push'
       run: terraform apply -auto-approve -input=false tfplan
       working-directory: ./terraform
     - name: build
