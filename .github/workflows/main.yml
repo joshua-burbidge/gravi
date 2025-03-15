@@ -21,7 +21,7 @@ jobs:
     - uses: actions/checkout@v4
     - uses: aws-actions/configure-aws-credentials@v4
       with:
-        role-to-assume: arn:aws:iam::575737149124:role/graph-rs-deploy
+        role-to-assume: arn:aws:iam::575737149124:role/gravi-deploy
         aws-region: us-east-1
     - uses: hashicorp/setup-terraform@v3
       with:
@@ -30,7 +30,7 @@ jobs:
       run: |
         terraform init
         terraform fmt -check
-        terraform plan -input=false -output=tfplan
+        terraform plan -input=false -out=tfplan
       working-directory: ./terraform
     - name: Terraform Apply
       if: github.ref == 'refs/heads/"master"' && github.event_name == 'push'
