@@ -22,6 +22,7 @@ pub fn ui(app: &mut Orbital, ctx: &egui::Context) {
             .show(ui, |ui| {
                 for (i, preset) in presets.iter().enumerate() {
                     if ui.button(preset).clicked() {
+                        app.reset();
                         app.load_preset(i);
                     }
                 }
