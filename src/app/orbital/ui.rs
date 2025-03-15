@@ -15,6 +15,7 @@ pub fn ui(app: &mut Orbital, ctx: &egui::Context) {
     let panel = egui::SidePanel::left("main-ui-panel")
         .exact_width(app.ui_state.panel_width)
         .resizable(false);
+
     panel.show(ctx, |ui| {
         egui::CollapsingHeader::new(RichText::new("Select preset simulation").heading())
             .default_open(true)
@@ -118,4 +119,35 @@ pub fn ui(app: &mut Orbital, ctx: &egui::Context) {
         ui.monospace(format!("Diff:        {:.2}%", diff_percent));
         ui.monospace(format!("Diff per t:  {:.2e}%", (100. - diff_percent) / t));
     });
+}
+
+fn text_sized(ui: &mut egui::Ui, text: &str, size: f32) {
+    ui.monospace(RichText::new(text).size(size));
+}
+
+pub fn controls_panel(app: &mut Orbital, ctx: &egui::Context) {
+    let available_rect = ctx.screen_rect();
+    let x = available_rect.left() + app.ui_state.panel_width;
+    let y = available_rect.top();
+
+    let panel_color = ctx.style().visuals.panel_fill;
+    let panel_stroke = ctx.style().visuals.window_stroke;
+
+    egui::Area::new("right-side-panel".into())
+        .fixed_pos([x, y])
+        .default_size([200., 200.])
+        .show(ctx, |ui| {
+            egui::Frame::new()
+                .fill(panel_color)
+                .inner_margin(6.)
+                .stroke(panel_stroke)
+                .show(ui, |ui| {
+                    ui.label(RichText::new("Controls").heading());
+
+                    text_sized(ui, "drag and scroll with mouse", 12.);
+                    text_sized(ui, &format!("{}: start", '\u{21B5}'), 14.);
+                    text_sized(ui, &format!("{}: progress forwards", '\u{2192}'), 14.);
+                    text_sized(ui, "a: reset", 14.);
+                });
+        });
 }
