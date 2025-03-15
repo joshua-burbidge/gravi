@@ -36,7 +36,8 @@ jobs:
       if: github.ref == 'refs/heads/deploy-to-s3' && github.event_name == 'push'
       run: |
         terraform apply -auto-approve -input=false tfplan
-        export BUCKET_NAME=$(terraform output --raw bucket_name)
+        BUCKET_NAME=$(terraform output --raw bucket_name)
+        echo "BUCKET_NAME=$(terraform output --raw bucket_name)" >> "$GITHUB_ENV"
       working-directory: ./terraform
     - name: build
       run: |
