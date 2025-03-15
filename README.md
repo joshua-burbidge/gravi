@@ -19,7 +19,9 @@ Runs natively and compiles to WebAssembly to run in a browser.
 
 Uses [`wgpu`](https://github.com/gfx-rs/wgpu) (graphics) + [`femtovg`](https://github.com/femtovg/femtovg) (2D vector drawing) + [`egui`](https://github.com/femtovg/femtovg) (UI).
 
-Created from my boilerplate here: https://github.com/joshua-burbidge/femtovg-wgpu, which is adapted from the [femtovg examples](https://github.com/femtovg/femtovg/tree/master/examples).
+#### Credits
+
+Created from my femtovg+wgpu+egui boilerplate here: https://github.com/joshua-burbidge/femtovg-wgpu, which references the [femtovg examples](https://github.com/femtovg/femtovg/tree/master/examples) for femtovg integration and [egui-wgpu-demo](https://github.com/ejb004/egui-wgpu-demo) by [ejb004](https://github.com/ejb004) for the egui-wgpu integration.
 
 #### WASM
 
