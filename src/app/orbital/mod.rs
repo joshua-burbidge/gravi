@@ -8,7 +8,7 @@ use body::{is_mass_significant, Body, Preset};
 use super::{
     core::{
         draw::{
-            draw_barycenter, draw_circle_fixed, draw_circle_scaled, draw_line_thru_points,
+            draw_barycenter, draw_circle_by_radius, draw_circle_scaled, draw_line_thru_points,
             draw_text,
         },
         physics::{
@@ -52,7 +52,7 @@ impl App for Orbital {
             if b.radius == 0. {
                 draw_circle_scaled(canvas, &b.pos, 4., self.distance_per_px);
             } else {
-                draw_circle_fixed(canvas, &b.pos, b.radius, self.distance_per_px);
+                draw_circle_by_radius(canvas, &b.pos, b.radius, self.distance_per_px);
             }
 
             let points: Vec<Position> = b.trajectory.iter().map(|b| b.pos).collect();

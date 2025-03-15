@@ -54,17 +54,22 @@ fn draw_circle_green<T: Renderer>(
     draw_circle_paint(canvas, position, r, distance_per_px, paint);
 }
 
-// draws a circle with a fixed radius
-pub fn draw_circle_fixed<T: Renderer>(
+// Draws a circle based on its radius.
+// At large scale, the size will be mostly determined by the radius,
+// at small scale, the size will be mostly determined by the width_factor so it stays visible.
+pub fn draw_circle_by_radius<T: Renderer>(
     canvas: &mut Canvas<T>,
     position: &Position,
     r: f32,
     distance_per_px: f32,
 ) {
-    let scaled_r = convert_length(r, distance_per_px);
+    let fixed_r = convert_length(r, distance_per_px);
+    let scaled = scaled_width(canvas, 3.);
+    let total_r = fixed_r + scaled;
 
-    draw_circle_green(canvas, position, scaled_r, distance_per_px);
+    draw_circle_green(canvas, position, total_r, distance_per_px);
 }
+
 // draws a circle with a radius that scales up and down as you zoom in and out
 pub fn draw_circle_scaled<T: Renderer>(
     canvas: &mut Canvas<T>,
