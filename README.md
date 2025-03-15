@@ -15,6 +15,12 @@ Runs natively and compiles to WebAssembly to run in a browser.
 
 ![demo](image-2.png)
 
+#### Building and Running
+
+To run natively: `cargo run`
+
+To run in a browser with WebAssembly: `./serve.sh` then go to localhost:8000
+
 #### Dependencies
 
 Uses [`wgpu`](https://github.com/gfx-rs/wgpu) (graphics) + [`femtovg`](https://github.com/femtovg/femtovg) (2D vector drawing) + [`egui`](https://github.com/femtovg/femtovg) (UI).
@@ -22,10 +28,6 @@ Uses [`wgpu`](https://github.com/gfx-rs/wgpu) (graphics) + [`femtovg`](https://g
 #### Credits
 
 Created from my femtovg+wgpu+egui boilerplate here: https://github.com/joshua-burbidge/femtovg-wgpu, which references the [femtovg examples](https://github.com/femtovg/femtovg/tree/master/examples) for femtovg integration and [egui-wgpu-demo](https://github.com/ejb004/egui-wgpu-demo) by [ejb004](https://github.com/ejb004) for the egui-wgpu integration.
-
-#### WASM
-
-To run this in a browser, run `./serve.sh` and open localhost:8000 (requires python).
 
 #### TODO
 - disable/don't render ui after starting to improve performance?
