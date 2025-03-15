@@ -11,6 +11,7 @@ permissions:
 jobs:
   deploy:
     name: deploy
+    concurrency: deploy
     runs-on: ubuntu-latest
     environment: production
     defaults:
@@ -21,7 +22,7 @@ jobs:
     - uses: actions/checkout@v4
     - uses: aws-actions/configure-aws-credentials@v4
       with:
-        role-to-assume: arn:aws:iam::575737149124:role/gravi-deploy
+        role-to-assume: arn:aws:iam::575737149124:role/graph-rs-deploy
         aws-region: us-east-1
     - uses: hashicorp/setup-terraform@v3
       with:
