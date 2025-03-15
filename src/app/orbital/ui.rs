@@ -108,6 +108,8 @@ pub fn ui(app: &mut Orbital, ctx: &egui::Context) {
             }
         });
 
+        ui.add_space(10.);
+        ui.label(RichText::new("Analysis").heading());
         let t = app.t();
         let days = t / (60 * 60 * 24) as f32;
         ui.monospace(format!("t: {:.4e} s, {:.2} d", t, days));
