@@ -2,18 +2,16 @@
 
 2D orbital mechanics simulations, made with Rust.
 
-Runs natively and compiles to WebAssembly to run in a browser.
+![demo](docs/image-2.png)
 
 ## Usage
 1. Select a preset in the top left.
-  - ![preset-options](image.png)
+  - ![preset-options](docs/image.png)
 2. Configure initial conditions further in the left panel.
-  - ![more-configuration](image-1.png)
+  - ![more-configuration](docs/image-1.png)
 3. Press the Start button to lock in initial conditions and start the simulation.
 4. Press the right arrow to progress forwards.
 5. Select another preset and start again.
-
-![demo](image-2.png)
 
 #### Building and Running
 
