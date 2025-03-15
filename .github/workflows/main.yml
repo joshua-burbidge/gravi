@@ -36,16 +36,14 @@ jobs:
       if: github.ref == 'refs/heads/deploy-to-s3' && github.event_name == 'push'
       run: |
         terraform apply -auto-approve -input=false tfplan
-        BUCKET_NAME=$(terraform output --raw bucket_name)
         echo "BUCKET_NAME=$(terraform output --raw bucket_name)" >> "$GITHUB_ENV"
       working-directory: ./terraform
-    - name: build
+    - name: build and upload
       run: |
-        echo "printing bucket name"
-        echo $BUCKET_NAME
         chmod u+x build-release.sh
         ./build-release.sh
-    # - name: upload
-    #   run: aws s3 sync ./web s3://gravi-bucket
+        ls web
+        ls web/generated
+        aws s3 sync ./web s3://$BUCKET_NAME
       
       
