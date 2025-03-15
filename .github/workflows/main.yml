@@ -34,10 +34,13 @@ jobs:
       working-directory: ./terraform
     - name: Terraform Apply
       if: github.ref == 'refs/heads/deploy-to-s3' && github.event_name == 'push'
-      run: terraform apply -auto-approve -input=false tfplan
+      run: |
+        terraform apply -auto-approve -input=false tfplan
+        export BUCKET_NAME=$(terraform output --raw bucket_name)
       working-directory: ./terraform
     - name: build
       run: |
+        echo $BUCKET_NAME
         chmod u+x build-release.sh
         ./build-release.sh
     # - name: upload
