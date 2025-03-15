@@ -34,8 +34,8 @@ web_sys = { version = "0.3", package = "web-sys", features = [
 console_error_panic_hook = "0.1.5"
 resource = { version = "0.6.0", features = ["force-static"] }
 wgpu = { version = "24", features = ["webgl"] }
-wasm-bindgen-futures = { version = "0.4.45" }
-wasm-bindgen = "0.2.99"
+wasm-bindgen-futures = { version = "0.4.50" }
+wasm-bindgen = "0.2.100"
 
 [features]
 default = ["simple"]
