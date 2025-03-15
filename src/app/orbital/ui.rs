@@ -30,32 +30,32 @@ pub fn ui(app: &mut Orbital, ctx: &egui::Context) {
 
         ui.add_space(20.);
 
-        ui.add_enabled_ui(!app.started, |ui| {
-            ui.label(RichText::new("General").heading());
-            ui.add(CustomSlider::new(&mut app.dt, 0.01..=10.0).label("dt:"));
-            ui.add(CustomSlider::new(&mut app.num_ticks, 100..=100000).label("ticks per press:"));
-            ui.add_space(20.);
+        ui.label(RichText::new("General").heading());
+        ui.add(CustomSlider::new(&mut app.dt, 0.01..=10.0).label("dt:"));
+        ui.add(CustomSlider::new(&mut app.num_ticks, 100..=100000).label("ticks per press:"));
+        ui.add_space(20.);
 
-            ui.input(|i| {
-                if i.key_pressed(egui::Key::A) {
-                    app.reset();
-                }
-                if !app.started && i.key_pressed(egui::Key::Enter) {
-                    app.start();
-                }
-            });
+        ui.input(|i| {
+            if i.key_pressed(egui::Key::A) {
+                app.reset();
+            }
+            if !app.started && i.key_pressed(egui::Key::Enter) {
+                app.start();
+            }
+        });
 
-            let len = app.bodies.len();
+        let len = app.bodies.len();
 
-            for (i, body) in app.bodies.iter_mut().enumerate() {
-                let x_range = -10000.0..=10000.;
-                let y_range = -10000.0..=10000.;
+        for (i, body) in app.bodies.iter_mut().enumerate() {
+            let x_range = -10000.0..=10000.;
+            let y_range = -10000.0..=10000.;
 
-                egui::CollapsingHeader::new(
-                    RichText::new(format!("Body {}: {}", i + 1, body.name)).heading(),
-                )
-                .show(ui, |ui| {
-                    ui.label("Position");
+            egui::CollapsingHeader::new(
+                RichText::new(format!("Body {}: {}", i + 1, body.name)).heading(),
+            )
+            .show(ui, |ui| {
+                ui.add_enabled_ui(!app.started, |ui| {
+                    text_sized(ui, "Position (km)", 14.);
                     ui.add(XYInput::new(
                         &mut body.pos.x,
                         &mut body.pos.y,
@@ -63,9 +63,10 @@ pub fn ui(app: &mut Orbital, ctx: &egui::Context) {
                         y_range,
                     ));
                     ui.label(format!("|r|: {} km", body.pos.mag()));
+                    ui.add_space(6.);
 
                     if !body.is_fixed {
-                        ui.label("Velocity");
+                        text_sized(ui, "Velocity (km/s)", 14.);
                         ui.checkbox(
                             &mut body.lock_to_circular_velocity,
                             "lock to circular velocity",
@@ -90,24 +91,26 @@ pub fn ui(app: &mut Orbital, ctx: &egui::Context) {
                                 -50.0..=50.0,
                             ));
                         });
+                        ui.add_space(4.);
                     }
 
-                    ui.label("Mass");
+                    text_sized(ui, "Mass (kg)", 14.);
                     ui.add(CustomSlider::new(&mut body.mass, 1.0..=5e10).label("M:"));
+                    ui.add_space(6.);
 
-                    ui.monospace("Acceleration (km/s^2)");
+                    text_sized(ui, "Acceleration (km/s^2)", 14.);
                     ui.monospace(format!("Ax:    {:+.4e}", body.computed_a.x));
                     ui.monospace(format!("Ay:    {:+.4e}", body.computed_a.y));
                 });
-                ui.add_space(20.);
-            }
+            });
+            ui.add_space(20.);
+        }
 
-            app.set_velocities();
+        app.set_velocities();
 
-            if ui.button("Start").clicked() {
-                app.start();
-            }
-        });
+        if ui.button("Start").clicked() {
+            app.start();
+        }
 
         ui.add_space(10.);
         ui.label(RichText::new("Analysis").heading());
