@@ -33,6 +33,12 @@ jobs:
         terraform plan -input=false -out=tfplan
       working-directory: ./terraform
     - name: Terraform Apply
-      if: github.ref == 'refs/heads/"master"' && github.event_name == 'push'
-      run: terraform apply -auto-approve -input=false
+      if: github.ref == 'refs/heads/"deploy-to-s3"' && github.event_name == 'push'
+      run: terraform apply -auto-approve -input=false tfplan
       working-directory: ./terraform
+    - name: build
+      run: ./build-release.sh
+    # - name: upload
+    #   run: aws s3 sync ./web s3://gravi-bucket
+      
+      
