@@ -5,7 +5,7 @@ use crate::app::App;
 
 pub mod wgpu;
 
-pub fn start<A: App>(
+pub fn start<A: App + 'static>(
     app: A,
     #[cfg(not(target_arch = "wasm32"))] width: u32,
     #[cfg(not(target_arch = "wasm32"))] height: u32,

@@ -6,6 +6,17 @@ Uses [`wgpu`](https://github.com/gfx-rs/wgpu) (graphics) + [`femtovg`](https://g
 
 Created from my boilerplate here: https://github.com/joshua-burbidge/femtovg-wgpu
 
+#### WASM
+
+```sh
+cargo install wasm-bindgen-cli
+cargo build --target=wasm32-unknown-unknown
+wasm-bindgen ./target/wasm32-unknown-unknown/debug/examples/demo.wasm --out-dir examples/generated --target web
+
+cd examples/
+python3 -m http.server
+```
+
 #### TODO
 - disable/don't render ui after starting to improve performance?
   - don't clear canvas?
