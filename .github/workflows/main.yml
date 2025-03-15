@@ -1,0 +1,38 @@
+name: Deploy
+
+on:
+  push:
+    branches: [ "master" ]
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    name: deploy
+    runs-on: ubuntu-latest
+    environment: production
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+    - uses: actions/checkout@v4
+    - uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: arn:aws:iam::575737149124:role/graph-rs-deploy
+        aws-region: us-east-1
+    - uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: 1.11.2
+    - name: Terraform
+      run: |
+        terraform init
+        terraform fmt -check
+        terraform plan -input=false -output=tfplan
+      working-directory: ./terraform
+    - name: Terraform Apply
+      if: github.ref == 'refs/heads/"master"' && github.event_name == 'push'
+      run: terraform apply -auto-approve -input=false
+      working-directory: ./terraform
