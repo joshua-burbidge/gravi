@@ -146,6 +146,7 @@ pub async fn start_wgpu<A: App>(
             .into(),
         );
 
+        // need to see what this returns
         let _ = window.request_inner_size(winit::dpi::PhysicalSize::new(width, height));
 
         let winit::dpi::PhysicalSize {
