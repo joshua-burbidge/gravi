@@ -59,7 +59,24 @@ jobs:
         docker pull "$ECR_URL:$PREVIOUS_TAG" || echo "could not pull image"
         docker build . -f Dockerfile --cache-from "$ECR_URL:$PREVIOUS_TAG" -t "$ECR_URL:$IMAGE_TAG"
         docker push "$ECR_URL:$IMAGE_TAG"
-        echo "IMAGE $IMAGE_TAG is pushed to $ECR_URL"
+        echo "Image $IMAGE_TAG is pushed to $ECR_URL"
+    - name: Update container via SSM
+      env:
+        IMAGE_TAG: ${{ github.sha }}
+      run: |
+        echo $ECR_URL
+        echo $INSTANCE_ID
+        aws ssm send-command \
+          --instance-ids "$INSTANCE_ID" \
+          --document-name "AWS-RunShellScript" \
+          --parameters commands="[
+            'sudo $(aws ecr get-login --no-include-email --region us-east-1)',
+            'sudo docker pull $ECR_URL:$IMAGE_TAG',
+            'sudo docker stop app_container || true',
+            'sudo docker rm app_container || true',
+            'sudo docker run -d --name app_container -p 8080:80 $ECR_URL:$IMAGE_TAG'
+          ]" \
+          --region us-east-1
   
     # - name: build and upload
     #   run: |
