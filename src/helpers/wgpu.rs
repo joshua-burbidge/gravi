@@ -56,9 +56,10 @@ pub fn init_wgpu_app<A: App>(
     app: A,
     event_loop: EventLoop<()>,
     mut canvas: Canvas<WGPURenderer>,
-    surface: WgpuWindowSurface,
+    mut surface: WgpuWindowSurface,
     window: Arc<Window>,
 ) {
+    surface.resize(window.inner_size().width, window.inner_size().height);
     let surface_config = &surface.surface_config;
     let device = &surface.device;
 
