@@ -21,6 +21,6 @@ pub fn start<A: App + 'static>(
 
 fn init_canvas<T: Renderer>(canvas: &mut Canvas<T>) {
     canvas
-        .add_font_mem(&resource!("assets/Roboto-Regular.ttf"))
+        .add_font_mem(&resource!("assets/roboto-regular.ttf"))
         .expect("Cannot add font");
 }
