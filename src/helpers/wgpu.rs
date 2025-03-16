@@ -128,7 +128,21 @@ pub async fn start_wgpu<A: App>(
         #[allow(deprecated)]
         let window = event_loop.create_window(window_attrs).unwrap();
 
+        let winit::dpi::PhysicalSize { height, width } = window.inner_size();
+        web_sys::console::log_1(
+            &format!("created window - height: {}, width: {}", height, width).into(),
+        );
+
         let _ = window.request_inner_size(winit::dpi::PhysicalSize::new(width, height));
+
+        let winit::dpi::PhysicalSize { height, width } = window.inner_size();
+        web_sys::console::log_1(
+            &format!(
+                "after requested size - height: {}, width: {}",
+                height, width
+            )
+            .into(),
+        );
 
         (window, width, height)
     };
