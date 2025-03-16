@@ -21,4 +21,4 @@ EXPOSE 80
 CMD [ "nginx", "-g", "daemon off;" ]
 
 # docker build -t gravi-rs .
-# docker run -p 80:80 gravi-rs
+# docker run --rm -p 80:80 gravi-rs
