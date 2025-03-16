@@ -11,8 +11,8 @@ COPY src ./src
 COPY web ./web
 COPY assets ./assets
 
-RUN cargo build --target=wasm32-unknown-unknown
-RUN wasm-bindgen ./target/wasm32-unknown-unknown/debug/grav.wasm --out-dir web/generated --target web
+RUN cargo build --target=wasm32-unknown-unknown --release
+RUN wasm-bindgen ./target/wasm32-unknown-unknown/release/grav.wasm --out-dir web/generated --target web
 
 FROM nginx:latest
 COPY nginx.conf /etc/nginx/nginx.conf
@@ -21,4 +21,4 @@ EXPOSE 80
 CMD [ "nginx", "-g", "daemon off;" ]
 
 # docker build -t gravi-rs .
-# docker run -p 8080:80 gravi-rs
+# docker run -p 80:80 gravi-rs
