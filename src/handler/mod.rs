@@ -195,8 +195,8 @@ impl<A: App> ApplicationHandler for AppHandler<A> {
                 // egui
                 // On the first redraw, the window width/height are sometimes 0.
                 // If we pass is 0 to render_ui it will crash.
-                let egui_width = if size.width != 0 { size.height } else { 1024 };
-                let egui_height = if size.height != 0 { size.height } else { 768 };
+                let egui_width = if size.width != 0 { size.height } else { 1600 };
+                let egui_height = if size.height != 0 { size.height } else { 1000 };
                 let device = surface.get_device();
                 let queue = surface.get_queue();
                 self.egui.render_ui(
