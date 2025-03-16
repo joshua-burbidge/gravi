@@ -63,13 +63,16 @@ resource "aws_instance" "app_instance" {
     service docker start
     chkconfig docker on
 
-
-
   EOF
 
   tags = {
     Name = "gravi-instance"
   }
+}
+
+resource "aws_eip" "lb" {
+  instance = aws_instance.app_instance.id
+  domain   = "vpc"
 }
 
 # # Authenticate Docker to ECR
