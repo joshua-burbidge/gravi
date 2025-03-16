@@ -46,15 +46,14 @@ data "aws_ssm_parameter" "amazon_linux_ami" {
   name = "/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2"
 }
 
-# EC2 Instance that runs Docker and deploys a container from ECR
 resource "aws_instance" "app_instance" {
   ami                  = data.aws_ssm_parameter.amazon_linux_ami.value
   instance_type        = "t2.micro"
-  key_name             = "gravi-instance-key-pair" # Replace with your key pair name
+  key_name             = "gravi-instance-key-pair"
   security_groups      = [aws_security_group.web_sg.name]
   iam_instance_profile = aws_iam_instance_profile.ec2_instance_profile.name
 
-  # User data installs Docker, logs into ECR, pulls and runs your image
+  # install docker - images will be pulled after they are uploaded
   user_data = <<-EOF
     #!/bin/bash
     set -e
@@ -66,7 +65,6 @@ resource "aws_instance" "app_instance" {
 
     # Authenticate Docker to ECR
     $(aws ecr get-login --no-include-email --region ${data.aws_region.current.name})
-
 
   EOF
 

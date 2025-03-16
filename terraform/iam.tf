@@ -1,6 +1,6 @@
-# IAM Role for EC2 with ECR permissions
+# IAM Role for EC2 with ECR and SSM permissions
 resource "aws_iam_role" "ec2_role" {
-  name = "ec2-ecr-access-role"
+  name = "gravi-instance-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
