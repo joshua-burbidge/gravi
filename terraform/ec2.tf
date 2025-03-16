@@ -72,7 +72,7 @@ data "aws_ssm_parameter" "amazon_linux_ami" {
 }
 output "ami" {
   description = "amazon linux ami"
-  value       = data.aws_ssm_parameter.amazon_linux_ami.arn
+  value       = data.aws_ssm_parameter.amazon_linux_ami.id
 }
 
 # EC2 Instance that runs Docker and deploys a container from ECR
