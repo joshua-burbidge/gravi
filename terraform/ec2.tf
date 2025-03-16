@@ -1,29 +1,3 @@
-# IAM Role for EC2 with ECR permissions
-resource "aws_iam_role" "ec2_role" {
-  name = "ec2-ecr-access-role"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [{
-      Action = "sts:AssumeRole"
-      Effect = "Allow"
-      Principal = {
-        Service = "ec2.amazonaws.com"
-      }
-    }]
-  })
-}
-
-resource "aws_iam_role_policy_attachment" "ecr_access" {
-  role       = aws_iam_role.ec2_role.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
-}
-
-resource "aws_iam_instance_profile" "ec2_instance_profile" {
-  name = "ec2-ecr-instance-profile"
-  role = aws_iam_role.ec2_role.name
-}
-
 # Security Group allowing SSH and HTTP/HTTPS access
 resource "aws_security_group" "web_sg" {
   name        = "web-sg"
@@ -72,12 +46,12 @@ data "aws_ssm_parameter" "amazon_linux_ami" {
 }
 output "ami" {
   description = "amazon linux ami"
-  value       = data.aws_ssm_parameter.amazon_linux_ami.id
+  value       = data.aws_ssm_parameter.amazon_linux_ami.value
 }
 
 # EC2 Instance that runs Docker and deploys a container from ECR
-resource "aws_instance" "ubuntu" {
-  ami                  = data.aws_ssm_parameter.amazon_linux_ami.id
+resource "aws_instance" "app_instance" {
+  ami                  = data.aws_ssm_parameter.amazon_linux_ami.value
   instance_type        = "t2.micro"
   key_name             = "gravi-instance-key-pair" # Replace with your key pair name
   security_groups      = [aws_security_group.web_sg.name]
