@@ -114,6 +114,10 @@ impl<A: App> ApplicationHandler for AppHandler<A> {
 
                 let scale_factor = 1.0 + (y / 10.0);
                 let new_scale = scale_factor * get_scale(canvas);
+
+                #[cfg(target_arch = "wasm32")]
+                web_sys::console::log_1(&format!("scale: {}", new_scale).into());
+
                 if new_scale <= 0.001 {
                     return;
                 }
