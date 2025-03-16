@@ -69,7 +69,7 @@ impl EguiRenderer {
         let size = window.inner_size();
         let screen_descriptor = egui_wgpu::ScreenDescriptor {
             pixels_per_point: full_output.pixels_per_point,
-            size_in_pixels: [size.width, size.height],
+            size_in_pixels: [1024, 768],
         };
         egui_renderer.update_buffers(
             device,
