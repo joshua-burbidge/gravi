@@ -41,6 +41,8 @@ impl EguiRenderer {
         device: &wgpu::Device,
         queue: &wgpu::Queue,
         surface_texture: &wgpu::SurfaceTexture,
+        width: u32,
+        height: u32,
     ) {
         let state = &mut self.state;
 
@@ -66,10 +68,9 @@ impl EguiRenderer {
         let mut encoder = device.create_command_encoder(&CommandEncoderDescriptor {
             label: Some("My render encoder"),
         });
-        let size = window.inner_size();
         let screen_descriptor = egui_wgpu::ScreenDescriptor {
             pixels_per_point: full_output.pixels_per_point,
-            size_in_pixels: [1024, 768],
+            size_in_pixels: [width, height],
         };
         egui_renderer.update_buffers(
             device,

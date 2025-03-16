@@ -195,10 +195,19 @@ impl<A: App> ApplicationHandler for AppHandler<A> {
                 surface.present_canvas(canvas, &surface_texture);
 
                 // egui
+                let egui_width = if size.width != 0 { size.height } else { 1024 };
+                let egui_height = if size.height != 0 { size.height } else { 768 };
                 let device = surface.get_device();
                 let queue = surface.get_queue();
-                self.egui
-                    .render_ui(&mut self.app, window, device, queue, &surface_texture);
+                self.egui.render_ui(
+                    &mut self.app,
+                    window,
+                    device,
+                    queue,
+                    &surface_texture,
+                    egui_width,
+                    egui_height,
+                );
 
                 // both
                 surface_texture.present();
