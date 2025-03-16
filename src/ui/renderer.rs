@@ -94,7 +94,7 @@ impl EguiRenderer {
         web_sys::console::log_1(&format!("EguiRenderer::render_ui before render_pass").into());
         {
             // wgpu example uses a block like this - maybe it's an alternative to dropping render_pass
-            let render_pass = encoder.begin_render_pass(&RenderPassDescriptor {
+            let mut render_pass = encoder.begin_render_pass(&RenderPassDescriptor {
                 label: Some("My render pass"),
                 depth_stencil_attachment: None,
                 timestamp_writes: None,
@@ -108,6 +108,13 @@ impl EguiRenderer {
                     },
                 })],
             });
+            let winit::dpi::PhysicalSize { height, width } = window.inner_size();
+
+            println!("height: {}, width: {}", height, width);
+            #[cfg(target_arch = "wasm32")]
+            web_sys::console::log_1(&format!("height: {}, width: {}", height, width).into());
+
+            render_pass.set_viewport(0., 0., width as f32, height as f32, 0.0, 1.0);
 
             let mut static_render_pass = render_pass.forget_lifetime();
 
