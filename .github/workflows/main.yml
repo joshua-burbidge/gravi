@@ -74,7 +74,7 @@ jobs:
             'sudo docker pull $ECR_URL:$IMAGE_TAG',
             'sudo docker stop app_container || true',
             'sudo docker rm app_container || true',
-            'sudo docker run -d --name app_container -p 8080:80 $ECR_URL:$IMAGE_TAG'
+            'sudo docker run -d --name app_container -p 80:80 $ECR_URL:$IMAGE_TAG'
           ]" \
           --region us-east-1
   
