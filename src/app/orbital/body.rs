@@ -138,12 +138,12 @@ impl Preset {
             Preset {
                 bodies: vec![fixed_earth, Body::outer_low()],
                 name: String::from("Small object orbiting Earth"),
-                distance_per_px: 30,
+                distance_per_px: 150,
             },
             Preset {
                 bodies: vec![barycenter_earth, Body::moon()],
                 name: String::from("Moon orbiting Earth"),
-                distance_per_px: 850,
+                distance_per_px: 4000,
             },
         ]
     }

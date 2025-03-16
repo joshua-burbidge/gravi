@@ -40,3 +40,4 @@ Created from my femtovg+wgpu+egui boilerplate here: https://github.com/joshua-bu
 - new energy implementation
 
 text disappears at smaller scales - when deployed, it only appears at large scales
+- try increasing the scale

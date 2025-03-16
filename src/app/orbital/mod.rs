@@ -50,7 +50,7 @@ impl App for Orbital {
 
         for b in self.bodies.iter() {
             if b.radius == 0. {
-                draw_circle_scaled(canvas, &b.pos, 4., self.distance_per_px);
+                draw_circle_scaled(canvas, &b.pos, 10., self.distance_per_px);
             } else {
                 draw_circle_by_radius(canvas, &b.pos, b.radius, self.distance_per_px);
             }
@@ -63,7 +63,7 @@ impl App for Orbital {
         }
 
         for bary in &self.analysis.barycenters {
-            draw_barycenter(canvas, &bary, 3., self.distance_per_px);
+            draw_barycenter(canvas, &bary, 5., self.distance_per_px);
         }
     }
 
@@ -83,7 +83,7 @@ impl Orbital {
             ui_state: UiState::new(),
             dt: 1.,
             num_ticks: 1000,
-            distance_per_px: 30.,
+            distance_per_px: 150.,
             started: false,
             stopped: false,
             bodies: vec![Body::earth()],

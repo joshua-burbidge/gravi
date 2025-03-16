@@ -59,6 +59,8 @@ impl<A: App> ApplicationHandler for AppHandler<A> {
         let midpoint_y = (self.canvas.height() / 2) as f32;
         let midpoint_x = (self.app.panel_width() + self.canvas.width() as f32) / 2.;
         self.canvas.translate(midpoint_x, midpoint_y);
+
+        self.canvas.scale(4., 4.);
     }
 
     fn window_event(
@@ -242,7 +244,7 @@ fn draw_base_canvas(canvas: &mut Canvas<WGPURenderer>) {
     path.move_to(0., -100000.);
     path.line_to(0., 100000.);
 
-    let width = scaled_width(canvas, 1.);
+    let width = scaled_width(canvas, 2.);
 
     canvas.stroke_path(&path, &Paint::color(Color::white()).with_line_width(width));
 }
