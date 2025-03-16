@@ -30,19 +30,74 @@ jobs:
       run: |
         terraform init
         terraform fmt -check
-        terraform plan -input=false -out=tfplan
+        terraform plan -input=false -out=tfplan \
+          -var "git_commit_sha=${{github.sha}}"
       working-directory: ./terraform
     - name: Terraform Apply
       if: github.ref == 'refs/heads/deploy-to-s3' && github.event_name == 'push'
       run: |
         terraform apply -auto-approve -input=false tfplan
         echo "BUCKET_NAME=$(terraform output --raw bucket_name)" >> "$GITHUB_ENV"
+        echo "ECR_URL=$(terraform output --raw ecr_repository_url)" >> "$GITHUB_ENV"
       working-directory: ./terraform
-    - name: build and upload
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v2
+      with:
+        registries: 575737149124
+        mask-password: "true"
+    - name: Build, tag, and push image to Amazon ECR
+      id: build-publish
+      shell: bash
+      env:
+        IMAGE_TAG: ${{ github.sha }}
+        PREVIOUS_TAG: ${{ github.event.before }}
       run: |
-        chmod u+x build-release.sh
-        ./build-release.sh
-        aws s3 sync ./web s3://$BUCKET_NAME/web
-        aws s3 sync ./assets s3://$BUCKET_NAME/assets
-      
-      
+        echo $IMAGE_TAG
+        echo $PREVIOUS_TAG
+        docker pull "$ECR_URL:$PREVIOUS_TAG" || echo "could not pull image"
+        docker build . -f Dockerfile --cache-from "$ECR_URL:$PREVIOUS_TAG" -t "$ECR_URL:$IMAGE_TAG"
+        docker push "$ECR_URL:$IMAGE_TAG"
+        echo "IMAGE $IMAGE_TAG is pushed to $ECR_URL"
+  
+    # - name: build and upload
+    #   run: |
+    #     chmod u+x build-release.sh
+    #     ./build-release.sh
+    #     aws s3 sync ./web s3://$BUCKET_NAME/web
+    #     aws s3 sync ./assets s3://$BUCKET_NAME/assets
+  # upload:
+  #   name: upload-image
+  #   concurrency: upload-image
+  #   runs-on: ubuntu-latest
+  #   environment: production
+  #   defaults:
+  #     run:
+  #       shell: bash
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: aws-actions/configure-aws-credentials@v4
+  #       with:
+  #         role-to-assume: arn:aws:iam::575737149124:role/gravi-deploy
+  #         aws-region: us-east-1
+  #     - name: Login to Amazon ECR
+  #       id: login-ecr
+  #       uses: aws-actions/amazon-ecr-login@v2
+  #       with:
+  #         registries: 575737149124
+  #         mask-password: "true"
+  #     - name: Build, tag, and push image to Amazon ECR
+  #       id: build-publish
+  #       shell: bash
+  #       env:
+  #         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+  #         IMAGE_TAG: ${{ github.sha }}
+  #         PREVIOUS_TAG: ${{ github.event.before }}
+  #       run: |
+  #         echo $IMAGE_TAG
+  #         echo $PREVIOUS_TAG
+  #         docker pull "$ECR_REGISTRY/$REPOSITORY_NAME:$PREVIOUS_TAG" || echo "could not pull image"
+  #         docker build . -f Dockerfile --cache-from "$ECR_REGISTRY/$REPOSITORY_NAME:$PREVIOUS_TAG" -t "$ECR_REGISTRY/$REPOSITORY_NAME:$IMAGE_TAG"
+  #         docker push "$ECR_REGISTRY/$REPOSITORY_NAME:$IMAGE_TAG"
+  #         echo "IMAGE $IMAGE_TAG is pushed to $ECR_REGISTRY/$REPOSITORY_NAME"
+    
