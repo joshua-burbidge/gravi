@@ -35,6 +35,7 @@ Created from my femtovg+wgpu+egui boilerplate here: https://github.com/joshua-bu
 - Binary system - 2 equally-sized bodies
 - performance gets worse when there are long trajectories
 - show distance
+- recenter on preset
 
 #### Verify
 - new energy implementation

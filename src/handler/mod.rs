@@ -244,7 +244,7 @@ fn draw_base_canvas(canvas: &mut Canvas<WGPURenderer>) {
     path.move_to(0., -100000.);
     path.line_to(0., 100000.);
 
-    let width = scaled_width(canvas, 2.);
+    let width = scaled_width(canvas, 1.);
 
     canvas.stroke_path(&path, &Paint::color(Color::white()).with_line_width(width));
 }
