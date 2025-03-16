@@ -123,23 +123,34 @@ pub async fn start_wgpu<A: App>(
 
         let width = html_canvas.width();
         let height = html_canvas.height();
+        web_sys::console::log_1(&format!("canvas - height: {}, width: {}", height, width).into());
 
         let window_attrs = WindowAttributes::default().with_canvas(Some(html_canvas.clone()));
         #[allow(deprecated)]
         let window = event_loop.create_window(window_attrs).unwrap();
 
-        let winit::dpi::PhysicalSize { height, width } = window.inner_size();
+        let winit::dpi::PhysicalSize {
+            height: window_height,
+            width: window_width,
+        } = window.inner_size();
         web_sys::console::log_1(
-            &format!("created window - height: {}, width: {}", height, width).into(),
+            &format!(
+                "created window - height: {}, width: {}",
+                window_height, window_width
+            )
+            .into(),
         );
 
         let _ = window.request_inner_size(winit::dpi::PhysicalSize::new(width, height));
 
-        let winit::dpi::PhysicalSize { height, width } = window.inner_size();
+        let winit::dpi::PhysicalSize {
+            height: window_height,
+            width: window_width,
+        } = window.inner_size();
         web_sys::console::log_1(
             &format!(
                 "after requested size - height: {}, width: {}",
-                height, width
+                window_height, window_width
             )
             .into(),
         );
