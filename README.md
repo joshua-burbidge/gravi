@@ -38,3 +38,5 @@ Created from my femtovg+wgpu+egui boilerplate here: https://github.com/joshua-bu
 
 #### Verify
 - new energy implementation
+
+text disappears at smaller scales - when deployed, it only appears at large scales

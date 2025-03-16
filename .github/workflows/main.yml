@@ -1,0 +1,85 @@
+name: Deploy
+
+on:
+  push:
+    branches: [ "master" ]
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    name: deploy
+    concurrency: deploy
+    runs-on: ubuntu-latest
+    environment: production
+    defaults:
+      run:
+        shell: bash
+    steps:
+    - uses: actions/checkout@v4
+    - uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: arn:aws:iam::575737149124:role/gravi-deploy
+        aws-region: us-east-1
+    - uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: 1.11.2
+    - name: Terraform
+      run: |
+        terraform init
+        terraform fmt -check
+        terraform plan -input=false -out=tfplan \
+          -var "git_commit_sha=${{github.sha}}"
+      working-directory: ./terraform
+    - name: Terraform Apply
+      if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+      run: |
+        terraform apply -auto-approve -input=false tfplan
+        echo "BUCKET_NAME=$(terraform output --raw bucket_name)" >> "$GITHUB_ENV"
+        echo "ECR_URL=$(terraform output --raw ecr_repository_url)" >> "$GITHUB_ENV"
+        echo "INSTANCE_ID=$(terraform output --raw instance_id)" >> "$GITHUB_ENV"
+      working-directory: ./terraform
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v2
+      with:
+        registries: 575737149124
+        mask-password: "true"
+    - name: Build, tag, and push image to Amazon ECR
+      id: build-publish
+      shell: bash
+      env:
+        IMAGE_TAG: ${{ github.sha }}
+        PREVIOUS_TAG: ${{ github.event.before }}
+      run: |
+        echo $IMAGE_TAG
+        echo $PREVIOUS_TAG
+        docker pull "$ECR_URL:$PREVIOUS_TAG" || echo "could not pull image"
+        docker build . -f Dockerfile --cache-from "$ECR_URL:$PREVIOUS_TAG" -t "$ECR_URL:$IMAGE_TAG"
+        docker push "$ECR_URL:$IMAGE_TAG"
+        echo "Image $IMAGE_TAG is pushed to $ECR_URL"
+    - name: Update container via SSM
+      env:
+        IMAGE_TAG: ${{ github.sha }}
+      run: |
+        echo $ECR_URL
+        echo $INSTANCE_ID
+        aws ssm send-command \
+          --instance-ids "$INSTANCE_ID" \
+          --document-name "AWS-RunShellScript" \
+          --parameters commands="[
+            'aws ecr get-login-password --region us-east-1 | sudo docker login --username AWS --password-stdin $ECR_URL',
+            'sudo docker image prune --all --force',
+            'sudo docker pull $ECR_URL:$IMAGE_TAG',
+            'sudo docker stop app_container || true',
+            'sudo docker rm app_container || true',
+            'sudo docker run -d --name app_container -p 80:80 $ECR_URL:$IMAGE_TAG'
+          ]" \
+          --region us-east-1
+    - name: build and upload to s3
+      run: |
+        chmod u+x build-release.sh
+        ./build-release.sh
+        aws s3 sync ./web s3://$BUCKET_NAME/web

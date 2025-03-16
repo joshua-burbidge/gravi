@@ -114,6 +114,11 @@ impl<A: App> ApplicationHandler for AppHandler<A> {
 
                 let scale_factor = 1.0 + (y / 10.0);
                 let new_scale = scale_factor * get_scale(canvas);
+
+                #[cfg(target_arch = "wasm32")]
+                web_sys::console::log_1(&format!("scale: {}", new_scale).into());
+                println!("{}", new_scale);
+
                 if new_scale <= 0.001 {
                     return;
                 }
@@ -189,10 +194,21 @@ impl<A: App> ApplicationHandler for AppHandler<A> {
                 surface.present_canvas(canvas, &surface_texture);
 
                 // egui
+                // On the first redraw, the window width/height are sometimes 0.
+                // If we pass is 0 to render_ui it will crash.
+                let egui_width = if size.width != 0 { size.height } else { 1500 };
+                let egui_height = if size.height != 0 { size.height } else { 900 };
                 let device = surface.get_device();
                 let queue = surface.get_queue();
-                self.egui
-                    .render_ui(&mut self.app, window, device, queue, &surface_texture);
+                self.egui.render_ui(
+                    &mut self.app,
+                    window,
+                    device,
+                    queue,
+                    &surface_texture,
+                    egui_width,
+                    egui_height,
+                );
 
                 // both
                 surface_texture.present();

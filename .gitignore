@@ -1,2 +1,4 @@
 /target
-wasm/generated
+web/generated
+
+.terraform
