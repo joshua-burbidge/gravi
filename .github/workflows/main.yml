@@ -82,7 +82,6 @@ jobs:
         chmod u+x build-release.sh
         ./build-release.sh
         aws s3 sync ./web s3://$BUCKET_NAME/web
-        aws s3 sync ./assets s3://$BUCKET_NAME/assets
   # upload:
   #   name: upload-image
   #   concurrency: upload-image
