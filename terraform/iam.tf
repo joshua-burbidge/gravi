@@ -22,7 +22,7 @@ resource "aws_iam_role_policy_attachment" "ecr_access" {
 data "aws_iam_policy" "ssm_instance_policy" {
   name = "AmazonSSMManagedInstanceCore"
 }
-resource "aws_iam_role_policy_attachment" "ecr_access" {
+resource "aws_iam_role_policy_attachment" "ssm_access" {
   role       = aws_iam_role.ec2_role.name
   policy_arn = data.aws_iam_policy.ssm_instance_policy.arn
 }
