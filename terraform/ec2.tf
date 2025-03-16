@@ -5,7 +5,7 @@ resource "aws_security_group" "web_sg" {
   vpc_id      = data.aws_vpc.default_vpc.id
 
   ingress {
-    description = "SSH access from your IP"
+    description = "SSH access"
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
@@ -73,6 +73,10 @@ resource "aws_instance" "app_instance" {
 resource "aws_eip" "lb" {
   instance = aws_instance.app_instance.id
   domain   = "vpc"
+
+  tags = {
+    Name = "gravi-instance-elastic-ip"
+  }
 }
 
 # # Authenticate Docker to ECR
