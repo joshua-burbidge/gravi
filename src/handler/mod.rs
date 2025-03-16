@@ -117,6 +117,7 @@ impl<A: App> ApplicationHandler for AppHandler<A> {
 
                 #[cfg(target_arch = "wasm32")]
                 web_sys::console::log_1(&format!("scale: {}", new_scale).into());
+                println!("{}", new_scale);
 
                 if new_scale <= 0.001 {
                     return;
