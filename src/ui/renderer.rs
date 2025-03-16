@@ -91,7 +91,7 @@ impl EguiRenderer {
             array_layer_count: None,
         });
         #[cfg(target_arch = "wasm32")]
-        web_sys::console::log_1("EguiRenderer::render_ui before");
+        web_sys::console::log_1(&format!("EguiRenderer::render_ui before").into());
         {
             // wgpu example uses a block like this - maybe it's an alternative to dropping render_pass
             let render_pass = encoder.begin_render_pass(&RenderPassDescriptor {
@@ -118,7 +118,7 @@ impl EguiRenderer {
             );
         }
         #[cfg(target_arch = "wasm32")]
-        web_sys::console::log_1("EguiRenderer::render_ui after");
+        web_sys::console::log_1(&format!("EguiRenderer::render_ui after").into());
         for x in &full_output.textures_delta.free {
             egui_renderer.free_texture(x)
         }
