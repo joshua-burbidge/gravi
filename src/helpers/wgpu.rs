@@ -16,7 +16,7 @@ use super::init_canvas;
 pub struct WgpuWindowSurface {
     device: wgpu::Device,
     surface_config: wgpu::SurfaceConfiguration,
-    pub surface: wgpu::Surface<'static>,
+    surface: wgpu::Surface<'static>,
     queue: wgpu::Queue,
 }
 
@@ -32,11 +32,6 @@ impl WgpuWindowSurface {
         canvas: &mut Canvas<WGPURenderer>,
         surface_texture: &wgpu::SurfaceTexture,
     ) {
-        let w = surface_texture.texture.size().width;
-        let h = surface_texture.texture.size().height;
-        #[cfg(target_arch = "wasm32")]
-        web_sys::console::log_1(&format!("present_canvas - h: {}, w: {}", h, w).into());
-
         let commands = canvas.flush_to_surface(&surface_texture.texture);
         self.queue.submit(Some(commands));
     }
@@ -64,15 +59,6 @@ pub fn init_wgpu_app<A: App>(
     surface: WgpuWindowSurface,
     window: Arc<Window>,
 ) {
-    #[cfg(target_arch = "wasm32")]
-    web_sys::console::log_1(
-        &format!(
-            "init_wgpu: h {}, w  {}",
-            surface.surface_config.height, surface.surface_config.width
-        )
-        .into(),
-    );
-
     let surface_config = &surface.surface_config;
     let device = &surface.device;
 
@@ -128,38 +114,12 @@ pub async fn start_wgpu<A: App>(
 
         let width = html_canvas.width();
         let height = html_canvas.height();
-        web_sys::console::log_1(&format!("canvas - height: {}, width: {}", height, width).into());
 
         let window_attrs = WindowAttributes::default().with_canvas(Some(html_canvas.clone()));
         #[allow(deprecated)]
         let window = event_loop.create_window(window_attrs).unwrap();
 
-        let winit::dpi::PhysicalSize {
-            height: window_height,
-            width: window_width,
-        } = window.inner_size();
-        web_sys::console::log_1(
-            &format!(
-                "created window - height: {}, width: {}",
-                window_height, window_width
-            )
-            .into(),
-        );
-
-        // need to see what this returns
         let _ = window.request_inner_size(winit::dpi::PhysicalSize::new(width, height));
-
-        let winit::dpi::PhysicalSize {
-            height: window_height,
-            width: window_width,
-        } = window.inner_size();
-        web_sys::console::log_1(
-            &format!(
-                "after requested size - height: {}, width: {}",
-                window_height, window_width
-            )
-            .into(),
-        );
 
         (window, width, height)
     };
@@ -204,10 +164,6 @@ pub async fn start_wgpu<A: App>(
         .await
         .expect("Failed to create device");
 
-    #[cfg(target_arch = "wasm32")]
-    web_sys::console::log_1(
-        &format!("surface_config - height: {}, width: {}", height, width).into(),
-    );
     let mut surface_config = surface.get_default_config(&adapter, width, height).unwrap();
 
     let swapchain_capabilities = surface.get_capabilities(&adapter);

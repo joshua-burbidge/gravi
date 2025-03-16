@@ -168,12 +168,6 @@ impl<A: App> ApplicationHandler for AppHandler<A> {
                 }
             }
             WindowEvent::RedrawRequested { .. } => {
-                let temp_height = self.window.inner_size().height;
-                let temp_width = self.window.inner_size().width;
-                #[cfg(target_arch = "wasm32")]
-                web_sys::console::log_1(
-                    &format!("redrawing - height: {}, width: {}", temp_height, temp_width).into(),
-                );
                 let window = &self.window;
                 let surface = &mut self.surface;
                 let surface_texture = surface.get_surface_texture();
@@ -195,6 +189,8 @@ impl<A: App> ApplicationHandler for AppHandler<A> {
                 surface.present_canvas(canvas, &surface_texture);
 
                 // egui
+                // On the first redraw, the window width/height are sometimes 0.
+                // If we pass is 0 to render_ui it will crash.
                 let egui_width = if size.width != 0 { size.height } else { 1024 };
                 let egui_height = if size.height != 0 { size.height } else { 768 };
                 let device = surface.get_device();
