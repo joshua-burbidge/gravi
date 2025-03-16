@@ -9,7 +9,7 @@ resource "aws_security_group" "web_sg" {
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = ["207.45.84.102/32"] # Replace <YOUR_IP> with your public IP
+    cidr_blocks = ["207.45.84.101/32"]
   }
 
   ingress {
@@ -68,6 +68,10 @@ resource "aws_instance" "app_instance" {
 
 
   EOF
+
+  tags = {
+    Name = "gravi-instance"
+  }
 }
 
 # # Pull the image from ECR repository
