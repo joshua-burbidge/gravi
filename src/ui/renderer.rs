@@ -117,7 +117,7 @@ impl EguiRenderer {
                 &format!("before render height: {}, width: {}", height, width).into(),
             );
 
-            render_pass.set_viewport(0., 0., 1024 as f32, 768 as f32, 0.0, 1.0);
+            // render_pass.set_viewport(0., 0., 1024 as f32, 768 as f32, 0.0, 1.0);
 
             let mut static_render_pass = render_pass.forget_lifetime();
 
