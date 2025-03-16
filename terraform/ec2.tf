@@ -44,10 +44,6 @@ resource "aws_security_group" "web_sg" {
 data "aws_ssm_parameter" "amazon_linux_ami" {
   name = "/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2"
 }
-output "ami" {
-  description = "amazon linux ami"
-  value       = data.aws_ssm_parameter.amazon_linux_ami.value
-}
 
 # EC2 Instance that runs Docker and deploys a container from ECR
 resource "aws_instance" "app_instance" {
