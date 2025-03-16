@@ -73,7 +73,7 @@ impl<A: App> ApplicationHandler for AppHandler<A> {
         }
 
         match event {
-            #[cfg(not(target_arch = "wasm32"))]
+            // #[cfg(not(target_arch = "wasm32"))]
             WindowEvent::Resized(physical_size) => {
                 let surface = &mut self.surface;
 
