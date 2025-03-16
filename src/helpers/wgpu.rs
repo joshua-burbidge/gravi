@@ -56,10 +56,18 @@ pub fn init_wgpu_app<A: App>(
     app: A,
     event_loop: EventLoop<()>,
     mut canvas: Canvas<WGPURenderer>,
-    mut surface: WgpuWindowSurface,
+    surface: WgpuWindowSurface,
     window: Arc<Window>,
 ) {
-    surface.resize(window.inner_size().width, window.inner_size().height);
+    #[cfg(target_arch = "wasm32")]
+    web_sys::console::log_1(
+        &format!(
+            "init_wgpu: h {}, w  {}",
+            surface.surface_config.height, surface.surface_config.width
+        )
+        .into(),
+    );
+
     let surface_config = &surface.surface_config;
     let device = &surface.device;
 
