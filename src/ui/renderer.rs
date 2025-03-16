@@ -69,7 +69,7 @@ impl EguiRenderer {
         let size = window.inner_size();
         let screen_descriptor = egui_wgpu::ScreenDescriptor {
             pixels_per_point: full_output.pixels_per_point,
-            size_in_pixels: [size.width, size.height],
+            size_in_pixels: [1024, 768],
         };
         egui_renderer.update_buffers(
             device,
@@ -113,7 +113,9 @@ impl EguiRenderer {
             println!("height: {}, width: {}", height, width);
             // this part is 0 in deployed, non-0 in local
             #[cfg(target_arch = "wasm32")]
-            web_sys::console::log_1(&format!("height: {}, width: {}", height, width).into());
+            web_sys::console::log_1(
+                &format!("before render height: {}, width: {}", height, width).into(),
+            );
 
             render_pass.set_viewport(0., 0., 1024 as f32, 768 as f32, 0.0, 1.0);
 
