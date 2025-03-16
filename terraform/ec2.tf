@@ -63,8 +63,7 @@ resource "aws_instance" "app_instance" {
     service docker start
     chkconfig docker on
 
-    # Authenticate Docker to ECR
-    $(aws ecr get-login --no-include-email --region ${data.aws_region.current.name})
+
 
   EOF
 
@@ -73,6 +72,8 @@ resource "aws_instance" "app_instance" {
   }
 }
 
+# # Authenticate Docker to ECR
+# $(aws ecr get-login --no-include-email --region ${data.aws_region.current.name})
 # # Pull the image from ECR repository
 # docker pull ${aws_ecr_repository.gravi_repo.repository_url}:${var.git_commit_sha}
 

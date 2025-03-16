@@ -70,7 +70,7 @@ jobs:
           --instance-ids "$INSTANCE_ID" \
           --document-name "AWS-RunShellScript" \
           --parameters commands="[
-            'sudo $(aws ecr get-login --no-include-email --region us-east-1)',
+            'sudo $(aws ecr get-login-password --region us-east-1 | sudo docker login --username AWS --password-stdin $ECR_URL)',
             'sudo docker pull $ECR_URL:$IMAGE_TAG',
             'sudo docker stop app_container || true',
             'sudo docker rm app_container || true',
