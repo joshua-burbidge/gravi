@@ -12,7 +12,7 @@ jobs:
   deploy:
     name: deploy
     concurrency: deploy
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     environment: production
     defaults:
       run:
@@ -39,6 +39,7 @@ jobs:
         terraform apply -auto-approve -input=false tfplan
         echo "BUCKET_NAME=$(terraform output --raw bucket_name)" >> "$GITHUB_ENV"
         echo "ECR_URL=$(terraform output --raw ecr_repository_url)" >> "$GITHUB_ENV"
+        echo "INSTANCE_ID=$(terraform output --raw instance_id)" >> "$GITHUB_ENV"
       working-directory: ./terraform
     - name: Login to Amazon ECR
       id: login-ecr
