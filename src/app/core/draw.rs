@@ -137,7 +137,7 @@ pub fn draw_text<T: Renderer>(
     pos: &Position,
     distance_per_px: f32,
 ) {
-    let text_paint = Paint::color(Color::white()).with_font_size(30.0);
+    let text_paint = Paint::color(Color::white()).with_font_size(16.0);
 
     let px = pos_to_canvas(pos, distance_per_px);
 
