@@ -41,6 +41,11 @@ jobs:
         echo "ECR_URL=$(terraform output --raw ecr_repository_url)" >> "$GITHUB_ENV"
         echo "INSTANCE_ID=$(terraform output --raw instance_id)" >> "$GITHUB_ENV"
       working-directory: ./terraform
+    - name: build and upload to s3
+      run: |
+        chmod u+x build-release.sh
+        ./build-release.sh
+        aws s3 sync ./web s3://$BUCKET_NAME/web
     - name: Login to Amazon ECR
       id: login-ecr
       uses: aws-actions/amazon-ecr-login@v2
@@ -78,8 +83,3 @@ jobs:
             'sudo docker run -d --name app_container -p 80:80 $ECR_URL:$IMAGE_TAG'
           ]" \
           --region us-east-1
-    - name: build and upload to s3
-      run: |
-        chmod u+x build-release.sh
-        ./build-release.sh
-        aws s3 sync ./web s3://$BUCKET_NAME/web
