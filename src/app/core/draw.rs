@@ -16,11 +16,6 @@ pub fn scaled_width<T: Renderer>(canvas: &Canvas<T>, width_factor: f32) -> f32 {
     let canvas_scale = get_scale(canvas);
 
     // balance width when scale is small and large
-    // let large_scale_part = canvas_scale * 0.6;
-    // let small_scale_part = 1. / canvas_scale;
-    // let equalized_scale = large_scale_part + small_scale_part;
-
-    // equalized_scale * width_factor
     width_factor / canvas_scale
 }
 
@@ -67,13 +62,13 @@ pub fn draw_circle_by_radius<T: Renderer>(
     distance_per_px: f32,
 ) {
     let fixed_r = convert_length(r, distance_per_px);
-    let scaled = scaled_width(canvas, 1.);
+    // let scaled = scaled_width(canvas, 1.);
 
-    let total_r = if distance_per_px > 2000. {
-        fixed_r + scaled
-    } else {
-        fixed_r
-    };
+    // let total_r = if distance_per_px > 2000. {
+    //     fixed_r + scaled
+    // } else {
+    //     fixed_r
+    // };
     let total_r = fixed_r; // + scaled;
 
     draw_circle_green(canvas, position, total_r, distance_per_px);
@@ -86,7 +81,6 @@ pub fn draw_circle_scaled<T: Renderer>(
     width_factor: f32,
     distance_per_px: f32,
 ) {
-    // let width_factor_2 = distance_per_px / 10000. * width_factor;
     let r = scaled_width(canvas, width_factor);
 
     draw_circle_green(canvas, position, r, distance_per_px);
@@ -143,7 +137,7 @@ pub fn draw_text<T: Renderer>(
     pos: &Position,
     distance_per_px: f32,
 ) {
-    let text_paint = Paint::color(Color::white()).with_font_size(8.0);
+    let text_paint = Paint::color(Color::white()).with_font_size(30.0);
 
     let px = pos_to_canvas(pos, distance_per_px);
 
