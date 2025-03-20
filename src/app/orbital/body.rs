@@ -145,6 +145,39 @@ impl Preset {
                 name: String::from("Moon orbiting Earth"),
                 distance_per_px: 4000,
             },
+            Self::three_body(),
         ]
+    }
+
+    pub fn three_body() -> Self {
+        let b1 = Body {
+            name: String::from("1"),
+            radius: 1000.,
+            mass: 1e21,
+            pos: Position::new(-5000., -5000.),
+            lock_to_circular_velocity: true,
+            selected_vel_lock: 1,
+            ..Default::default()
+        };
+        let b2 = Body {
+            name: String::from("2"),
+            pos: Position::new(0., 5000.),
+            lock_to_circular_velocity: true,
+            selected_vel_lock: 0,
+            ..b1.clone()
+        };
+        let b3: Body = Body {
+            name: String::from("3"),
+            pos: Position::new(7000., -5000.),
+            v: Velocity::new(-0.2, 0.08),
+            lock_to_circular_velocity: false,
+            ..b1.clone()
+        };
+
+        Self {
+            name: String::from("Three body"),
+            distance_per_px: 300,
+            bodies: vec![b1, b2, b3],
+        }
     }
 }
