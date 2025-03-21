@@ -1,4 +1,4 @@
-use std::ops::RangeInclusive;
+use std::ops::{Neg, RangeInclusive};
 
 use egui::emath::{self, round_to_decimals};
 
@@ -35,16 +35,22 @@ fn custom_formatter(
     num: f64,
     range: RangeInclusive<usize>,
 ) -> String {
-    if num <= 100000. {
+    let abs = num.abs();
+    if abs <= 100000. {
         default_formatter.format(num, range)
     } else {
-        let pow_of_10 = num.log10().floor() as i32;
+        let pow_of_10 = abs.log10().floor() as i32;
 
-        let decimal = num / (10_f64.powi(pow_of_10));
+        let decimal = abs / (10_f64.powi(pow_of_10));
 
         let rounded = round_to_decimals(decimal, 3);
+        let with_sign = if num.is_sign_negative() {
+            rounded.neg()
+        } else {
+            rounded
+        };
 
-        String::from(format!("{}e{}", rounded, pow_of_10))
+        String::from(format!("{}e{}", with_sign, pow_of_10))
     }
 }
 
@@ -96,8 +102,17 @@ mod tests {
     }
 
     #[test]
-    fn should_use_default_if_num_lt_100000() {
+    fn should_use_default_if_num_pos_and_lt_100000() {
         let num = 99999.9_f64;
+
+        let actual = custom_formatter(&def_formatter(), num, DEFAULT_RANGE.clone());
+
+        assert_eq!(actual, num.to_string());
+    }
+
+    #[test]
+    fn should_use_default_if_num_neg_and_gt_neg_100000() {
+        let num = -99999.9_f64;
 
         let actual = custom_formatter(&def_formatter(), num, DEFAULT_RANGE.clone());
 
@@ -114,12 +129,30 @@ mod tests {
     }
 
     #[test]
+    fn should_use_default_if_num_eq_neg_100000() {
+        let num = -100000_f64;
+
+        let actual = custom_formatter(&def_formatter(), num, DEFAULT_RANGE.clone());
+
+        assert_eq!(actual, num.to_string());
+    }
+
+    #[test]
     fn should_use_e_if_num_gt_100000() {
         let num = 100001_f64;
 
         let actual = custom_formatter(&def_formatter(), num, DEFAULT_RANGE.clone());
 
         assert_eq!(actual, "1e5");
+    }
+
+    #[test]
+    fn should_use_e_if_num_lt_neg_100000() {
+        let num = -100001_f64;
+
+        let actual = custom_formatter(&def_formatter(), num, DEFAULT_RANGE.clone());
+
+        assert_eq!(actual, "-1e5");
     }
 
     #[test]
@@ -138,5 +171,14 @@ mod tests {
         let actual = custom_formatter(&def_formatter(), num, DEFAULT_RANGE.clone());
 
         assert_eq!(actual, "2.395e24");
+    }
+
+    #[test]
+    fn should_display_big_neg_number() {
+        let num = -2394871239847290000000000_f64;
+
+        let actual = custom_formatter(&def_formatter(), num, DEFAULT_RANGE.clone());
+
+        assert_eq!(actual, "-2.395e24");
     }
 }
