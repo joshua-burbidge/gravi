@@ -1,3 +1,6 @@
+use std::ops::Neg;
+
+use egui::emath::round_to_decimals;
 use femtovg::{Canvas, Color, Paint, Path, Renderer};
 
 use super::physics::{Axis, Position};
@@ -94,9 +97,10 @@ fn draw_ticks_for_axis<T: Renderer>(
         let axis_distance = (interval * i) as f32;
 
         if i == first_tick || i == last_tick {
+            let distance_text = format!("{} km", large_number_formatter(axis_distance.into()));
             draw_text_font(
                 canvas,
-                axis_distance.to_string(),
+                distance_text,
                 &axis_distance_to_position(axis, axis_distance),
                 5.0,
                 distance_per_px,
@@ -251,4 +255,24 @@ pub fn draw_text_font<T: Renderer>(
     canvas
         .fill_text(px.x, px.y, text, &text_paint)
         .expect("failed to write text");
+}
+
+pub fn large_number_formatter(num: f64) -> String {
+    let abs = num.abs();
+    if abs <= 100000. {
+        num.to_string()
+    } else {
+        let pow_of_10 = abs.log10().floor() as i32;
+
+        let decimal = abs / (10_f64.powi(pow_of_10));
+
+        let rounded = round_to_decimals(decimal, 3);
+        let with_sign = if num.is_sign_negative() {
+            rounded.neg()
+        } else {
+            rounded
+        };
+
+        String::from(format!("{}e{}", with_sign, pow_of_10))
+    }
 }

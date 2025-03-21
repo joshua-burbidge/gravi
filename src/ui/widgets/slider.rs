@@ -1,6 +1,8 @@
-use std::ops::{Neg, RangeInclusive};
+use std::ops::RangeInclusive;
 
-use egui::emath::{self, round_to_decimals};
+use egui::emath;
+
+use crate::app::core::draw::large_number_formatter;
 
 pub struct CustomSlider<'a, Num: emath::Numeric> {
     value: &'a mut Num,
@@ -39,18 +41,7 @@ fn custom_formatter(
     if abs <= 100000. {
         default_formatter.format(num, range)
     } else {
-        let pow_of_10 = abs.log10().floor() as i32;
-
-        let decimal = abs / (10_f64.powi(pow_of_10));
-
-        let rounded = round_to_decimals(decimal, 3);
-        let with_sign = if num.is_sign_negative() {
-            rounded.neg()
-        } else {
-            rounded
-        };
-
-        String::from(format!("{}e{}", with_sign, pow_of_10))
+        large_number_formatter(num)
     }
 }
 
