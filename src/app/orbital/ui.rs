@@ -92,6 +92,8 @@ pub fn ui(app: &mut Orbital, ctx: &egui::Context) {
                                 -50.0..=50.0,
                             ));
                         });
+                        ui.label(format!("|v|: {} km/s", body.v.mag()));
+
                         ui.add_space(4.);
                     }
 

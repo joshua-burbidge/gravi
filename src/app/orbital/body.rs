@@ -177,6 +177,8 @@ impl Preset {
             },
             Self::three_body(),
             Self::sun_earth_moon(),
+            Self::equal_binary(),
+            Self::unequal_binary(),
         ]
     }
 
@@ -236,6 +238,81 @@ impl Preset {
             dt: 50.,
             ticks_per_press: 100000,
             draw_frequency: 24 * 60 * 60,
+        }
+    }
+
+    // binary system with equal masses and circular velocities
+    // both bodies will move in the exact same circle
+    pub fn equal_binary() -> Self {
+        let body1 = Body {
+            name: "1".to_string(),
+            mass: 1.23e22,
+            radius: 8000.,
+            pos: Position::new(50000., 0.),
+            lock_to_circular_velocity: true,
+            selected_vel_lock: 1,
+            default_expanded: true,
+            ..Body::default()
+        };
+        let body2 = Body {
+            name: "2".to_string(),
+            pos: Position::new(-50000., 0.),
+            selected_vel_lock: 0,
+            ..body1.clone()
+        };
+
+        Self {
+            name: "Equal circular binary system".to_string(),
+            bodies: vec![body1, body2],
+            distance_per_px: 1000,
+            dt: 10.,
+            ticks_per_press: 10000,
+            draw_frequency: 24 * 60 * 60,
+            ..Preset::default()
+        }
+    }
+
+    // binary system with unequal masses
+    // If circular velocity is enabled, both bodies will travel in different-sized circles.
+    // If velocities are slightly changed, both bodies will travel in elliptical orbits.
+    // If the overall system velocity is changed, then both bodies will be orbiting a moving barycenter.
+    pub fn unequal_binary() -> Self {
+        let body1_mass = 6.23e22;
+        let body1_pos = Position::new(-100000., 150000.);
+        let body2_mass = body1_mass / 5.;
+        let body2_pos = Position::new(-200000., 150000.);
+
+        let (body1_circ_v, _body2_circ_v) =
+            circ_velocity_barycenter(body1_mass, body1_pos, body2_mass, body2_pos);
+
+        let body1 = Body {
+            name: "1".to_string(),
+            mass: body1_mass,
+            radius: 8000.,
+            pos: body1_pos,
+            v: body1_circ_v.add(Velocity::new(0.02, -0.02)),
+            lock_to_circular_velocity: false,
+            selected_vel_lock: 1,
+            default_expanded: true,
+            ..Body::default()
+        };
+        let body2 = Body {
+            name: "2".to_string(),
+            mass: 1.23e22,
+            pos: body2_pos,
+            lock_to_circular_velocity: true,
+            selected_vel_lock: 0,
+            ..body1.clone()
+        };
+
+        Self {
+            name: "Unequal binary system".to_string(),
+            bodies: vec![body1, body2],
+            distance_per_px: 2000,
+            dt: 10.,
+            ticks_per_press: 10000,
+            draw_frequency: 24 * 60 * 60,
+            ..Preset::default()
         }
     }
 }

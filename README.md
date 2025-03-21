@@ -32,10 +32,12 @@ Created from my femtovg+wgpu+egui boilerplate here: https://github.com/joshua-bu
   - don't clear canvas?
 - use types for units
 - why is the frame time so low even when it's lagging
-- Binary system - 2 equally-sized bodies
-- performance gets worse when there are long trajectories
-- show distance
 - recenter on preset
+- big: hierarchical calculations for multi-body systems
+- resonance
+
+Performance gets worse when there are long trajectories
+- a path of circles performs worse than a path of line_to
 
 #### Verify
 - new energy implementation
