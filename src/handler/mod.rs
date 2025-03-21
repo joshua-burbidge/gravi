@@ -238,11 +238,22 @@ impl<A: App> ApplicationHandler for AppHandler<A> {
 
 fn draw_base_canvas(canvas: &mut Canvas<WGPURenderer>) {
     let mut path = Path::new();
-    path.move_to(-100000., 0.);
-    path.line_to(100000., 0.);
 
-    path.move_to(0., -100000.);
-    path.line_to(0., 100000.);
+    let (width, height) = (canvas.width(), canvas.height());
+    let transform = canvas.transform().0;
+    let (offset_x, offset_y) = (transform[4], transform[5]);
+
+    let scale = get_scale(canvas);
+    let min_x = -offset_x / scale;
+    let max_x = (width as f32 - offset_x) / scale;
+    let min_y = -offset_y / scale;
+    let max_y = (height as f32 - offset_y) / scale;
+
+    path.move_to(min_x, 0.);
+    path.line_to(max_x, 0.);
+
+    path.move_to(0., min_y);
+    path.line_to(0., max_y);
 
     let width = scaled_width(canvas, 1.);
 
