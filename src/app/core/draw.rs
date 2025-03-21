@@ -205,7 +205,7 @@ pub fn draw_line_thru_points<T: Renderer>(
     ticks_per_graph_point: usize, // number of array elements per graphed point
     distance_per_px: f32,
 ) {
-    let mut points_to_draw = points
+    let points_to_draw = points
         .iter()
         .enumerate()
         .filter(|(i, _)| i % ticks_per_graph_point == 0)
@@ -213,23 +213,15 @@ pub fn draw_line_thru_points<T: Renderer>(
         // .take(10000)
         .map(|(_, pos)| pos);
 
-    let mut line_path = Path::new();
-    let initial_pos = points_to_draw.next();
-    match initial_pos {
-        Some(p) => {
-            let canvas_pos = pos_to_canvas(&p, distance_per_px);
-            line_path.move_to(canvas_pos.x, canvas_pos.y);
-        }
-        None => {}
-    }
+    let mut trajectory_path = Path::new();
     for pos in points_to_draw {
         let canvas_pos = pos_to_canvas(&pos, distance_per_px);
-        line_path.line_to(canvas_pos.x, canvas_pos.y);
+        trajectory_path.circle(canvas_pos.x, canvas_pos.y, scaled_width(canvas, 1.));
     }
 
-    let paint = Paint::color(Color::rgbf(0., 1., 0.)).with_line_width(scaled_width(canvas, 2.));
+    let paint = Paint::color(Color::rgbf(0., 1., 0.)); //.with_line_width(scaled_width(canvas, 2.));
 
-    canvas.stroke_path(&line_path, &paint);
+    canvas.fill_path(&trajectory_path, &paint);
 }
 
 pub fn draw_text<T: Renderer>(
