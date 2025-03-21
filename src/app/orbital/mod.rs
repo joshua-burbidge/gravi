@@ -5,13 +5,11 @@ use std::collections::HashMap;
 
 use body::{is_mass_significant, Body, Preset};
 
-use crate::app::core::{draw::draw_tick, physics::Axis};
-
 use super::{
     core::{
         draw::{
             draw_barycenter, draw_circle_by_radius, draw_circle_scaled, draw_line_thru_points,
-            draw_text, get_scale,
+            draw_text, draw_tick_marks, get_scale,
         },
         physics::{
             barycenter, circ_velocity_barycenter, escape_velocity_barycenter,
@@ -50,20 +48,13 @@ impl App for Orbital {
         let sec_per_graph = 100.; // graph a point every 100 seconds
         let graph_frequency = (sec_per_graph / self.dt).ceil() as usize;
 
-        let ((min_x, max_x), _) = self.distance_range(canvas);
-        let distance = max_x - min_x;
-        let pow_of_ten = distance.log10().round() as u32;
-        let interval = 10_i32.pow(pow_of_ten - 1);
-
-        println!("num tick marks: {}", distance / interval as f32);
-
-        for i in 0..10 {
-            let axis_distance = (interval * i) as f32;
-            draw_tick(canvas, Axis::X, axis_distance, self.distance_per_px);
-            draw_tick(canvas, Axis::X, -axis_distance, self.distance_per_px);
-            draw_tick(canvas, Axis::Y, axis_distance, self.distance_per_px);
-            draw_tick(canvas, Axis::Y, -axis_distance, self.distance_per_px);
-        }
+        let (x_distance_range, y_distance_range) = self.distance_range(canvas);
+        draw_tick_marks(
+            canvas,
+            x_distance_range,
+            y_distance_range,
+            self.distance_per_px,
+        );
 
         for b in self.bodies.iter() {
             if b.radius == 0. {
@@ -133,7 +124,7 @@ impl Orbital {
         let (offset_x, offset_y) = (transform[4], transform[5]);
 
         let scale = get_scale(canvas);
-        let min_x_px = -offset_x / scale;
+        let min_x_px = -(offset_x - self.ui_state.panel_width) / scale; // account for the side panel taking away some space
         let max_x_px = (width as f32 - offset_x) / scale;
         let min_y_px = -offset_y / scale;
         let max_y_px = (height as f32 - offset_y) / scale;

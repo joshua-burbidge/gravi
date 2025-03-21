@@ -40,10 +40,10 @@ pub fn draw_line_px<T: Renderer>(canvas: &mut Canvas<T>, start_px: &Position, en
     canvas.stroke_path(&path, &paint);
 }
 
-// on dimension is distance, the other is a fixed px length
-pub fn draw_tick<T: Renderer>(
+// one dimension is distance, the other is a fixed px length
+fn draw_tick<T: Renderer>(
     canvas: &mut Canvas<T>,
-    axis: Axis,
+    axis: &Axis,
     axis_distance: f32,
     distance_per_px: f32,
 ) {
@@ -66,6 +66,40 @@ pub fn draw_tick<T: Renderer>(
         }
     };
     draw_line_px(canvas, &start_px, &end_px);
+}
+
+fn draw_ticks_for_axis<T: Renderer>(
+    canvas: &mut Canvas<T>,
+    axis: &Axis,
+    distance_range: (f32, f32),
+    interval: i32,
+    distance_per_px: f32,
+) {
+    let (min_distance, max_distance) = distance_range;
+    let first_tick = min_distance as i32 / interval;
+    let last_tick = max_distance as i32 / interval;
+
+    for i in first_tick..=last_tick {
+        let axis_distance = (interval * i) as f32;
+        draw_tick(canvas, axis, axis_distance, distance_per_px);
+    }
+}
+
+pub fn draw_tick_marks<T: Renderer>(
+    canvas: &mut Canvas<T>,
+    x_distance_range: (f32, f32),
+    y_distance_range: (f32, f32),
+    distance_per_px: f32,
+) {
+    let (min_distance, max_distance) = x_distance_range;
+
+    let distance = max_distance - min_distance;
+    let pow_of_ten = distance.log10().round() as i32;
+    let interval = 10_f32.powi(pow_of_ten - 1) as i32;
+
+    for (axis, range) in [(Axis::X, x_distance_range), (Axis::Y, y_distance_range)] {
+        draw_ticks_for_axis(canvas, &axis, range, interval, distance_per_px);
+    }
 }
 
 fn draw_circle_paint<T: Renderer>(
