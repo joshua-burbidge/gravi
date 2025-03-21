@@ -105,6 +105,16 @@ impl Body {
             ..Default::default()
         }
     }
+    pub fn sun() -> Self {
+        Self {
+            name: "Sun".to_string(),
+            pos: Position::new(0., 0.),
+            mass: 1.989e30,
+            radius: 6.963e5,
+            is_fixed: true,
+            ..Default::default()
+        }
+    }
 }
 
 // if the object being pulled is 1000x more massive than the source of the gravity,
@@ -114,13 +124,23 @@ pub fn is_mass_significant(source_body: &Body, body_under_effect: &Body) -> bool
     (body_under_effect.mass / source_body.mass) < ratio_threshold
 }
 
+#[derive(Default)]
 pub struct Preset {
     pub bodies: Vec<Body>,
     pub name: String,
     pub distance_per_px: i32,
+    pub dt: f32,
+    pub ticks_per_press: i32,
 }
 
 impl Preset {
+    fn default() -> Self {
+        Self {
+            dt: 1.0,
+            ticks_per_press: 1000,
+            ..Default::default()
+        }
+    }
     pub fn defaults() -> Vec<Self> {
         let fixed_earth = Body {
             is_fixed: true,
@@ -134,18 +154,27 @@ impl Preset {
             selected_vel_lock: 1,
             ..Body::earth()
         };
+        let moon_orbiting_earth = Body {
+            lock_to_circular_velocity: true,
+            selected_vel_lock: 0,
+            ..Body::moon()
+        };
         vec![
             Preset {
                 bodies: vec![fixed_earth, Body::outer_low()],
                 name: String::from("Small object orbiting Earth"),
                 distance_per_px: 150,
+                ..Preset::default()
             },
             Preset {
-                bodies: vec![barycenter_earth, Body::moon()],
+                bodies: vec![barycenter_earth, moon_orbiting_earth],
                 name: String::from("Moon orbiting Earth"),
                 distance_per_px: 4000,
+                ticks_per_press: 100000,
+                ..Preset::default()
             },
             Self::three_body(),
+            Self::sun_earth_moon(),
         ]
     }
 
@@ -178,6 +207,32 @@ impl Preset {
             name: String::from("Three body"),
             distance_per_px: 300,
             bodies: vec![b1, b2, b3],
+            ..Preset::default()
+        }
+    }
+
+    pub fn sun_earth_moon() -> Self {
+        let sun = Body::sun();
+        let earth = Body {
+            pos: Position::new(0., 149597870_f32),
+            lock_to_circular_velocity: true,
+            selected_vel_lock: 0,
+            ..Body::earth()
+        };
+        let default_moon = Body::moon();
+        let moon = Body {
+            pos: earth.pos.add(default_moon.pos),
+            lock_to_circular_velocity: true,
+            selected_vel_lock: 1,
+            ..default_moon
+        };
+
+        Self {
+            name: "Sun + earth + moon".to_string(),
+            bodies: vec![sun, earth, moon],
+            distance_per_px: 1400000,
+            dt: 50.,
+            ticks_per_press: 100000,
         }
     }
 }
