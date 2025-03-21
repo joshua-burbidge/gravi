@@ -90,8 +90,8 @@ fn draw_ticks_for_axis<T: Renderer>(
     distance_per_px: f32,
 ) {
     let (min_distance, max_distance) = distance_range;
-    let first_tick = min_distance as i32 / interval;
-    let last_tick = max_distance as i32 / interval;
+    let first_tick = (min_distance / interval as f32).ceil() as i32;
+    let last_tick = (max_distance / interval as f32).floor() as i32;
 
     for i in first_tick..=last_tick {
         let axis_distance = (interval * i) as f32;
