@@ -131,6 +131,7 @@ pub struct Preset {
     pub distance_per_px: i32,
     pub dt: f32,
     pub ticks_per_press: i32,
+    pub draw_frequency: u32,
 }
 
 impl Preset {
@@ -138,6 +139,7 @@ impl Preset {
         Self {
             dt: 1.0,
             ticks_per_press: 1000,
+            draw_frequency: 100,
             ..Default::default()
         }
     }
@@ -233,6 +235,7 @@ impl Preset {
             distance_per_px: 1400000,
             dt: 50.,
             ticks_per_press: 100000,
+            draw_frequency: 24 * 60 * 60,
         }
     }
 }

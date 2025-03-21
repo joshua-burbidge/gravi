@@ -25,6 +25,7 @@ pub struct Orbital {
     dt: f32,
     num_ticks: i32,
     distance_per_px: f32,
+    draw_frequency: u32, // graph a point every X seconds
     started: bool,
     stopped: bool,
     bodies: Vec<Body>,
@@ -45,9 +46,6 @@ impl App for Orbital {
     }
 
     fn draw(&self, canvas: &mut femtovg::Canvas<femtovg::renderer::WGPURenderer>) {
-        let graph_frequency = 100.; // graph a point every X seconds
-        let ticks_per_graph_point = (graph_frequency / self.dt).ceil() as usize;
-
         let (x_distance_range, y_distance_range) = self.distance_range(canvas);
         draw_tick_marks(
             canvas,
@@ -55,6 +53,8 @@ impl App for Orbital {
             y_distance_range,
             self.distance_per_px,
         );
+
+        let ticks_per_graph_point = (self.draw_frequency as f32 / self.dt).ceil() as usize;
 
         for b in self.bodies.iter() {
             if b.radius == 0. {
@@ -64,7 +64,6 @@ impl App for Orbital {
             }
 
             let points: Vec<Position> = b.trajectory.iter().map(|b| b.pos).collect();
-
             draw_line_thru_points(canvas, points, ticks_per_graph_point, self.distance_per_px);
 
             draw_text(canvas, b.name.clone(), &b.pos, self.distance_per_px);
@@ -92,6 +91,7 @@ impl Orbital {
             dt: 1.,
             num_ticks: 1000,
             distance_per_px: 150.,
+            draw_frequency: 100,
             started: false,
             stopped: false,
             bodies: vec![Body::earth()],
@@ -149,6 +149,7 @@ impl Orbital {
                 self.distance_per_px = preset.distance_per_px as f32;
                 self.num_ticks = preset.ticks_per_press;
                 self.dt = preset.dt;
+                self.draw_frequency = preset.draw_frequency;
             }
             None => {}
         };
