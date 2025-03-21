@@ -7,6 +7,11 @@ pub const G_KM: f32 = G * 1e-6; // N km^2 / kg^2 (converted to km)
 pub const R_EARTH_KM: f32 = 6378.;
 pub const R_MOON_KM: f32 = 1740.;
 
+pub enum Axis {
+    X,
+    Y,
+}
+
 // calculate the magnitude of the circular velocity
 // v = sqrt(GM/r)
 fn circular_velocity_magnitude(central_mass: f32, r: f32) -> f32 {

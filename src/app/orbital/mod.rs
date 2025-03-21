@@ -5,11 +5,13 @@ use std::collections::HashMap;
 
 use body::{is_mass_significant, Body, Preset};
 
+use crate::app::core::{draw::draw_tick, physics::Axis};
+
 use super::{
     core::{
         draw::{
             draw_barycenter, draw_circle_by_radius, draw_circle_scaled, draw_line_thru_points,
-            draw_text,
+            draw_text, get_scale,
         },
         physics::{
             barycenter, circ_velocity_barycenter, escape_velocity_barycenter,
@@ -47,6 +49,21 @@ impl App for Orbital {
     fn draw(&self, canvas: &mut femtovg::Canvas<femtovg::renderer::WGPURenderer>) {
         let sec_per_graph = 100.; // graph a point every 100 seconds
         let graph_frequency = (sec_per_graph / self.dt).ceil() as usize;
+
+        let ((min_x, max_x), _) = self.distance_range(canvas);
+        let distance = max_x - min_x;
+        let pow_of_ten = distance.log10().round() as u32;
+        let interval = 10_i32.pow(pow_of_ten - 1);
+
+        println!("num tick marks: {}", distance / interval as f32);
+
+        for i in 0..10 {
+            let axis_distance = (interval * i) as f32;
+            draw_tick(canvas, Axis::X, axis_distance, self.distance_per_px);
+            draw_tick(canvas, Axis::X, -axis_distance, self.distance_per_px);
+            draw_tick(canvas, Axis::Y, axis_distance, self.distance_per_px);
+            draw_tick(canvas, Axis::Y, -axis_distance, self.distance_per_px);
+        }
 
         for b in self.bodies.iter() {
             if b.radius == 0. {
@@ -105,6 +122,31 @@ impl Orbital {
         } else {
             0.
         }
+    }
+
+    fn distance_range(
+        &self,
+        canvas: &mut femtovg::Canvas<femtovg::renderer::WGPURenderer>,
+    ) -> ((f32, f32), (f32, f32)) {
+        let (width, height) = (canvas.width(), canvas.height());
+        let transform = canvas.transform().0;
+        let (offset_x, offset_y) = (transform[4], transform[5]);
+
+        let scale = get_scale(canvas);
+        let min_x_px = -offset_x / scale;
+        let max_x_px = (width as f32 - offset_x) / scale;
+        let min_y_px = -offset_y / scale;
+        let max_y_px = (height as f32 - offset_y) / scale;
+
+        let y_range = (
+            min_y_px * self.distance_per_px,
+            max_y_px * self.distance_per_px,
+        );
+        let x_range = (
+            min_x_px * self.distance_per_px,
+            max_x_px * self.distance_per_px,
+        );
+        (x_range, y_range)
     }
 
     fn load_preset(&mut self, preset_num: usize) {

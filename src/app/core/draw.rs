@@ -1,6 +1,6 @@
 use femtovg::{Canvas, Color, Paint, Path, Renderer};
 
-use super::physics::Position;
+use super::physics::{Axis, Position};
 
 pub fn get_scale<T: Renderer>(canvas: &Canvas<T>) -> f32 {
     let transform_matrix = canvas.transform().0;
@@ -24,6 +24,48 @@ fn pos_to_canvas(position: &Position, distance_per_px: f32) -> Position {
 }
 fn convert_length(length: f32, distance_per_px: f32) -> f32 {
     length / distance_per_px
+}
+
+fn white<T: Renderer>(canvas: &Canvas<T>) -> Paint {
+    Paint::color(Color::white()).with_line_width(scaled_width(canvas, 1.))
+}
+
+pub fn draw_line_px<T: Renderer>(canvas: &mut Canvas<T>, start_px: &Position, end_px: &Position) {
+    let mut path = Path::new();
+
+    path.move_to(start_px.x, start_px.y);
+    path.line_to(end_px.x, end_px.y);
+
+    let paint = white(canvas);
+    canvas.stroke_path(&path, &paint);
+}
+
+// on dimension is distance, the other is a fixed px length
+pub fn draw_tick<T: Renderer>(
+    canvas: &mut Canvas<T>,
+    axis: Axis,
+    axis_distance: f32,
+    distance_per_px: f32,
+) {
+    let tick_length = scaled_width(canvas, 20.);
+    let tick_dist_from_axis = tick_length / 2.;
+    let (tick_start, tick_end) = (-tick_dist_from_axis, tick_dist_from_axis);
+
+    let axis_distance_px = convert_length(axis_distance, distance_per_px);
+
+    let (start_px, end_px) = match axis {
+        Axis::X => {
+            let start = Position::new(axis_distance_px, tick_start);
+            let end = Position::new(axis_distance_px, tick_end);
+            (start, end)
+        }
+        Axis::Y => {
+            let start = Position::new(tick_start, axis_distance_px);
+            let end = Position::new(tick_end, axis_distance_px);
+            (start, end)
+        }
+    };
+    draw_line_px(canvas, &start_px, &end_px);
 }
 
 fn draw_circle_paint<T: Renderer>(
