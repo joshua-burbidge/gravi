@@ -172,9 +172,9 @@ impl Orbital {
 
                 let circ_vel =
                     circ_velocity_barycenter(body.mass, body.pos, *locked_body_m, *locked_body_pos)
-                        .0
-                        .add(*_locked_body_v); // this works if the locked body velocity is not influenced by the current body (ie, hierarchical sun-earth-moon)
-                                               // but does not work for calcualting both parts of a 2-body system
+                        .0;
+                //.add(*_locked_body_v); // this works if the locked body velocity is not influenced by the current body (ie, hierarchical sun-earth-moon)
+                // but does not work for calcualting both parts of a 2-body system
                 body.v = circ_vel;
             } else if body.lock_to_escape_velocity {
                 let (locked_body_pos, _locked_body_v, locked_body_m) =
