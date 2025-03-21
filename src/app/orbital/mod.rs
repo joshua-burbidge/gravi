@@ -45,8 +45,8 @@ impl App for Orbital {
     }
 
     fn draw(&self, canvas: &mut femtovg::Canvas<femtovg::renderer::WGPURenderer>) {
-        let sec_per_graph = 100.; // graph a point every 100 seconds
-        let graph_frequency = (sec_per_graph / self.dt).ceil() as usize;
+        let graph_frequency = 100.; // graph a point every X seconds
+        let ticks_per_graph_point = (graph_frequency / self.dt).ceil() as usize;
 
         let (x_distance_range, y_distance_range) = self.distance_range(canvas);
         draw_tick_marks(
@@ -65,7 +65,7 @@ impl App for Orbital {
 
             let points: Vec<Position> = b.trajectory.iter().map(|b| b.pos).collect();
 
-            draw_line_thru_points(canvas, points, graph_frequency, self.distance_per_px);
+            draw_line_thru_points(canvas, points, ticks_per_graph_point, self.distance_per_px);
 
             draw_text(canvas, b.name.clone(), &b.pos, self.distance_per_px);
         }
@@ -171,9 +171,9 @@ impl Orbital {
 
                 let circ_vel =
                     circ_velocity_barycenter(body.mass, body.pos, *locked_body_m, *locked_body_pos)
-                        .0;
-                // .add(*_locked_body_v); // this works if the locked body velocity is not influenced by the current body (ie, hierarchical sun-earth-moon)
-                // but does not work for calcualting both parts of a 2-body system
+                        .0
+                        .add(*_locked_body_v); // this works if the locked body velocity is not influenced by the current body (ie, hierarchical sun-earth-moon)
+                                               // but does not work for calcualting both parts of a 2-body system
                 body.v = circ_vel;
             } else if body.lock_to_escape_velocity {
                 let (locked_body_pos, _locked_body_v, locked_body_m) =

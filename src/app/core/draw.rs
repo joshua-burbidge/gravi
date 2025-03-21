@@ -202,13 +202,13 @@ pub fn draw_barycenter<T: Renderer>(
 pub fn draw_line_thru_points<T: Renderer>(
     canvas: &mut Canvas<T>,
     points: Vec<Position>,
-    graph_frequency: usize, // number of array elements per graphed point
+    ticks_per_graph_point: usize, // number of array elements per graphed point
     distance_per_px: f32,
 ) {
     let mut points_to_draw = points
         .iter()
         .enumerate()
-        .filter(|(i, _)| i % graph_frequency == 0)
+        .filter(|(i, _)| i % ticks_per_graph_point == 0)
         // .rev()
         // .take(10000)
         .map(|(_, pos)| pos);
