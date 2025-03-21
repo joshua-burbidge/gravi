@@ -126,8 +126,8 @@ impl Orbital {
         let scale = get_scale(canvas);
         let min_x_px = -(offset_x - self.ui_state.panel_width) / scale; // account for the side panel taking away some space
         let max_x_px = (width as f32 - offset_x) / scale;
-        let min_y_px = -offset_y / scale;
-        let max_y_px = (height as f32 - offset_y) / scale;
+        let max_y_px = offset_y / scale;
+        let min_y_px = -(height as f32 - offset_y) / scale;
 
         let y_range = (
             min_y_px * self.distance_per_px,

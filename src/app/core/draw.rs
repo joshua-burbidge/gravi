@@ -51,23 +51,34 @@ fn draw_tick<T: Renderer>(
     let tick_dist_from_axis = tick_length / 2.;
     let (tick_start, tick_end) = (-tick_dist_from_axis, tick_dist_from_axis);
 
-    let axis_distance_px = convert_length(axis_distance, distance_per_px);
-
     let (start_px, end_px) = match axis {
         Axis::X => {
-            let start = Position::new(axis_distance_px, tick_start);
-            let end = Position::new(axis_distance_px, tick_end);
+            let tick_pos = Position::new(axis_distance, 0.);
+            let tick_px = pos_to_canvas(&tick_pos, distance_per_px).x;
+
+            let start = Position::new(tick_px, tick_start);
+            let end = Position::new(tick_px, tick_end);
             (start, end)
         }
         Axis::Y => {
-            let start = Position::new(tick_start, axis_distance_px);
-            let end = Position::new(tick_end, axis_distance_px);
+            let tick_pos = Position::new(0., axis_distance);
+            let tick_px = pos_to_canvas(&tick_pos, distance_per_px).y;
+
+            let start = Position::new(tick_start, tick_px);
+            let end = Position::new(tick_end, tick_px);
             (start, end)
         }
     };
     draw_line_px(canvas, &start_px, &end_px);
 }
 
+fn axis_distance_to_position(axis: &Axis, axis_distance: f32) -> Position {
+    let position = match axis {
+        Axis::X => Position::new(axis_distance, 0.),
+        Axis::Y => Position::new(0., axis_distance),
+    };
+    position
+}
 fn draw_ticks_for_axis<T: Renderer>(
     canvas: &mut Canvas<T>,
     axis: &Axis,
@@ -81,6 +92,16 @@ fn draw_ticks_for_axis<T: Renderer>(
 
     for i in first_tick..=last_tick {
         let axis_distance = (interval * i) as f32;
+
+        if i == first_tick || i == last_tick {
+            draw_text_font(
+                canvas,
+                axis_distance.to_string(),
+                &axis_distance_to_position(axis, axis_distance),
+                5.0,
+                distance_per_px,
+            );
+        }
         draw_tick(canvas, axis, axis_distance, distance_per_px);
     }
 }
@@ -213,7 +234,17 @@ pub fn draw_text<T: Renderer>(
     pos: &Position,
     distance_per_px: f32,
 ) {
-    let text_paint = Paint::color(Color::white()).with_font_size(12.0);
+    draw_text_font(canvas, text, pos, 12.0, distance_per_px);
+}
+
+pub fn draw_text_font<T: Renderer>(
+    canvas: &mut Canvas<T>,
+    text: String,
+    pos: &Position,
+    font_size: f32,
+    distance_per_px: f32,
+) {
+    let text_paint = Paint::color(Color::white()).with_font_size(font_size);
 
     let px = pos_to_canvas(pos, distance_per_px);
 
