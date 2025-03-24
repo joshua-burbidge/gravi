@@ -11,12 +11,10 @@ pub fn start<A: App + 'static>(
     #[cfg(not(target_arch = "wasm32"))] height: u32,
     #[cfg(not(target_arch = "wasm32"))] title: &'static str,
 ) {
-    use wgpu::start_wgpu as async_start;
-
     #[cfg(not(target_arch = "wasm32"))]
-    spin_on::spin_on(async_start(app, width, height, title));
+    spin_on::spin_on(wgpu::start_wgpu(app, width, height, title));
     #[cfg(target_arch = "wasm32")]
-    wasm_bindgen_futures::spawn_local(async_start(app));
+    wasm_bindgen_futures::spawn_local(wgpu::start_wgpu(app));
 }
 
 pub fn init_canvas<T: Renderer>(canvas: &mut Canvas<T>) {
