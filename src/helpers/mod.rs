@@ -19,7 +19,7 @@ pub fn start<A: App + 'static>(
     wasm_bindgen_futures::spawn_local(async_start(app));
 }
 
-fn init_canvas<T: Renderer>(canvas: &mut Canvas<T>) {
+pub fn init_canvas<T: Renderer>(canvas: &mut Canvas<T>) {
     canvas
         .add_font_mem(&resource!("assets/Roboto-Regular.ttf"))
         .expect("Cannot add font");

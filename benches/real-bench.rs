@@ -1,28 +1,13 @@
 use criterion::{criterion_group, criterion_main, BatchSize, Criterion};
-use grav::{app::App, Orbital};
-
-fn bench_real(c: &mut Criterion) {
-    let mut app = Orbital::new();
-    app.load_preset(1);
-    app.start();
-    println!(
-        "{} * {} = {}",
-        app.dt,
-        app.num_ticks,
-        app.dt * app.num_ticks as f32
-    );
-
-    c.bench_function("real_app_bench", |b| {
-        b.iter(|| {
-            app.run();
-        })
-    });
-
-    println!("final: {}", app.t());
-}
+use femtovg::Color;
+use grav::{
+    app::App,
+    helpers::{init_canvas, wgpu::create_canvas},
+    Orbital,
+};
 
 fn bench_batched(c: &mut Criterion) {
-    c.bench_function("real_app_bench_batched", |b| {
+    c.bench_function("run_bench", |b| {
         b.iter_batched_ref(
             || {
                 let mut app = Orbital::new();
@@ -36,22 +21,29 @@ fn bench_batched(c: &mut Criterion) {
     });
 }
 
-// fn draw_bench(c: &mut Criterion) {
-//     c.bench_function("draw_bench", |b| {
-//         b.iter_batched_ref(
-//             || {
-//                 let mut app = Orbital::new();
-//                 app.load_preset(1);
-//                 app.start();
-//                 app.run();
-//                 app.run();
-//                 app
-//             },
-//             |app| app.run(),
-//             BatchSize::SmallInput,
-//         )
-//     });
-// }
+fn draw_bench(c: &mut Criterion) {
+    let (mut canvas, _, _, _) = spin_on::spin_on(create_canvas(1600, 1000, "benching"));
 
-criterion_group!(benches, bench_real, bench_batched);
+    init_canvas(&mut canvas);
+
+    c.bench_function("draw_bench", |b| {
+        b.iter_batched_ref(
+            || {
+                let mut app = Orbital::new();
+                app.load_preset(1);
+                app.start();
+                app.run();
+                app.run();
+                app
+            },
+            |app| {
+                canvas.clear_rect(0, 0, 1600, 1000, Color::black());
+                app.draw(&mut canvas);
+            },
+            BatchSize::SmallInput,
+        )
+    });
+}
+
+criterion_group!(benches, bench_batched, draw_bench);
 criterion_main!(benches);
