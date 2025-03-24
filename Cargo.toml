@@ -45,5 +45,8 @@ default = ["simple"]
 simple = []
 
 [[bench]]
-name = "real-bench"
+name = "simple-bench"
+harness = false
+[[bench]]
+name = "long-bench"
 harness = false
