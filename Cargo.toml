@@ -45,8 +45,5 @@ default = ["simple"]
 simple = []
 
 [[bench]]
-name = "fib-bench"
-harness = false
-[[bench]]
 name = "real-bench"
 harness = false
