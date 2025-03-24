@@ -22,8 +22,8 @@ use super::{
 
 pub struct Orbital {
     ui_state: UiState,
-    dt: f32,
-    num_ticks: i32,
+    pub dt: f32,
+    pub num_ticks: i32,
     distance_per_px: f32,
     draw_frequency: u32, // graph a point every X seconds
     started: bool,
@@ -140,7 +140,7 @@ impl Orbital {
         (x_range, y_range)
     }
 
-    fn load_preset(&mut self, preset_num: usize) {
+    pub fn load_preset(&mut self, preset_num: usize) {
         let preset = self.presets.get(preset_num);
 
         match preset {
@@ -191,7 +191,7 @@ impl Orbital {
         }
     }
 
-    fn start(&mut self) {
+    pub fn start(&mut self) {
         // map of a body to the list of bodies that have a gravitational effect on it
         let mut map_body_to_sources: HashMap<usize, Vec<usize>> = HashMap::new();
 
@@ -208,11 +208,6 @@ impl Orbital {
 
             map_body_to_sources.insert(effected_i, significant_sources);
         }
-
-        println!(
-            "significant gravitational relationships: {:?}",
-            map_body_to_sources
-        );
 
         self.relationships = map_body_to_sources;
         self.started = true;
