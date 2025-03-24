@@ -36,7 +36,7 @@ pub struct Orbital {
 
 impl App for Orbital {
     fn run(&mut self) {
-        let start = Instant::now();
+        // let start = Instant::now();
 
         if !self.started || self.stopped {
             return;
@@ -46,12 +46,12 @@ impl App for Orbital {
         }
         self.analyze();
 
-        let duration = start.elapsed();
-        println!("Run: Time elapsed = {:?}", duration);
+        // let duration = start.elapsed();
+        // println!("Run: Time elapsed = {:?}", duration);
     }
 
     fn draw(&self, canvas: &mut femtovg::Canvas<femtovg::renderer::WGPURenderer>) {
-        let start = Instant::now();
+        // let start = Instant::now();
         let (x_distance_range, y_distance_range) = self.distance_range(canvas);
         draw_tick_marks(
             canvas,
@@ -82,8 +82,8 @@ impl App for Orbital {
         for bary in &self.analysis.barycenters {
             draw_barycenter(canvas, &bary, 5., self.distance_per_px);
         }
-        let duration = start.elapsed();
-        println!("Draw: Time elapsed = {:?}", duration);
+        // let duration = start.elapsed();
+        // println!("Draw: Time elapsed = {:?}", duration);
     }
 
     fn ui(&mut self, ctx: &egui::Context) {
@@ -239,9 +239,6 @@ impl Orbital {
 
         let dt = self.dt;
 
-        // let tuples = self.bodies.iter().enumerate();
-        // let lookup: HashMap<usize, &Body> = tuples.collect();
-
         let mut accelerations: HashMap<usize, Acceleration> = HashMap::new();
 
         for (affected_i, sources) in self.relationships.iter() {
@@ -254,16 +251,9 @@ impl Orbital {
                     let a_from_source =
                         gravitational_acceleration(source.pos, affected.pos, source.mass);
 
-                    // if *affected_i == 1 {
-                    //     println!("{:?}", (affected_i, source_i, a_from_source));
-                    // }
                     a_from_source
                 })
                 .fold(Acceleration::new(0., 0.), |acc, a| acc.add(a));
-
-            // if *affected_i == 1 {
-            //     println!("{:?}", total_a_for_body);
-            // }
 
             accelerations.insert(*affected_i, total_a_for_body);
         }
