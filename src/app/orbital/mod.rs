@@ -1,4 +1,4 @@
-mod body;
+pub mod body;
 mod ui;
 
 use std::collections::HashMap;
@@ -63,8 +63,12 @@ impl App for Orbital {
                 draw_circle_by_radius(canvas, &b.pos, b.radius, self.distance_per_px);
             }
 
-            let points: Vec<Position> = b.trajectory.iter().map(|b| b.pos).collect();
-            draw_line_thru_points(canvas, points, ticks_per_graph_point, self.distance_per_px);
+            draw_line_thru_points(
+                canvas,
+                &b.trajectory,
+                ticks_per_graph_point,
+                self.distance_per_px,
+            );
 
             draw_text(canvas, b.name.clone(), &b.pos, self.distance_per_px);
         }

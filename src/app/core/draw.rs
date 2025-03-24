@@ -3,6 +3,8 @@ use std::ops::Neg;
 use egui::emath::round_to_decimals;
 use femtovg::{Canvas, Color, Paint, Path, Renderer};
 
+use crate::app::orbital::body::Body;
+
 use super::physics::{Axis, Position};
 
 pub fn get_scale<T: Renderer>(canvas: &Canvas<T>) -> f32 {
@@ -201,21 +203,13 @@ pub fn draw_barycenter<T: Renderer>(
 
 pub fn draw_line_thru_points<T: Renderer>(
     canvas: &mut Canvas<T>,
-    points: Vec<Position>,
+    trajectory: &Vec<Body>,
     ticks_per_graph_point: usize, // number of array elements per graphed point
     distance_per_px: f32,
 ) {
-    let points_to_draw = points
-        .iter()
-        .enumerate()
-        .filter(|(i, _)| i % ticks_per_graph_point == 0)
-        // .rev()
-        // .take(10000)
-        .map(|(_, pos)| pos);
-
     let mut trajectory_path = Path::new();
-    for pos in points_to_draw {
-        let canvas_pos = pos_to_canvas(&pos, distance_per_px);
+    for b in trajectory.iter().step_by(ticks_per_graph_point) {
+        let canvas_pos = pos_to_canvas(&b.pos, distance_per_px);
         trajectory_path.circle(canvas_pos.x, canvas_pos.y, scaled_width(canvas, 1.));
     }
 
