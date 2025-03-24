@@ -39,6 +39,7 @@ Created from my femtovg+wgpu+egui boilerplate here: https://github.com/joshua-bu
 Performance gets worse when there are long trajectories
 - a path of circles performs worse than a path of line_to (much worse)
 - "run" function time stays mostly the same, "draw" increases with long trajectories
+- in the "run" function the calculation is taking 10x more time than the rest
 
 #### Verify
 - new energy implementation
