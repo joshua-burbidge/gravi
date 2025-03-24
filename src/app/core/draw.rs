@@ -207,10 +207,12 @@ pub fn draw_line_thru_points<T: Renderer>(
     ticks_per_graph_point: usize, // number of array elements per graphed point
     distance_per_px: f32,
 ) {
+    let width = scaled_width(canvas, 1.);
+
     let mut trajectory_path = Path::new();
     for b in trajectory.iter().step_by(ticks_per_graph_point) {
         let canvas_pos = pos_to_canvas(&b.pos, distance_per_px);
-        trajectory_path.circle(canvas_pos.x, canvas_pos.y, scaled_width(canvas, 1.));
+        trajectory_path.circle(canvas_pos.x, canvas_pos.y, width);
     }
 
     let paint = Paint::color(Color::rgbf(0., 1., 0.)); //.with_line_width(scaled_width(canvas, 2.));
