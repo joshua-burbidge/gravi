@@ -208,16 +208,25 @@ pub fn draw_line_thru_points<T: Renderer>(
     distance_per_px: f32,
 ) {
     let width = scaled_width(canvas, 1.);
-
     let mut trajectory_path = Path::new();
-    for b in trajectory.iter().step_by(ticks_per_graph_point) {
+
+    let mut trajectory_iter = trajectory.iter();
+    let initial_state = trajectory_iter.next();
+    match initial_state {
+        Some(b) => {
+            let canvas_pos = pos_to_canvas(&b.pos, distance_per_px);
+            trajectory_path.move_to(canvas_pos.x, canvas_pos.y);
+        }
+        None => {}
+    }
+    for b in trajectory_iter.step_by(ticks_per_graph_point) {
         let canvas_pos = pos_to_canvas(&b.pos, distance_per_px);
-        trajectory_path.circle(canvas_pos.x, canvas_pos.y, width);
+        trajectory_path.line_to(canvas_pos.x, canvas_pos.y);
     }
 
-    let paint = Paint::color(Color::rgbf(0., 1., 0.)); //.with_line_width(scaled_width(canvas, 2.));
+    let paint = Paint::color(Color::rgbf(0., 1., 0.)).with_line_width(width);
 
-    canvas.fill_path(&trajectory_path, &paint);
+    canvas.stroke_path(&trajectory_path, &paint);
 }
 
 pub fn draw_text<T: Renderer>(

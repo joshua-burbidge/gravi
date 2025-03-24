@@ -37,7 +37,8 @@ Created from my femtovg+wgpu+egui boilerplate here: https://github.com/joshua-bu
 - resonance
 
 Performance gets worse when there are long trajectories
-- a path of circles performs worse than a path of line_to
+- a path of circles performs worse than a path of line_to (much worse)
+- "run" function time stays mostly the same, "draw" increases with long trajectories
 
 #### Verify
 - new energy implementation
