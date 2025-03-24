@@ -1,7 +1,7 @@
 pub mod body;
 mod ui;
 
-use std::collections::HashMap;
+use std::{collections::HashMap, time::Instant};
 
 use body::{is_mass_significant, Body, Preset};
 
@@ -36,6 +36,8 @@ pub struct Orbital {
 
 impl App for Orbital {
     fn run(&mut self) {
+        let start = Instant::now();
+
         if !self.started || self.stopped {
             return;
         }
@@ -43,9 +45,13 @@ impl App for Orbital {
             self.run_euler();
         }
         self.analyze();
+
+        let duration = start.elapsed();
+        println!("Run: Time elapsed = {:?}", duration);
     }
 
     fn draw(&self, canvas: &mut femtovg::Canvas<femtovg::renderer::WGPURenderer>) {
+        let start = Instant::now();
         let (x_distance_range, y_distance_range) = self.distance_range(canvas);
         draw_tick_marks(
             canvas,
@@ -76,6 +82,8 @@ impl App for Orbital {
         for bary in &self.analysis.barycenters {
             draw_barycenter(canvas, &bary, 5., self.distance_per_px);
         }
+        let duration = start.elapsed();
+        println!("Draw: Time elapsed = {:?}", duration);
     }
 
     fn ui(&mut self, ctx: &egui::Context) {
@@ -231,6 +239,11 @@ impl Orbital {
 
         let dt = self.dt;
 
+        // let tuples = self.bodies.iter().enumerate();
+        // let lookup: HashMap<usize, &Body> = tuples.collect();
+
+        let mut accelerations: HashMap<usize, Acceleration> = HashMap::new();
+
         for (affected_i, sources) in self.relationships.iter() {
             let affected = self.bodies.get(*affected_i).unwrap();
 
@@ -252,11 +265,17 @@ impl Orbital {
             //     println!("{:?}", total_a_for_body);
             // }
 
+            accelerations.insert(*affected_i, total_a_for_body);
+        }
+
+        for (body_i, new_a) in accelerations.iter() {
+            let affected = self.bodies.get(*body_i).unwrap();
+
             let cur_v = affected.v;
             let cur_r = affected.pos;
-            let (next_r, next_v) = symplectic_euler_calc(cur_r, cur_v, total_a_for_body, dt);
+            let (next_r, next_v) = symplectic_euler_calc(cur_r, cur_v, *new_a, dt);
 
-            self.bodies[*affected_i].update(next_r, next_v, total_a_for_body);
+            self.bodies[*body_i].update(next_r, next_v, *new_a);
         }
 
         self.check_collisions();
