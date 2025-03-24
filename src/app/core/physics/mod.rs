@@ -30,11 +30,11 @@ pub fn circular_velocity(
 
     let circular_velocity_magnitude = circular_velocity_magnitude(central_mass, r_mag);
 
-    // take the magnitude and multiply by the proportion that should go in each dimension
-    // negative y makes it go clockwise
-    let y_vel = -circular_velocity_magnitude * r.x / r_mag;
-    let x_vel = circular_velocity_magnitude * r.y / r_mag;
-    Velocity::new(x_vel, y_vel)
+    // Positions determine the direction that the velocity should point (perpendicular to the position vector).
+    // Then multiply by the magnitude.
+    let pos_unit_vector = r.scale(1. / r_mag);
+    let vel_unit_vector = Velocity::from(pos_unit_vector.perpendicular_cw());
+    vel_unit_vector.scale(circular_velocity_magnitude)
 }
 
 // return circular velocity of body 1, based on the influence of body 2
@@ -46,8 +46,6 @@ pub fn circ_velocity_barycenter(
 ) -> (Velocity, Velocity) {
     // calculate Vc of the whole sytem orbiting around the barycenter
     let overall_vc = circular_velocity(pos2, m1 + m2, pos1);
-
-    // println!("{:?}", overall_vc);
 
     // split the whole vc based on mass ratio to get individual velocities
     let v1 = overall_vc.scale(m2 / (m1 + m2));
@@ -64,20 +62,14 @@ pub fn _escape_velocity(
 ) -> Velocity {
     let circular_velocity = circular_velocity(central_pos, central_mass, orbital_pos);
 
-    Velocity::new(
-        2_f32.sqrt() * circular_velocity.x,
-        2_f32.sqrt() * circular_velocity.y,
-    )
+    circular_velocity.scale(2_f32.sqrt())
 }
 
 // escape velocity = sqrt(2) * circular_velocity
 pub fn escape_velocity_barycenter(m1: f32, pos1: Position, m2: f32, pos2: Position) -> Velocity {
     let (circular_velocity, _) = circ_velocity_barycenter(m1, pos1, m2, pos2);
 
-    Velocity::new(
-        2_f32.sqrt() * circular_velocity.x,
-        2_f32.sqrt() * circular_velocity.y,
-    )
+    circular_velocity.scale(2_f32.sqrt())
 }
 
 pub fn gravitational_acceleration(
@@ -85,19 +77,13 @@ pub fn gravitational_acceleration(
     orbital_pos: Position,
     central_mass: f32,
 ) -> Acceleration {
-    // a = -G * m_central * r_vec / (|r_vec|^3)
-
     let r = orbital_pos.minus(central_pos);
 
-    let a_x = -G_KM * central_mass * r.x / r.mag().powi(3); // m/s^2
-    let a_x_km = a_x * 1e-3; // km/s^2
+    // a = -G * m_central * r_vec / (|r_vec|^3)
+    let cur_a = r.scale(-G_KM * central_mass / (r.mag().powi(3)));
+    let cur_a_km = cur_a.scale(1e-3);
 
-    let a_y = -G_KM * central_mass * r.y / r.mag().powi(3); // m/s^2
-    let a_y_km = a_y * 1e-3; // km/s^2
-
-    let cur_a = Acceleration::new(a_x_km, a_y_km);
-
-    cur_a
+    Acceleration::from(cur_a_km)
 }
 
 // normal euler method

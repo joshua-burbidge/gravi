@@ -253,7 +253,7 @@ impl Orbital {
 
                     a_from_source
                 })
-                .fold(Acceleration::new(0., 0.), |acc, a| acc.add(a));
+                .fold(Acceleration::default(), |acc, a| acc.add(a));
 
             accelerations.insert(*affected_i, total_a_for_body);
         }

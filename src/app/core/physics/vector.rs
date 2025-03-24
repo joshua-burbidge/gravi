@@ -21,7 +21,7 @@ pub struct Vector<T: VectorType> {
     pub y: f32,
 }
 
-impl<T: VectorType> Vector<T> {
+impl<T: VectorType + Default> Vector<T> {
     pub fn mag(&self) -> f32 {
         (self.x.powi(2) + self.y.powi(2)).sqrt()
     }
@@ -33,6 +33,13 @@ impl<T: VectorType> Vector<T> {
     }
     pub fn minus(self, vec2: Vector<T>) -> Self {
         self.add(vec2.scale(-1.))
+    }
+    pub fn perpendicular_cw(self) -> Self {
+        Self::new_vec(self._type, self.y, -self.x)
+    }
+
+    pub fn from<SourceType: VectorType>(v: Vector<SourceType>) -> Self {
+        Vector::new_vec(T::default(), v.x, v.y)
     }
     fn new_vec(vec_type: T, x: f32, y: f32) -> Self {
         Self {
@@ -51,10 +58,9 @@ impl Vector<Pos> {
     // position after t seconds given constant acceleration
     pub fn update(&self, v: &Velocity, a: &Acceleration, t: f32) -> Self {
         // px + vx t + 1/2 ax t^2
-        Self::new(
-            self.x + v.x * t + 0.5 * a.x * t.powi(2),
-            self.y + v.y * t + 0.5 * a.x * t.powi(2),
-        )
+        let vel_term = Position::from(v.scale(t));
+        let acc_term = Position::from(a.scale(0.5 * t.powi(2)));
+        self.add(vel_term).add(acc_term)
     }
 
     pub fn update_const_v(&self, v: &Velocity, t: f32) -> Self {
@@ -72,7 +78,8 @@ impl Vector<Vel> {
     // velocity update after t seconds given constant acceleration
     pub fn update(&self, a: &Acceleration, t: f32) -> Self {
         // vx + ax t
-        Self::new(self.x + a.x * t, self.y + a.y * t)
+        let vel_change = Velocity::from(a.scale(t));
+        self.add(vel_change)
     }
 }
 
