@@ -101,7 +101,7 @@ impl Orbital {
         }
     }
 
-    pub fn t(&self) -> f32 {
+    fn t(&self) -> f32 {
         let body = self.bodies.first();
         let len = match body {
             Some(b) => b.trajectory.len(),
