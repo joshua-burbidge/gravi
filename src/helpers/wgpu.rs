@@ -85,9 +85,10 @@ pub async fn start_wgpu<A: App>(
     #[cfg(all(debug_assertions, target_arch = "wasm32"))]
     console_error_panic_hook::set_once();
 
-    let (mut canvas, window, demo_surface, event_loop) = create_canvas(width, height, title).await;
-
-    canvas.set_size(width, height, window.scale_factor() as f32);
+    #[cfg(not(target_arch = "wasm32"))]
+    let (canvas, window, demo_surface, event_loop) = create_canvas(width, height, title).await;
+    #[cfg(target_arch = "wasm32")]
+    let (canvas, window, demo_surface, event_loop) = create_canvas().await;
 
     init_wgpu_app(app, event_loop, canvas, demo_surface, window);
 }
@@ -202,7 +203,8 @@ pub async fn create_canvas(
 
     let renderer = WGPURenderer::new(device, queue);
 
-    let canvas = Canvas::new(renderer).expect("Cannot create canvas");
+    let mut canvas = Canvas::new(renderer).expect("Cannot create canvas");
+    canvas.set_size(width, height, window.scale_factor() as f32);
 
     (canvas, window, demo_surface, event_loop)
 }
