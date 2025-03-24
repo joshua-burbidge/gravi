@@ -52,7 +52,7 @@ impl WgpuWindowSurface {
     }
 }
 
-pub fn init_wgpu_app<A: App>(
+fn init_wgpu_app<A: App>(
     app: A,
     event_loop: EventLoop<()>,
     mut canvas: Canvas<WGPURenderer>,
@@ -85,6 +85,23 @@ pub async fn start_wgpu<A: App>(
     #[cfg(all(debug_assertions, target_arch = "wasm32"))]
     console_error_panic_hook::set_once();
 
+    let (mut canvas, window, demo_surface, event_loop) = create_canvas(width, height, title).await;
+
+    canvas.set_size(width, height, window.scale_factor() as f32);
+
+    init_wgpu_app(app, event_loop, canvas, demo_surface, window);
+}
+
+pub async fn create_canvas(
+    #[cfg(not(target_arch = "wasm32"))] width: u32,
+    #[cfg(not(target_arch = "wasm32"))] height: u32,
+    #[cfg(not(target_arch = "wasm32"))] title: &'static str,
+) -> (
+    Canvas<WGPURenderer>,
+    Arc<Window>,
+    WgpuWindowSurface,
+    EventLoop<()>,
+) {
     let event_loop = EventLoop::new().unwrap();
 
     #[cfg(not(target_arch = "wasm32"))]
@@ -185,8 +202,7 @@ pub async fn start_wgpu<A: App>(
 
     let renderer = WGPURenderer::new(device, queue);
 
-    let mut canvas = Canvas::new(renderer).expect("Cannot create canvas");
-    canvas.set_size(width, height, window.scale_factor() as f32);
+    let canvas = Canvas::new(renderer).expect("Cannot create canvas");
 
-    init_wgpu_app(app, event_loop, canvas, demo_surface, window);
+    (canvas, window, demo_surface, event_loop)
 }
