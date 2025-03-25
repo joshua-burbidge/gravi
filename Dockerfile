@@ -6,6 +6,7 @@ COPY ["Cargo.toml", "Cargo.lock", "rust-toolchain.toml", "./"]
 RUN rustup target add wasm32-unknown-unknown
 RUN cargo install wasm-bindgen-cli
 
+COPY benches ./benches
 COPY .cargo ./.cargo
 COPY src ./src
 COPY web ./web
