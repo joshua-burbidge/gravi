@@ -121,17 +121,17 @@ impl<A: App> ApplicationHandler for AppHandler<A> {
                 web_sys::console::log_1(&format!("scale: {}", new_scale).into());
                 println!("{}", new_scale);
 
-                let font_size = (1. / get_scale(canvas)) * 50.;
-                #[cfg(target_arch = "wasm32")]
-                web_sys::console::log_1(&format!("font - names: {}", font_size).into());
-
-                let font_size = 2.5 * 25. / get_scale(canvas);
-                #[cfg(target_arch = "wasm32")]
-                web_sys::console::log_1(&format!("font - scaled: {}", font_size).into());
-
                 if new_scale <= 0.001 {
                     return;
                 }
+
+                let font_size = (1. / new_scale) * 50.;
+                #[cfg(target_arch = "wasm32")]
+                web_sys::console::log_1(&format!("font - names: {}", font_size).into());
+
+                let font_size = 2.5 * 25. / new_scale;
+                #[cfg(target_arch = "wasm32")]
+                web_sys::console::log_1(&format!("font - scaled: {}", font_size).into());
 
                 let pt = canvas
                     .transform()
