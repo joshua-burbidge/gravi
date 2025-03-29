@@ -100,12 +100,12 @@ fn draw_ticks_for_axis<T: Renderer>(
 
         if i == first_tick || i == last_tick {
             let distance_text = format!("{} km", large_number_formatter(axis_distance.into()));
-            println!("writing tick number");
+            // println!("writing tick number");
             draw_text_scaled(
                 canvas,
                 distance_text,
                 &axis_distance_to_position(axis, axis_distance),
-                20.0,
+                25.0,
                 distance_per_px,
             );
         }
