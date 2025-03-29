@@ -235,7 +235,7 @@ pub fn draw_text<T: Renderer>(
     pos: &Position,
     distance_per_px: f32,
 ) {
-    draw_text_font(canvas, text, pos, 12.0, distance_per_px);
+    draw_text_font(canvas, text, pos, 16.0, distance_per_px);
 }
 
 pub fn draw_text_font<T: Renderer>(
