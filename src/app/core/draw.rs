@@ -237,8 +237,6 @@ pub fn draw_text<T: Renderer>(
     distance_per_px: f32,
 ) {
     let font_size = (1. / get_scale(canvas)) * 50.;
-    #[cfg(target_arch = "wasm32")]
-    web_sys::console::log_1(&format!("font - names: {}", font_size).into());
     draw_text_font(canvas, text, pos, font_size, distance_per_px);
 }
 
@@ -250,8 +248,6 @@ pub fn draw_text_scaled<T: Renderer>(
     distance_per_px: f32,
 ) {
     let font_size = 2.5 * scale_factor / get_scale(canvas);
-    #[cfg(target_arch = "wasm32")]
-    web_sys::console::log_1(&format!("font - scaled: {}", font_size).into());
     draw_text_font(canvas, text, pos, font_size, distance_per_px);
 }
 
