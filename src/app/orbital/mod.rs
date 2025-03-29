@@ -1,7 +1,7 @@
 pub mod body;
 mod ui;
 
-use std::{collections::HashMap, time::Instant};
+use std::collections::HashMap;
 
 use body::{is_mass_significant, Body, Preset};
 
@@ -9,7 +9,7 @@ use super::{
     core::{
         draw::{
             draw_barycenter, draw_circle_by_radius, draw_circle_scaled, draw_line_thru_points,
-            draw_text, draw_tick_marks, get_scale,
+            draw_text, draw_text_font, draw_tick_marks, get_scale,
         },
         physics::{
             barycenter, circ_velocity_barycenter, escape_velocity_barycenter,
@@ -20,6 +20,7 @@ use super::{
     App,
 };
 
+#[derive(Default)]
 pub struct Orbital {
     ui_state: UiState,
     pub dt: f32,
@@ -32,6 +33,7 @@ pub struct Orbital {
     relationships: HashMap<usize, Vec<usize>>,
     presets: Vec<Preset>,
     analysis: Analysis,
+    font_size: f32,
 }
 
 impl App for Orbital {
@@ -76,7 +78,13 @@ impl App for Orbital {
                 self.distance_per_px,
             );
 
-            draw_text(canvas, b.name.clone(), &b.pos, self.distance_per_px);
+            draw_text_font(
+                canvas,
+                b.name.clone(),
+                &b.pos,
+                self.font_size,
+                self.distance_per_px,
+            );
         }
 
         for bary in &self.analysis.barycenters {
@@ -110,6 +118,7 @@ impl Orbital {
             relationships: HashMap::new(),
             presets: Preset::defaults(),
             analysis: Analysis::default(),
+            font_size: 20.,
         }
     }
 

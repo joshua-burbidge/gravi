@@ -17,6 +17,7 @@ pub fn ui(app: &mut Orbital, ctx: &egui::Context) {
         .resizable(false);
 
     panel.show(ctx, |ui| {
+        ui.add(CustomSlider::new(&mut app.font_size, 1.0..=100.0).label("font size"));
         egui::CollapsingHeader::new(RichText::new("Select preset simulation").heading())
             .default_open(true)
             .show(ui, |ui| {
