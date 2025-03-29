@@ -125,7 +125,7 @@ impl<A: App> ApplicationHandler for AppHandler<A> {
                 #[cfg(target_arch = "wasm32")]
                 web_sys::console::log_1(&format!("font - names: {}", font_size).into());
 
-                let font_size = 2.5 * scale_factor / get_scale(canvas);
+                let font_size = 2.5 * 25. / get_scale(canvas);
                 #[cfg(target_arch = "wasm32")]
                 web_sys::console::log_1(&format!("font - scaled: {}", font_size).into());
 
