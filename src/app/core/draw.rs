@@ -236,7 +236,7 @@ pub fn draw_text<T: Renderer>(
     pos: &Position,
     distance_per_px: f32,
 ) {
-    let font_size = (1. / get_scale(canvas)) * 25.;
+    let font_size = (1. / get_scale(canvas)) * 50.;
     draw_text_font(canvas, text, pos, font_size, distance_per_px);
 }
 
