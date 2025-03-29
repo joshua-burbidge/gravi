@@ -2,7 +2,7 @@ name: Deploy
 
 on:
   push:
-    branches: [ "master" ]
+    branches: [ "font-size" ]
 
 permissions:
   id-token: write
@@ -34,7 +34,7 @@ jobs:
           -var "git_commit_sha=${{github.sha}}"
       working-directory: ./terraform
     - name: Terraform Apply
-      if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+      if: github.ref == 'refs/heads/font-size' && github.event_name == 'push'
       run: |
         terraform apply -auto-approve -input=false tfplan
         echo "BUCKET_NAME=$(terraform output --raw bucket_name)" >> "$GITHUB_ENV"
