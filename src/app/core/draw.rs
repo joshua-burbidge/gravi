@@ -100,11 +100,12 @@ fn draw_ticks_for_axis<T: Renderer>(
 
         if i == first_tick || i == last_tick {
             let distance_text = format!("{} km", large_number_formatter(axis_distance.into()));
-            draw_text_font(
+            println!("writing tick number");
+            draw_text_scaled(
                 canvas,
                 distance_text,
                 &axis_distance_to_position(axis, axis_distance),
-                5.0,
+                20.0,
                 distance_per_px,
             );
         }
@@ -235,7 +236,19 @@ pub fn draw_text<T: Renderer>(
     pos: &Position,
     distance_per_px: f32,
 ) {
-    draw_text_font(canvas, text, pos, 16.0, distance_per_px);
+    let font_size = (1. / get_scale(canvas)) * 25.;
+    draw_text_font(canvas, text, pos, font_size, distance_per_px);
+}
+
+pub fn draw_text_scaled<T: Renderer>(
+    canvas: &mut Canvas<T>,
+    text: String,
+    pos: &Position,
+    scale_factor: f32,
+    distance_per_px: f32,
+) {
+    let font_size = (1. / get_scale(canvas)) * scale_factor;
+    draw_text_font(canvas, text, pos, font_size, distance_per_px);
 }
 
 pub fn draw_text_font<T: Renderer>(
