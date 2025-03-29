@@ -247,7 +247,7 @@ pub fn draw_text_scaled<T: Renderer>(
     scale_factor: f32,
     distance_per_px: f32,
 ) {
-    let font_size = (1. / get_scale(canvas)) * scale_factor;
+    let font_size = 1.5 * scale_factor / get_scale(canvas);
     draw_text_font(canvas, text, pos, font_size, distance_per_px);
 }
 
