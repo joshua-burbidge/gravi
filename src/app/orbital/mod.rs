@@ -1,15 +1,15 @@
 pub mod body;
 mod ui;
 
-use std::{collections::HashMap, time::Instant};
+use std::collections::HashMap;
 
 use body::{is_mass_significant, Body, Preset};
 
 use super::{
     core::{
         draw::{
-            draw_barycenter, draw_circle_by_radius, draw_circle_scaled, draw_line_thru_points,
-            draw_text, draw_tick_marks, get_scale,
+            draw_barycenter, draw_body, draw_line_thru_points, draw_text, draw_tick_marks,
+            get_scale,
         },
         physics::{
             barycenter, circ_velocity_barycenter, escape_velocity_barycenter,
@@ -63,11 +63,7 @@ impl App for Orbital {
         let ticks_per_graph_point = (self.draw_frequency as f32 / self.dt).ceil() as usize;
 
         for b in self.bodies.iter() {
-            if b.radius == 0. {
-                draw_circle_scaled(canvas, &b.pos, 10., self.distance_per_px);
-            } else {
-                draw_circle_by_radius(canvas, &b.pos, b.radius, self.distance_per_px);
-            }
+            draw_body(canvas, b, self.distance_per_px);
 
             draw_line_thru_points(
                 canvas,

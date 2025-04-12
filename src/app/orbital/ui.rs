@@ -51,7 +51,13 @@ pub fn ui(app: &mut Orbital, ctx: &egui::Context) {
             let y_range = -10000.0..=10000.;
 
             egui::CollapsingHeader::new(
-                RichText::new(format!("Body {}: {}", i + 1, body.name)).heading(),
+                RichText::new(format!("Body {}: {}", i + 1, body.name))
+                    .heading()
+                    .color(egui::Color32::from_rgb(
+                        body.color.0,
+                        body.color.1,
+                        body.color.2,
+                    )),
             )
             .default_open(body.default_expanded)
             .show(ui, |ui| {

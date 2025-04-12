@@ -3,7 +3,7 @@ use crate::app::core::physics::{
     R_MOON_KM,
 };
 
-#[derive(Default, Clone, Debug)]
+#[derive(Clone, Debug)]
 pub struct Body {
     pub pos: Position,
     pub v: Velocity,
@@ -16,7 +16,27 @@ pub struct Body {
     pub lock_to_escape_velocity: bool,
     pub selected_vel_lock: usize,
     pub name: String,
+    pub color: (u8, u8, u8),
     pub default_expanded: bool,
+}
+impl Default for Body {
+    fn default() -> Self {
+        Body {
+            pos: Position::default(),
+            v: Velocity::default(),
+            mass: Default::default(),
+            radius: Default::default(),
+            trajectory: Default::default(),
+            computed_a: Acceleration::default(),
+            is_fixed: Default::default(),
+            lock_to_circular_velocity: Default::default(),
+            lock_to_escape_velocity: Default::default(),
+            selected_vel_lock: Default::default(),
+            name: Default::default(),
+            color: (0, 255, 0),
+            default_expanded: Default::default(),
+        }
+    }
 }
 impl Body {
     // returns a version of this struct to be used for the trajectory history
@@ -33,6 +53,7 @@ impl Body {
             lock_to_escape_velocity: self.lock_to_escape_velocity,
             selected_vel_lock: self.selected_vel_lock,
             name: self.name.clone(),
+            color: self.color.clone(),
             default_expanded: self.default_expanded,
             trajectory: vec![],
         }
@@ -69,6 +90,7 @@ impl Body {
             v: circular_velocity(earth_pos, earth_mass, position), // km/s
             trajectory: Vec::new(),
             default_expanded: true,
+            color: (255, 0, 0),
             ..Default::default()
         }
     }
@@ -102,6 +124,7 @@ impl Body {
             pos: position,
             v: circ_velocity_barycenter(moon_mass, position, earth_mass, earth_pos).0, // km/s
             default_expanded: true,
+            color: (160, 160, 160),
             ..Default::default()
         }
     }
@@ -112,6 +135,7 @@ impl Body {
             mass: 1.989e30,
             radius: 6.963e5,
             is_fixed: true,
+            color: (255, 255, 0),
             ..Default::default()
         }
     }
