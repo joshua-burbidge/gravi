@@ -247,6 +247,50 @@ pub fn draw_text_font<T: Renderer>(
 ) {
     let text_paint = Paint::color(Color::white()).with_font_size(font_size);
 
+    if text == String::from("Earth") {
+        println!("\nFONT INFO");
+        println!("font_size: {:?}", text_paint.font_size());
+        println!("letter_spacing: {:?}", text_paint.letter_spacing());
+        println!("line_width: {:?}", text_paint.line_width());
+        println!("letter_spacing: {:?}", text_paint.letter_spacing());
+        println!("miter_limit: {:?}", text_paint.miter_limit());
+        println!("line_join: {:?}", text_paint.line_join());
+        println!("test");
+    }
+
+    let px = pos_to_canvas(pos, distance_per_px);
+
+    canvas
+        .fill_text(px.x, px.y, text, &text_paint)
+        .expect("failed to write text");
+}
+
+pub fn draw_text_font2<T: Renderer>(
+    canvas: &mut Canvas<T>,
+    text: String,
+    pos: &Position,
+    font_size: f32,
+    letter_spacing: f32,
+    line_width: f32,
+    miter_limit: f32,
+    distance_per_px: f32,
+) {
+    let text_paint = Paint::color(Color::white())
+        .with_font_size(font_size)
+        .with_letter_spacing(letter_spacing)
+        .with_line_width(line_width)
+        .with_miter_limit(miter_limit);
+
+    if text == String::from("Earth") {
+        println!("\nFONT INFO");
+        println!("font_size: {:?}", text_paint.font_size());
+        println!("letter_spacing: {:?}", text_paint.letter_spacing());
+        println!("line_width: {:?}", text_paint.line_width());
+        println!("miter_limit: {:?}", text_paint.miter_limit());
+        println!("line_join: {:?}", text_paint.line_join());
+        println!("test");
+    }
+
     let px = pos_to_canvas(pos, distance_per_px);
 
     canvas

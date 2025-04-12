@@ -18,6 +18,9 @@ pub fn ui(app: &mut Orbital, ctx: &egui::Context) {
 
     panel.show(ctx, |ui| {
         ui.add(CustomSlider::new(&mut app.font_size, 1.0..=100.0).label("font size"));
+        ui.add(CustomSlider::new(&mut app.letter_spacing, 0.0..=100.0).label("letter_spacing"));
+        ui.add(CustomSlider::new(&mut app.line_width, 0.0..=100.0).label("line_width"));
+        ui.add(CustomSlider::new(&mut app.miter_limit, 0.0..=100.0).label("miter_limit"));
         egui::CollapsingHeader::new(RichText::new("Select preset simulation").heading())
             .default_open(true)
             .show(ui, |ui| {
