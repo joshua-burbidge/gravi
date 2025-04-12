@@ -669,8 +669,9 @@ dependencies = [
 
 [[package]]
 name = "femtovg"
-version = "0.13.0"
-source = "git+https://github.com/joshua-burbidge/femtovg.git?branch=replace-overrides-with-uniform#97cb231eabb1b30fc3532cde6cb16968042ed41a"
+version = "0.14.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "47e15d51b37323a171a49399d46f0b0a9ec729d1106976f8fa70d68068b15504"
 dependencies = [
  "bitflags 2.8.0",
  "bytemuck",
