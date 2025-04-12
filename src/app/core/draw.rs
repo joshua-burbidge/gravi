@@ -213,6 +213,7 @@ pub fn draw_line_thru_points<T: Renderer>(
     trajectory: &Vec<Body>,
     ticks_per_graph_point: usize, // number of array elements per graphed point
     distance_per_px: f32,
+    color: (u8, u8, u8),
 ) {
     let width = scaled_width(canvas, 1.);
     let mut trajectory_path = Path::new();
@@ -231,7 +232,8 @@ pub fn draw_line_thru_points<T: Renderer>(
         trajectory_path.line_to(canvas_pos.x, canvas_pos.y);
     }
 
-    let paint = Paint::color(Color::rgbf(0., 1., 0.)).with_line_width(width);
+    let (r, g, b) = color;
+    let paint = Paint::color(Color::rgb(r, g, b)).with_line_width(width);
 
     canvas.stroke_path(&trajectory_path, &paint);
 }

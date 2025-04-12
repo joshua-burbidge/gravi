@@ -70,6 +70,7 @@ impl App for Orbital {
                 &b.trajectory,
                 ticks_per_graph_point,
                 self.distance_per_px,
+                b.color,
             );
 
             draw_text(canvas, b.name.clone(), &b.pos, self.distance_per_px);
