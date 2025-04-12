@@ -293,9 +293,12 @@ pub fn draw_text_font2<T: Renderer>(
 
     let px = pos_to_canvas(pos, distance_per_px);
 
-    canvas
+    let text_metrics = canvas
         .fill_text(px.x, px.y, text, &text_paint)
         .expect("failed to write text");
+    println!("{:?}", text_metrics);
+    #[cfg(target_arch = "wasm32")]
+    web_sys::console::log_1(&format!("text_metrics: {:?}", text_metrics).into());
 }
 
 pub fn large_number_formatter(num: f64) -> String {
