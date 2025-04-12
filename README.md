@@ -35,6 +35,7 @@ Created from my femtovg+wgpu+egui boilerplate here: https://github.com/joshua-bu
 - recenter on preset
 - big: hierarchical calculations for multi-body systems
 - resonance
+- panic in barycenters() if selecting a preset with fewer bodies
 
 Performance gets worse when there are long trajectories
 - a path of circles performs worse than a path of line_to (much worse)
@@ -46,3 +47,4 @@ Performance gets worse when there are long trajectories
 
 text disappears at smaller scales - when deployed, it only appears at large scales
 - try increasing the scale
+- scale == 0.05, font == 930 is visible
