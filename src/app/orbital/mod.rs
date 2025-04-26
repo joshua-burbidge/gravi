@@ -95,7 +95,7 @@ impl App for Orbital {
 
 impl Orbital {
     pub fn new() -> Self {
-        Self {
+        let mut app = Self {
             ui_state: UiState::new(),
             dt: 1.,
             num_ticks: 1000,
@@ -107,7 +107,9 @@ impl Orbital {
             relationships: HashMap::new(),
             presets: Preset::defaults(),
             analysis: Analysis::default(),
-        }
+        };
+        app.load_preset(3);
+        app
     }
 
     fn t(&self) -> f32 {
