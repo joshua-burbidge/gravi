@@ -7,7 +7,30 @@ use petgraph::{
     graph::{NodeIndex, UnGraph},
 };
 
+use crate::app::core::physics::{barycenter, Position};
+
 use super::body::Body;
+
+struct Node {
+    pub bodies: Vec<Body>,
+}
+
+impl Node {
+    fn new(body: Body) -> Self {
+        Self { bodies: vec![body] }
+    }
+    fn pos(self) -> Position {
+        // barycenter
+        barycenter(self.bodies)
+    }
+    fn mass(self) -> f32 {
+        // mass
+        self.bodies.iter().fold(0., |acc, b| acc + b.mass)
+    }
+    fn is_leaf(self) -> bool {
+        self.bodies.len() == 1
+    }
+}
 
 // group bodies into a tree
 // each node is a body or group
