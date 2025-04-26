@@ -3,12 +3,8 @@ mod tree;
 mod ui;
 
 use body::{is_mass_significant, Body, Preset};
-use petgraph::{
-    dot::{Config, Dot},
-    Graph,
-};
 use std::{collections::HashMap, f32};
-use tree::{group_bodies, group_bodies_2};
+use tree::group_bodies;
 
 use super::{
     core::{
@@ -207,21 +203,8 @@ impl Orbital {
         }
     }
 
-    fn test_graph(&mut self) {
-        let mut graph = Graph::<i32, ()>::new();
-        graph.add_node(0);
-        graph.add_node(1);
-        graph.add_node(2);
-        graph.add_node(3);
-        graph.add_node(4);
-        graph.extend_with_edges(&[(1, 2), (2, 3), (3, 4), (1, 4)]);
-
-        println!("{:?}", Dot::with_config(&graph, &[Config::EdgeNoLabel]));
-    }
-
     pub fn start(&mut self) {
-        // self.test_graph();
-        group_bodies_2(&self.bodies);
+        group_bodies(&self.bodies);
 
         // map of a body to the list of bodies that have a gravitational effect on it
         let mut map_body_to_sources: HashMap<usize, Vec<usize>> = HashMap::new();
