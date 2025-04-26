@@ -41,7 +41,7 @@ impl Default for Body {
 impl Body {
     // returns a version of this struct to be used for the trajectory history
     // maybe make this a separate struct?
-    pub fn new_history_entry(&self) -> Self {
+    pub fn copy(&self) -> Self {
         Self {
             pos: self.pos,
             v: self.v,
@@ -68,7 +68,7 @@ impl Body {
         self.pos = new_pos;
         self.v = new_vel;
         self.computed_a = new_acc;
-        self.trajectory.push(self.new_history_entry());
+        self.trajectory.push(self.copy());
 
         self
     }

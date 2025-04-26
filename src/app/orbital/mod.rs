@@ -227,7 +227,7 @@ impl Orbital {
         self.started = true;
 
         for b in self.bodies.iter_mut() {
-            b.trajectory.push(b.new_history_entry());
+            b.trajectory.push(b.copy());
         }
 
         self.analysis = self.analysis.initialize(self);
@@ -387,7 +387,7 @@ impl Analysis {
             for source_i in sources.iter() {
                 let source = app.bodies.get(*source_i).unwrap();
 
-                let barycenter = barycenter(affected.mass, source.mass, affected.pos, source.pos);
+                let barycenter = barycenter(vec![source.copy(), affected.copy()]);
                 barycenters.push(barycenter);
             }
         }

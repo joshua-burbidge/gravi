@@ -28,6 +28,9 @@ impl<T: VectorType + Default> Vector<T> {
     pub fn scale(self, factor: f32) -> Self {
         Self::new_vec(self._type, self.x * factor, self.y * factor)
     }
+    pub fn divide(self, divisor: f32) -> Self {
+        self.scale(1. / divisor)
+    }
     pub fn add(self, vec2: Vector<T>) -> Self {
         Self::new_vec(self._type, self.x + vec2.x, self.y + vec2.y)
     }

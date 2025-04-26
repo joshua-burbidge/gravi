@@ -1,5 +1,7 @@
 pub use vector::{Acceleration, Position, Velocity};
 
+use crate::app::orbital::body::Body;
+
 mod vector;
 
 pub const G: f32 = 6.674e-11; // N m^2 / kg^2
@@ -139,14 +141,14 @@ pub fn gravitational_potential_energy(m1: f32, m2: f32, pos1: Position, pos2: Po
     grav_potential_mj
 }
 
-// Compute the barycenter - the point around which two bodies both orbit
+// Compute the barycenter of multiple bodies - the point around which two bodies both orbit
 // Same as center of mass for spherical bodies in normal conditions.
-pub fn barycenter(m1: f32, m2: f32, pos1: Position, pos2: Position) -> Position {
-    // barycenter of two masses, distance d apart
-    // Rb = m2 / (m1 + m2) * d
-    let distance_vector = pos2.minus(pos1);
+// Rb = m1*r1 + m2*r2 + ... +mn*rn / (m1 + m2 + ... + mn)
+pub fn barycenter(bodies: Vec<Body>) -> Position {
+    let mass_sum = bodies.iter().fold(0., |acc, b| acc + b.mass);
+    let weighted_pos_sum = bodies
+        .iter()
+        .fold(Position::default(), |acc, b| acc.add(b.pos.scale(b.mass)));
 
-    let bary_from_p1 = distance_vector.scale(m2 / (m1 + m2));
-    let bary = pos1.add(bary_from_p1);
-    bary
+    weighted_pos_sum.divide(mass_sum)
 }
