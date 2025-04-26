@@ -3,7 +3,7 @@
 
 use itertools::Itertools;
 use petgraph::{
-    algo,
+    algo::{self, connected_components},
     dot::{Config, Dot},
     graph::{NodeIndex, UnGraph},
 };
@@ -113,8 +113,8 @@ fn find_bodies_within_threshold(
         }
     }
 
-    // never found a jump big enough, so no group
-    return vec![];
+    // never found a big jump, everything is grouped together
+    return distances.clone();
 }
 
 pub fn group_bodies_2(bodies: &Vec<Body>) {
