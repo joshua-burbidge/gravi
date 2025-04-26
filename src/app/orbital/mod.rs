@@ -8,7 +8,7 @@ use petgraph::{
     Graph,
 };
 use std::{collections::HashMap, f32};
-use tree::group_bodies;
+use tree::{group_bodies, group_bodies_2};
 
 use super::{
     core::{
@@ -221,7 +221,7 @@ impl Orbital {
 
     pub fn start(&mut self) {
         // self.test_graph();
-        group_bodies(&self.bodies);
+        group_bodies_2(&self.bodies);
 
         // map of a body to the list of bodies that have a gravitational effect on it
         let mut map_body_to_sources: HashMap<usize, Vec<usize>> = HashMap::new();
