@@ -214,6 +214,7 @@ impl Preset {
             pos: Position::new(-5000., -5000.),
             lock_to_circular_velocity: true,
             selected_vel_lock: 1,
+            color: (0, 255, 0),
             ..Default::default()
         };
         let b2 = Body {
@@ -221,6 +222,7 @@ impl Preset {
             pos: Position::new(0., 5000.),
             lock_to_circular_velocity: true,
             selected_vel_lock: 0,
+            color: (255, 0, 0),
             ..b1.clone()
         };
         let b3: Body = Body {
@@ -228,6 +230,7 @@ impl Preset {
             pos: Position::new(7000., -5000.),
             v: Velocity::new(-0.2, 0.08),
             lock_to_circular_velocity: false,
+            color: (0, 70, 180),
             ..b1.clone()
         };
 
@@ -282,6 +285,7 @@ impl Preset {
             name: "2".to_string(),
             pos: Position::new(-50000., 0.),
             selected_vel_lock: 0,
+            color: (220, 0, 0),
             ..body1.clone()
         };
 
@@ -326,6 +330,7 @@ impl Preset {
             pos: body2_pos,
             lock_to_circular_velocity: true,
             selected_vel_lock: 0,
+            color: (220, 0, 0),
             ..body1.clone()
         };
 
