@@ -303,8 +303,18 @@ impl Preset {
             pos: earth_3.pos.minus(Body::moon().pos),
             ..Body::moon()
         };
+        let small = Body {
+            name: "Small test particle".to_string(),
+            mass: 10.,
+            pos: third.pos.add(Position::new(100., 100.)),
+            ..Body::default()
+        };
 
-        let bodies = [base.bodies, vec![earth_2, moon_2, earth_3, moon_3, third]].concat();
+        let bodies = [
+            base.bodies,
+            vec![earth_2, moon_2, earth_3, moon_3, third, small],
+        ]
+        .concat();
 
         Self {
             name: "hierarchy_test".to_string(),
