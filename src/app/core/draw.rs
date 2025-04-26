@@ -95,16 +95,30 @@ fn draw_ticks_for_axis<T: Renderer>(
     let first_tick = (min_distance / interval as f32).ceil() as i32;
     let last_tick = (max_distance / interval as f32).floor() as i32;
 
+    let scale = get_scale(canvas);
+
     for i in first_tick..=last_tick {
         let axis_distance = (interval * i) as f32;
 
         if i == first_tick || i == last_tick {
+            let mut paint = Paint::default();
+            if let Axis::X = axis {
+                if i == last_tick {
+                    paint = paint.with_text_align(femtovg::Align::Right)
+                }
+            };
+            if let Axis::Y = axis {
+                if i == last_tick {
+                    paint = paint.with_text_baseline(femtovg::Baseline::Top)
+                }
+            }
+            paint = paint.with_font_size(20.0 / scale);
             let distance_text = format!("{} km", large_number_formatter(axis_distance.into()));
-            draw_text_font(
+            draw_text_custom(
                 canvas,
                 distance_text,
                 &axis_distance_to_position(axis, axis_distance),
-                5.0,
+                paint,
                 distance_per_px,
             );
         }
@@ -245,6 +259,20 @@ pub fn draw_text<T: Renderer>(
     distance_per_px: f32,
 ) {
     draw_text_font(canvas, text, pos, 12.0, distance_per_px);
+}
+
+pub fn draw_text_custom<T: Renderer>(
+    canvas: &mut Canvas<T>,
+    text: String,
+    pos: &Position,
+    paint: Paint,
+    distance_per_px: f32,
+) {
+    let px = pos_to_canvas(pos, distance_per_px);
+
+    canvas
+        .fill_text(px.x, px.y, text, &paint)
+        .expect("failed to write text");
 }
 
 pub fn draw_text_font<T: Renderer>(
