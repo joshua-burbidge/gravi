@@ -73,6 +73,12 @@ impl Body {
         self
     }
 
+    // return the mass ratio of this and another body, always converted to the >1 version
+    pub fn mass_ratio(&self, other: &Body) -> f32 {
+        (self.mass / other.mass).max(other.mass / self.mass)
+    }
+
+    // --------------- Constructors ------------------
     // starting conditions for a low earth orbit, modeled after the ISS
     pub fn outer_low() -> Self {
         let earth_mass = Self::earth().mass;

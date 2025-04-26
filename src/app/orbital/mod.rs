@@ -1,9 +1,17 @@
 pub mod body;
 mod ui;
 
-use std::collections::HashMap;
-
 use body::{is_mass_significant, Body, Preset};
+use itertools::Itertools;
+use petgraph::{
+    algo,
+    dot::{Config, Dot},
+    graph::{NodeIndex, UnGraph},
+    Graph,
+};
+use std::{collections::HashMap, f32};
+
+use crate::app::core::remove_indices;
 
 use super::{
     core::{
@@ -202,7 +210,82 @@ impl Orbital {
         }
     }
 
+    // returns smallest distance from a or b to a third body
+    fn min_distance_to_third(&self, a: &Body, b: &Body, other: &Vec<Body>) -> f32 {
+        let mut minimum = f32::INFINITY;
+
+        for body in other.iter() {
+            let cur_min = body.pos.abs_diff(a.pos).min(body.pos.abs_diff(b.pos));
+            let new_min = cur_min.min(minimum);
+            minimum = new_min;
+        }
+        minimum
+    }
+
+    // group bodies into a tree
+    // each node is a body or group
+    // a group can be represented by a Body (?), where the position is the barycenter, and all properties are combined together
+    // each node has children - more bodies/groups
+
+    // bodies should be grouped if M inner >> M outer, r outer >> r inner, period outer >> period inner
+    fn group_bodies(&self) {
+        let distance_ratio_threshold = 10.0_f32;
+        let mass_ratio_threshold = 100.0_f32;
+
+        let mut graph = UnGraph::<usize, ()>::new_undirected();
+        for (i, _) in self.bodies.iter().enumerate() {
+            graph.add_node(i);
+        }
+
+        for combination in self.bodies.iter().enumerate().combinations(2) {
+            let (a_i, a) = combination[0];
+            let (b_i, b) = combination[1];
+
+            let other_bodies = remove_indices(self.bodies.clone(), vec![a_i, b_i]);
+
+            println!("a: {}, b: {}", a.name, b.name);
+            let other_names: Vec<&String> = other_bodies.iter().map(|b| &b.name).collect();
+            println!("other: {:?}", other_names);
+
+            let distance_between = a.pos.abs_diff(b.pos);
+            let min_distance_to_third = self.min_distance_to_third(a, b, &other_bodies);
+
+            let mass_ratio = a.mass_ratio(b);
+
+            println!(
+                "between: {}, third: {}, mass_ratio: {}",
+                distance_between, min_distance_to_third, mass_ratio
+            );
+
+            if min_distance_to_third / distance_between > distance_ratio_threshold {
+                if mass_ratio <= mass_ratio_threshold {
+                    graph.add_edge(NodeIndex::new(a_i), NodeIndex::new(b_i), ());
+                }
+            }
+        }
+
+        let result = algo::tarjan_scc(&graph);
+        println!("{:?}", result);
+
+        // println!("{:?}", Dot::with_config(&graph, &[Config::EdgeNoLabel]));
+    }
+
+    fn test_graph(&mut self) {
+        let mut graph = Graph::<i32, ()>::new();
+        graph.add_node(0);
+        graph.add_node(1);
+        graph.add_node(2);
+        graph.add_node(3);
+        graph.add_node(4);
+        graph.extend_with_edges(&[(1, 2), (2, 3), (3, 4), (1, 4)]);
+
+        println!("{:?}", Dot::with_config(&graph, &[Config::EdgeNoLabel]));
+    }
+
     pub fn start(&mut self) {
+        // self.test_graph();
+        self.group_bodies();
+
         // map of a body to the list of bodies that have a gravitational effect on it
         let mut map_body_to_sources: HashMap<usize, Vec<usize>> = HashMap::new();
 
