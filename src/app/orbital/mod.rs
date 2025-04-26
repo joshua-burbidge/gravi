@@ -116,7 +116,7 @@ impl Orbital {
             presets: Preset::defaults(),
             analysis: Analysis::default(),
         };
-        app.load_preset(3);
+        app.load_preset(6);
         app
     }
 

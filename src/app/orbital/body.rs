@@ -209,6 +209,7 @@ impl Preset {
             Self::sun_earth_moon(),
             Self::equal_binary(),
             Self::unequal_binary(),
+            Self::hierarchy_test(),
         ]
     }
 
@@ -271,6 +272,44 @@ impl Preset {
             dt: 50.,
             ticks_per_press: 100000,
             draw_frequency: 24 * 60 * 60,
+        }
+    }
+
+    pub fn hierarchy_test() -> Self {
+        let base = Self::sun_earth_moon();
+        let earth_2 = Body {
+            name: "Earth 2".to_string(),
+            pos: Position::new(0., -149597870_f32),
+            ..Body::earth()
+        };
+        let moon_2 = Body {
+            name: "Moon 2".to_string(),
+            pos: earth_2.pos.add(Body::moon().pos),
+            ..Body::moon()
+        };
+
+        let earth_3 = Body {
+            name: "Earth 3".to_string(),
+            pos: Position::new(0., -109597870_f32),
+            ..Body::earth()
+        };
+        let moon_3 = Body {
+            name: "Moon 3".to_string(),
+            pos: earth_3.pos.add(Body::moon().pos),
+            ..Body::moon()
+        };
+        let third = Body {
+            name: "Third body".to_string(),
+            pos: earth_3.pos.minus(Body::moon().pos),
+            ..Body::moon()
+        };
+
+        let bodies = [base.bodies, vec![earth_2, moon_2, earth_3, moon_3, third]].concat();
+
+        Self {
+            name: "hierarchy_test".to_string(),
+            bodies,
+            ..base
         }
     }
 
