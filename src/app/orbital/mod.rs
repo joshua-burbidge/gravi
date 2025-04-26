@@ -4,7 +4,7 @@ mod ui;
 
 use body::{is_mass_significant, Body, Preset};
 use std::{collections::HashMap, f32};
-use tree::group_bodies;
+use tree::build_hierarchy;
 
 use super::{
     core::{
@@ -204,7 +204,7 @@ impl Orbital {
     }
 
     pub fn start(&mut self) {
-        group_bodies(&self.bodies);
+        build_hierarchy(&self.bodies);
 
         // map of a body to the list of bodies that have a gravitational effect on it
         let mut map_body_to_sources: HashMap<usize, Vec<usize>> = HashMap::new();
