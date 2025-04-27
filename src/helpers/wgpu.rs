@@ -109,7 +109,7 @@ pub async fn create_canvas(
     let window = {
         let window_attrs = WindowAttributes::default()
             .with_inner_size(PhysicalSize::new(width, height))
-            .with_position(PhysicalPosition::new(20, 20))
+            .with_position(PhysicalPosition::new(-1800, 20))
             .with_title(title);
 
         #[allow(deprecated)]
