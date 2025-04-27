@@ -201,7 +201,8 @@ pub fn draw_body<T: Renderer>(canvas: &mut Canvas<T>, body: &Body, distance_per_
     let radius = if body.radius == 0. {
         scaled_width(canvas, 10.)
     } else {
-        convert_length(body.radius, distance_per_px)
+        // convert_length(body.radius, distance_per_px)
+        scaled_width(canvas, 10.)
     };
 
     let (r, g, b) = body.color;
