@@ -277,9 +277,11 @@ impl Preset {
 
     pub fn hierarchy_test() -> Self {
         let base = Self::sun_earth_moon();
+
+        let cluster_y = -599_597_870_f32;
         let earth_2 = Body {
             name: "Earth 2".to_string(),
-            pos: Position::new(0., -149597870_f32),
+            pos: Position::new(0., cluster_y - 5_978_700.),
             ..Body::earth()
         };
         let moon_2 = Body {
@@ -290,7 +292,7 @@ impl Preset {
 
         let earth_3 = Body {
             name: "Earth 3".to_string(),
-            pos: Position::new(0., -109597870_f32),
+            pos: Position::new(0., cluster_y + 9_597_870.),
             ..Body::earth()
         };
         let moon_3 = Body {
