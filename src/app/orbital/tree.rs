@@ -7,24 +7,19 @@ use petgraph::{
     graph::{NodeIndex, UnGraph},
 };
 
-use crate::app::core::physics::Position;
+use crate::app::core::physics::{barycenter, Position};
 
 use super::body::Body;
 
 #[derive(Clone, Debug)]
 enum Node {
-    Leaf {
-        body: Body,
-    },
-    Group {
-        children: Vec<Node>,
-        composite: Body,
-    },
+    Leaf { body: Body },
+    Group { children: Vec<Node> },
 }
 
 impl Node {
     fn new(body: Body) -> Self {
-        Self::Leaf { body: body }
+        Self::Leaf { body }
     }
     fn names(&self) -> Vec<String> {
         let names = match self {
@@ -33,17 +28,28 @@ impl Node {
         };
         names
     }
+    fn label(&self) -> String {
+        self.names().join(", ")
+    }
     fn pos(&self) -> Position {
         match self {
             Node::Leaf { body } => body.pos,
-            Node::Group { composite, .. } => composite.pos,
+            Node::Group { .. } => {
+                let bodies = self.bodies();
+                barycenter(bodies)
+            }
+        }
+    }
+    fn bodies(&self) -> Vec<Body> {
+        match self {
+            Node::Leaf { body } => vec![body.copy()],
+            Node::Group { children } => children.iter().flat_map(|n| n.bodies()).collect(),
         }
     }
     fn mass(&self) -> f32 {
         match self {
             Node::Leaf { body } => body.mass,
-            // Node::Group { children, .. } => children.iter().map(|c| c.mass()).sum(),
-            Node::Group { composite, .. } => composite.mass,
+            Node::Group { children, .. } => children.iter().map(|c| c.mass()).sum(),
         }
     }
     fn mass_ratio(&self, other: &Node) -> f32 {
@@ -108,7 +114,9 @@ fn find_bodies_within_threshold(
     }
 
     // never found a big jump, everything is grouped together
-    return distances.clone();
+    // return distances.clone();
+    // that approach seems weird - i wouldn't want to group three different planets around the sun right?
+    return vec![];
 }
 
 // the graph in here is just to group bodies, it's not the same graph that's used to construct the hierarchy
@@ -122,6 +130,14 @@ fn group_bodies(bodies: &Vec<Node>) -> Vec<(usize, usize)> {
         println!("current node: {:?}", current_node.names());
 
         let bodies_sorted = sort_by_distance(cur_i, bodies);
+        println!(
+            "sorted nodes: {:?}",
+            bodies_sorted
+                .iter()
+                .map(|(i, n, d)| format!("{} - {}, d: {}", i, n.label(), d))
+                .collect::<Vec<String>>()
+        );
+
         // find all that are "relatively close" (distance increase is less than threshold)
         let within_threshold =
             find_bodies_within_threshold(&bodies_sorted, distance_ratio_threshold);
@@ -144,11 +160,10 @@ fn group_bodies(bodies: &Vec<Node>) -> Vec<(usize, usize)> {
     edges
 }
 
-fn build_one_level(nodes: Vec<Node>) {
-    // how to track indices after first level grouping?
-    let mut graph = UnGraph::<usize, ()>::new_undirected();
-    for (i, _) in nodes.iter().enumerate() {
-        graph.add_node(i);
+fn build_one_level(nodes: &Vec<Node>) -> Vec<Vec<NodeIndex>> {
+    let mut graph = UnGraph::<String, ()>::new_undirected();
+    for (_, n) in nodes.iter().enumerate() {
+        graph.add_node(n.label());
     }
 
     let edges = group_bodies(&nodes);
@@ -157,20 +172,57 @@ fn build_one_level(nodes: Vec<Node>) {
         graph.add_edge(NodeIndex::new(*start), NodeIndex::new(*end), ());
     }
 
-    let result = algo::tarjan_scc(&graph);
-    println!("{:?}", result);
-
-    // turn each group into a Group Node
-
+    // tarjan algorithm finds all groups of connected nodes
+    let groups = algo::tarjan_scc(&graph);
+    println!("{:?}", groups);
     println!("{:?}", Dot::with_config(&graph, &[Config::EdgeNoLabel]));
+
+    groups
 }
 
 pub fn build_hierarchy(bodies: &Vec<Body>) {
-    let current: Vec<Node> = bodies.iter().map(|b| Node::new(b.copy())).collect();
+    let initial_nodes: Vec<Node> = bodies.iter().map(|b| Node::new(b.copy())).collect();
 
-    build_one_level(current);
+    let mut current_nodes = initial_nodes;
+    let mut i = 0;
 
-    // loop {
-    //     let level = group_bodies(current);
-    // }
+    loop {
+        i += 1;
+        if i > 10 {
+            println!("loop limit: probably error");
+            break;
+        }
+
+        let new_groups = build_one_level(&current_nodes);
+
+        if current_nodes.len() == new_groups.len() {
+            break;
+        }
+
+        // turn each group into a Group Node
+        let mut new_nodes: Vec<Node> = vec![];
+        for group in new_groups.iter() {
+            let group_node = if group.len() > 1 {
+                let group_nodes: Vec<Node> = group
+                    .iter()
+                    .map(|nx| current_nodes[nx.index()].clone())
+                    .collect();
+
+                let new_node: Node = Node::Group {
+                    children: group_nodes,
+                };
+                new_node
+            } else if group.len() == 1 {
+                let nx = group[0];
+                current_nodes[nx.index()].clone()
+            } else {
+                panic!("group of length zero")
+            };
+            new_nodes.push(group_node);
+        }
+
+        current_nodes = new_nodes;
+    }
+
+    println!("looped {} times", i);
 }
