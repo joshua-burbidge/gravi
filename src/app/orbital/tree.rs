@@ -1,6 +1,9 @@
 // Modeling the group of orbital bodies as a tree,
 // where each node is a body or group of bodies
 
+use std::fmt::Debug;
+
+use itertools::Itertools;
 use petgraph::{
     algo,
     dot::{Config, Dot},
@@ -11,10 +14,29 @@ use crate::app::core::physics::{barycenter, Position};
 
 use super::body::Body;
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 enum Node {
     Leaf { body: Body },
     Group { children: Vec<Node> },
+}
+
+impl Debug for Node {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut d = f.debug_struct("Node");
+
+        let node_type = if self.is_leaf() { "Leaf" } else { "Group" };
+        let children = match self {
+            Node::Leaf { .. } => "".to_string(),
+            // Node::Group { children } => children.iter().map(|c| format!("{:?}", c)).join(" ,"),
+            Node::Group { children } => children.len().to_string(),
+        };
+
+        d.field("type", &node_type.to_string())
+            .field("names", &self.label())
+            .field("position", &self.pos())
+            .field("children", &children);
+        d.finish()
+    }
 }
 
 impl Node {
@@ -58,7 +80,7 @@ impl Node {
 
         (self_mass / other_mass).max(other_mass / self_mass)
     }
-    fn _is_leaf(self) -> bool {
+    fn is_leaf(&self) -> bool {
         match self {
             Node::Leaf { .. } => true,
             Node::Group { .. } => false,
@@ -161,9 +183,9 @@ fn group_bodies(bodies: &Vec<Node>) -> Vec<(usize, usize)> {
 }
 
 fn build_one_level(nodes: &Vec<Node>) -> Vec<Vec<NodeIndex>> {
-    let mut graph = UnGraph::<String, ()>::new_undirected();
+    let mut graph = UnGraph::<Node, ()>::new_undirected();
     for (_, n) in nodes.iter().enumerate() {
-        graph.add_node(n.label());
+        graph.add_node(n.clone());
     }
 
     let edges = group_bodies(&nodes);
