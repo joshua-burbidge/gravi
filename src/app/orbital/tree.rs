@@ -3,11 +3,10 @@
 
 use std::fmt::Debug;
 
-use itertools::Itertools;
 use petgraph::{
     algo,
     dot::{Config, Dot},
-    graph::{NodeIndex, UnGraph},
+    graph::{DiGraph, NodeIndex, UnGraph},
 };
 
 use crate::app::core::physics::{barycenter, Position};
@@ -100,6 +99,24 @@ impl Node {
 // if there is a jump of 10x, then they can be grouped together
 
 // bodies should be grouped if M inner >> M outer, r outer >> r inner, period outer >> period inner
+
+// returns nodes with no incoming edges
+// these are the nodes that should be considered for grouping
+fn find_roots<N: Clone, E: Debug>(graph: &DiGraph<N, E>) -> Vec<N> {
+    graph
+        .node_indices()
+        .filter(|&node| {
+            for e in graph.edges_directed(node, petgraph::Incoming) {
+                println!("{:?}", e);
+            }
+            graph
+                .edges_directed(node, petgraph::Incoming)
+                .next()
+                .is_none()
+        })
+        .map(|nx| graph.node_weight(nx).expect("invalid node index").clone())
+        .collect()
+}
 
 // returns Vec<(index, Body, distance)> sorted by increasing distance
 fn sort_by_distance(current: usize, bodies: &Vec<Node>) -> Vec<(usize, Node, f32)> {
@@ -194,56 +211,94 @@ fn build_one_level(nodes: &Vec<Node>) -> Vec<Vec<NodeIndex>> {
         graph.add_edge(NodeIndex::new(*start), NodeIndex::new(*end), ());
     }
 
+    // let copied = graph.filter_map(|_, n| Some(n), |_, _| None::<()>);
+
     // tarjan algorithm finds all groups of connected nodes
     let groups = algo::tarjan_scc(&graph);
     println!("{:?}", groups);
     println!("{:?}", Dot::with_config(&graph, &[Config::EdgeNoLabel]));
 
+    // println!("{:?}", Dot::with_config(&copied, &[Config::EdgeNoLabel]));
+
     groups
 }
 
+// Leaf node = index corresponds to original vector index
 pub fn build_hierarchy(bodies: &Vec<Body>) {
     let initial_nodes: Vec<Node> = bodies.iter().map(|b| Node::new(b.copy())).collect();
 
-    let mut current_nodes = initial_nodes;
+    let mut overall_graph = DiGraph::<Node, ()>::new();
+    for (_, n) in initial_nodes.iter().enumerate() {
+        overall_graph.add_node(n.clone());
+    }
+
+    // let mut current_nodes = initial_nodes;
+    // let mut current_nodes = overall_graph.node_weights().map(|n| n.clone()).collect();
     let mut i = 0;
 
     loop {
+        let root_nodes = find_roots(&overall_graph);
+
+        println!("roots: {:?}", root_nodes);
+
         i += 1;
         if i > 10 {
             println!("loop limit: probably error");
             break;
         }
 
-        let new_groups = build_one_level(&current_nodes);
+        let new_groups = build_one_level(&root_nodes);
 
-        if current_nodes.len() == new_groups.len() {
+        // TODO check this comparison, and test
+        if root_nodes.len() == new_groups.len() {
             break;
         }
 
         // turn each group into a Group Node
-        let mut new_nodes: Vec<Node> = vec![];
         for group in new_groups.iter() {
-            let group_node = if group.len() > 1 {
-                let group_nodes: Vec<Node> = group
+            if group.len() > 1 {
+                let nodes: Vec<Node> = group
                     .iter()
-                    .map(|nx| current_nodes[nx.index()].clone())
+                    .map(|i| {
+                        overall_graph
+                            .node_weight(*i)
+                            .expect("invalid node index")
+                            .clone()
+                    })
                     .collect();
+                let new_group_node = Node::Group { children: nodes };
+                let new_group_index = overall_graph.add_node(new_group_node);
 
-                let new_node: Node = Node::Group {
-                    children: group_nodes,
-                };
-                new_node
-            } else if group.len() == 1 {
-                let nx = group[0];
-                current_nodes[nx.index()].clone()
-            } else {
-                panic!("group of length zero")
-            };
-            new_nodes.push(group_node);
+                for n in group.iter() {
+                    overall_graph.add_edge(new_group_index, *n, ());
+                }
+            }
         }
 
-        current_nodes = new_nodes;
+        println!(
+            "new graph: {:?}",
+            Dot::with_config(&overall_graph, &[Config::EdgeNoLabel])
+        );
+
+        // let group_node = if group.len() > 1 {
+        //     let group_nodes: Vec<Node> = group
+        //         .iter()
+        //         .map(|nx| current_nodes[nx.index()].clone())
+        //         .collect();
+
+        //     let new_node: Node = Node::Group {
+        //         children: group_nodes,
+        //     };
+        //     new_node
+        // } else if group.len() == 1 {
+        //     let nx = group[0];
+        //     current_nodes[nx.index()].clone()
+        // } else {
+        //     panic!("group of length zero")
+        // };
+        // new_nodes.push(group_node);
+
+        // current_nodes = new_nodes;
     }
 
     println!("looped {} times", i);
