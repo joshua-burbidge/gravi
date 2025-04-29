@@ -304,4 +304,37 @@ pub fn build_hierarchy(bodies: &Vec<Body>) {
     }
 
     println!("looped {} times", i);
+
+    let bodies_graph = map_to_bodies(overall_graph);
+
+    println!(
+        "final body graph: {:?}",
+        Dot::with_config(&bodies_graph, &[Config::EdgeNoLabel])
+    );
 }
+
+fn map_to_bodies(graph: DiGraph<Node, ()>) -> DiGraph<Body, ()> {
+    let body_graph: DiGraph<Body, ()> = graph.map(
+        |_nx, n| {
+            let body = match n {
+                Node::Leaf { body } => body.copy(),
+                Node::Group { .. } => Body {
+                    name: n.label() + " barycenter",
+                    pos: n.pos(),
+                    mass: n.mass(),
+                    radius: 0.,
+                    is_fixed: false,
+                    color: (0, 30, 220),
+                    ..Body::default()
+                },
+            };
+            body
+        },
+        |_ex, _e| (),
+    );
+
+    body_graph
+}
+
+// TODO map tree into a tree of Bodies - group node is a Body at the barycenter
+// TODO each Body should be in a local coordinate system where 0,0 is the parent node position
