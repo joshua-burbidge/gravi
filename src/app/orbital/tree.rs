@@ -254,6 +254,23 @@ pub fn build_hierarchy(bodies: &Vec<Body>) {
 
         // no more groups to make
         if root_nodes.len() == new_groups.len() {
+            // add the final root node
+            let new_final_node = Node::Group {
+                children: root_nodes.clone(),
+            };
+            let new_index = overall_graph.add_node(new_final_node);
+
+            for (i, _) in root_nodes.iter().enumerate() {
+                let overall_idx_of_group_member = map_root_to_graph
+                    .get(&i)
+                    .expect("invalid mapping root node to overall graph node");
+                overall_graph.add_edge(new_index, *overall_idx_of_group_member, ());
+            }
+
+            println!(
+                "new graph: {:?}",
+                Dot::with_config(&overall_graph, &[Config::EdgeNoLabel])
+            );
             break;
         }
 
