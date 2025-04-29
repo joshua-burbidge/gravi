@@ -32,7 +32,7 @@ impl Debug for Node {
 
         d.field("type", &node_type.to_string())
             .field("names", &self.label())
-            .field("position", &self.pos())
+            // .field("position", &self.pos())
             .field("children", &children);
         d.finish()
     }
