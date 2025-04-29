@@ -1,7 +1,7 @@
 // Modeling the group of orbital bodies as a tree,
 // where each node is a body or group of bodies
 
-use std::fmt::Debug;
+use std::{collections::HashMap, fmt::Debug};
 
 use petgraph::{
     algo,
@@ -102,20 +102,27 @@ impl Node {
 
 // returns nodes with no incoming edges
 // these are the nodes that should be considered for grouping
-fn find_roots<N: Clone, E: Debug>(graph: &DiGraph<N, E>) -> Vec<N> {
-    graph
-        .node_indices()
-        .filter(|&node| {
-            for e in graph.edges_directed(node, petgraph::Incoming) {
-                println!("{:?}", e);
-            }
-            graph
-                .edges_directed(node, petgraph::Incoming)
-                .next()
-                .is_none()
-        })
-        .map(|nx| graph.node_weight(nx).expect("invalid node index").clone())
-        .collect()
+fn find_roots<N: Clone, E: Debug>(graph: &DiGraph<N, E>) -> (Vec<N>, HashMap<usize, NodeIndex>) {
+    let mut map_root_idx_to_graph_idx: HashMap<usize, NodeIndex> = HashMap::new();
+    let mut result = vec![];
+
+    for ni in graph.node_indices() {
+        let is_root = graph
+            .edges_directed(ni, petgraph::Incoming)
+            .next()
+            .is_none();
+        if is_root {
+            result.push(
+                graph
+                    .node_weight(ni)
+                    .expect("invalid node index - find_root")
+                    .clone(),
+            );
+            map_root_idx_to_graph_idx.insert(result.len() - 1, ni);
+        }
+    }
+
+    (result, map_root_idx_to_graph_idx)
 }
 
 // returns Vec<(index, Body, distance)> sorted by increasing distance
@@ -211,14 +218,10 @@ fn build_one_level(nodes: &Vec<Node>) -> Vec<Vec<NodeIndex>> {
         graph.add_edge(NodeIndex::new(*start), NodeIndex::new(*end), ());
     }
 
-    // let copied = graph.filter_map(|_, n| Some(n), |_, _| None::<()>);
-
     // tarjan algorithm finds all groups of connected nodes
     let groups = algo::tarjan_scc(&graph);
     println!("{:?}", groups);
     println!("{:?}", Dot::with_config(&graph, &[Config::EdgeNoLabel]));
-
-    // println!("{:?}", Dot::with_config(&copied, &[Config::EdgeNoLabel]));
 
     groups
 }
@@ -232,14 +235,14 @@ pub fn build_hierarchy(bodies: &Vec<Body>) {
         overall_graph.add_node(n.clone());
     }
 
-    // let mut current_nodes = initial_nodes;
-    // let mut current_nodes = overall_graph.node_weights().map(|n| n.clone()).collect();
     let mut i = 0;
 
     loop {
-        let root_nodes = find_roots(&overall_graph);
+        // TODO this function should return something better - one thing instead of 2
+        let (root_nodes, map_root_to_graph) = find_roots(&overall_graph);
 
         println!("roots: {:?}", root_nodes);
+        println!("root map: {:?}", map_root_to_graph);
 
         i += 1;
         if i > 10 {
@@ -249,7 +252,7 @@ pub fn build_hierarchy(bodies: &Vec<Body>) {
 
         let new_groups = build_one_level(&root_nodes);
 
-        // TODO check this comparison, and test
+        // no more groups to make
         if root_nodes.len() == new_groups.len() {
             break;
         }
@@ -260,17 +263,19 @@ pub fn build_hierarchy(bodies: &Vec<Body>) {
                 let nodes: Vec<Node> = group
                     .iter()
                     .map(|i| {
-                        overall_graph
-                            .node_weight(*i)
-                            .expect("invalid node index")
-                            .clone()
+                        // this index actually corresponds to the nodes passed into build_one_level, not to the overall graph indices
+                        root_nodes[i.index()].clone()
                     })
                     .collect();
                 let new_group_node = Node::Group { children: nodes };
                 let new_group_index = overall_graph.add_node(new_group_node);
 
                 for n in group.iter() {
-                    overall_graph.add_edge(new_group_index, *n, ());
+                    // n should be the index of root_nodes[n] in overall_graph
+                    let overall_idx_of_group_member = map_root_to_graph
+                        .get(&n.index())
+                        .expect("invalid mapping root node to overall graph node");
+                    overall_graph.add_edge(new_group_index, *overall_idx_of_group_member, ());
                 }
             }
         }
@@ -279,26 +284,6 @@ pub fn build_hierarchy(bodies: &Vec<Body>) {
             "new graph: {:?}",
             Dot::with_config(&overall_graph, &[Config::EdgeNoLabel])
         );
-
-        // let group_node = if group.len() > 1 {
-        //     let group_nodes: Vec<Node> = group
-        //         .iter()
-        //         .map(|nx| current_nodes[nx.index()].clone())
-        //         .collect();
-
-        //     let new_node: Node = Node::Group {
-        //         children: group_nodes,
-        //     };
-        //     new_node
-        // } else if group.len() == 1 {
-        //     let nx = group[0];
-        //     current_nodes[nx.index()].clone()
-        // } else {
-        //     panic!("group of length zero")
-        // };
-        // new_nodes.push(group_node);
-
-        // current_nodes = new_nodes;
     }
 
     println!("looped {} times", i);
