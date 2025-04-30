@@ -3,6 +3,7 @@ mod tree;
 mod ui;
 
 use body::{is_mass_significant, Body, Preset};
+use petgraph::graph::{DiGraph, NodeIndex};
 use std::{collections::HashMap, f32};
 use tree::build_hierarchy;
 
@@ -33,6 +34,8 @@ pub struct Orbital {
     relationships: HashMap<usize, Vec<usize>>,
     presets: Vec<Preset>,
     analysis: Analysis,
+    hierarchy: DiGraph<Body, ()>,
+    root: NodeIndex,
 }
 
 impl App for Orbital {
@@ -108,8 +111,10 @@ impl Orbital {
             relationships: HashMap::new(),
             presets: Preset::defaults(),
             analysis: Analysis::default(),
+            hierarchy: DiGraph::new(),
+            root: NodeIndex::new(0),
         };
-        app.load_preset(6);
+        app.load_preset(3);
         app
     }
 
@@ -204,7 +209,9 @@ impl Orbital {
     }
 
     pub fn start(&mut self) {
-        build_hierarchy(&self.bodies);
+        let (hierarchy, root_index) = build_hierarchy(&self.bodies);
+        self.hierarchy = hierarchy;
+        self.root = root_index;
 
         // map of a body to the list of bodies that have a gravitational effect on it
         let mut map_body_to_sources: HashMap<usize, Vec<usize>> = HashMap::new();
@@ -233,11 +240,44 @@ impl Orbital {
         self.analysis = self.analysis.initialize(self);
     }
 
+    // determine all accelerations by traversing the hierarchy
+    // then update the bodies in the hierarchy
+    fn hierarchical_update(&self) {
+        // stack contains all the nodes that will be visited - removes node when visited, adds nodes when they are discovered
+        // let mut bfs1 = petgraph::visit::Bfs::new(&self.hierarchy, self.root);
+        // println!("initial: {:?}", bfs1.stack);
+        // println!("initial: {:?}", bfs1.discovered.to_string());
+
+        // let node1 = bfs1.next(&self.hierarchy);
+        // println!("1: {:?}", node1);
+        // println!("1: {:?}", bfs1.stack);
+        // println!("1: {:?}", bfs1.discovered.to_string());
+
+        // let node2 = bfs1.next(&self.hierarchy);
+        // println!("2: {:?}", node2);
+        // println!("2: {:?}", bfs1.stack);
+        // println!("2: {:?}", bfs1.discovered.to_string());
+
+        // let node3 = bfs1.next(&self.hierarchy);
+        // println!("3: {:?}", node3);
+        // println!("3: {:?}", bfs1.stack);
+        // println!("3: {:?}", bfs1.discovered.to_string());
+
+        let mut bfs = petgraph::visit::Bfs::new(&self.hierarchy, self.root);
+
+        while let Some(nx) = bfs.next(&self.hierarchy) {
+            println!("visiting: {:?}", nx);
+        }
+        println!("finished BFS");
+    }
+
     // run function contains calculations necessary for the iteration process
     fn run_euler(&mut self) {
         if self.stopped {
             return;
         }
+
+        self.hierarchical_update();
 
         let dt = self.dt;
 

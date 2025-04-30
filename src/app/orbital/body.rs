@@ -270,7 +270,7 @@ impl Preset {
             bodies: vec![sun, earth, moon],
             distance_per_px: 1400000,
             dt: 50.,
-            ticks_per_press: 100000,
+            ticks_per_press: 1,
             draw_frequency: 24 * 60 * 60,
         }
     }

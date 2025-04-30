@@ -227,7 +227,7 @@ fn build_one_level(nodes: &Vec<Node>) -> Vec<Vec<NodeIndex>> {
 }
 
 // Leaf node = index corresponds to original vector index
-pub fn build_hierarchy(bodies: &Vec<Body>) {
+pub fn build_hierarchy(bodies: &Vec<Body>) -> (DiGraph<Body, ()>, NodeIndex) {
     let initial_nodes: Vec<Node> = bodies.iter().map(|b| Node::new(b.copy())).collect();
 
     let mut overall_graph = DiGraph::<Node, ()>::new();
@@ -236,6 +236,7 @@ pub fn build_hierarchy(bodies: &Vec<Body>) {
     }
 
     let mut i = 0;
+    let mut root_index: NodeIndex = NodeIndex::new(0);
 
     loop {
         // TODO this function should return something better - one thing instead of 2
@@ -253,18 +254,19 @@ pub fn build_hierarchy(bodies: &Vec<Body>) {
         let new_groups = build_one_level(&root_nodes);
 
         // no more groups to make
+        // TODO refactor this to share code with normal node creation
         if root_nodes.len() == new_groups.len() {
             // add the final root node
             let new_final_node = Node::Group {
                 children: root_nodes.clone(),
             };
-            let new_index = overall_graph.add_node(new_final_node);
+            root_index = overall_graph.add_node(new_final_node);
 
             for (i, _) in root_nodes.iter().enumerate() {
                 let overall_idx_of_group_member = map_root_to_graph
                     .get(&i)
                     .expect("invalid mapping root node to overall graph node");
-                overall_graph.add_edge(new_index, *overall_idx_of_group_member, ());
+                overall_graph.add_edge(root_index, *overall_idx_of_group_member, ());
             }
 
             println!(
@@ -318,6 +320,8 @@ pub fn build_hierarchy(bodies: &Vec<Body>) {
         "final localized graph: {:?}",
         Dot::with_config(&localized, &[Config::EdgeNoLabel])
     );
+
+    (localized, root_index)
 }
 
 fn map_to_bodies(graph: DiGraph<Node, ()>) -> DiGraph<Body, ()> {
