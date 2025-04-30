@@ -311,6 +311,13 @@ pub fn build_hierarchy(bodies: &Vec<Body>) {
         "final body graph: {:?}",
         Dot::with_config(&bodies_graph, &[Config::EdgeNoLabel])
     );
+
+    let localized = map_to_localized(bodies_graph);
+
+    println!(
+        "final localized graph: {:?}",
+        Dot::with_config(&localized, &[Config::EdgeNoLabel])
+    );
 }
 
 fn map_to_bodies(graph: DiGraph<Node, ()>) -> DiGraph<Body, ()> {
@@ -334,6 +341,33 @@ fn map_to_bodies(graph: DiGraph<Node, ()>) -> DiGraph<Body, ()> {
     );
 
     body_graph
+}
+
+// map all bodies to localized positions, meaning
+// all bodies' positions are relative to their parent
+fn map_to_localized(graph: DiGraph<Body, ()>) -> DiGraph<Body, ()> {
+    let localized_graph = graph.map(
+        |nx, n| {
+            // every node should have exactly one incoming neighbor, except the root which has zero
+            let mut neighbors = graph.neighbors_directed(nx, petgraph::Direction::Incoming);
+            // let parent_idx = neighbors.next().expect("no parent found");
+            let localized_body = if let Some(parent_idx) = neighbors.next() {
+                let parent = graph.node_weight(parent_idx).expect("invalid index");
+                let localized_position = n.pos.minus(parent.pos);
+                Body {
+                    pos: localized_position,
+                    ..n.copy()
+                }
+            } else {
+                // if there are no neighbors, it must be the root
+                n.copy()
+            };
+            localized_body
+        },
+        |_ex, _e| (),
+    );
+
+    localized_graph
 }
 
 // TODO map tree into a tree of Bodies - group node is a Body at the barycenter

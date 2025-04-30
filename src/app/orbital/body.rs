@@ -5,6 +5,7 @@ use crate::app::core::physics::{
 
 #[derive(Clone, Debug)]
 pub struct Body {
+    pub name: String,
     pub pos: Position,
     pub v: Velocity,
     pub mass: f32,
@@ -15,7 +16,6 @@ pub struct Body {
     pub lock_to_circular_velocity: bool,
     pub lock_to_escape_velocity: bool,
     pub selected_vel_lock: usize,
-    pub name: String,
     pub color: (u8, u8, u8),
     pub default_expanded: bool,
 }
