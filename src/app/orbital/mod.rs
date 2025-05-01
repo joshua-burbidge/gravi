@@ -242,7 +242,7 @@ impl Orbital {
 
     // determine all accelerations by traversing the hierarchy
     // then update the bodies in the hierarchy
-    fn hierarchical_update(&self) {
+    fn hierarchical_update(&mut self) {
         let mut bfs = petgraph::visit::Bfs::new(&self.hierarchy, self.root);
         let graph = &self.hierarchy;
 
@@ -285,6 +285,7 @@ impl Orbital {
             },
             |_, e| *e,
         );
+        self.hierarchy = new_graph;
     }
 
     fn calc_acceleration(&self, affected_body: &Body, sources: Vec<Body>) -> Acceleration {
