@@ -59,18 +59,15 @@ impl Body {
         }
     }
 
-    pub fn update(
-        &mut self,
-        new_pos: Position,
-        new_vel: Velocity,
-        new_acc: Acceleration,
-    ) -> &mut Self {
-        self.pos = new_pos;
-        self.v = new_vel;
-        self.computed_a = new_acc;
-        self.trajectory.push(self.copy());
-
-        self
+    pub fn update(&self, new_pos: Position, new_vel: Velocity, new_acc: Acceleration) -> Self {
+        // TODO probably have to remove this clone
+        Body {
+            pos: new_pos,
+            v: new_vel,
+            computed_a: new_acc,
+            trajectory: [self.trajectory.clone(), vec![self.copy()]].concat(),
+            ..self.copy()
+        }
     }
 
     // return the mass ratio of this and another body, always converted to the >1 version

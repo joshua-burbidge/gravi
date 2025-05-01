@@ -268,14 +268,23 @@ impl Orbital {
                 let acceleration = self.calc_acceleration(child, other_children);
                 accelerations.insert(*child_idx, acceleration);
             }
-
-            // let cur_v = affected.v;
-            // let cur_r = affected.pos;
-            // let (next_r, next_v) = symplectic_euler_calc(cur_r, cur_v, *new_a, dt);
         }
         println!("{:?}", accelerations);
 
-        println!("finished BFS");
+        let new_graph = self.hierarchy.map(
+            |nx, n| {
+                let new_a = if let Some(a) = accelerations.get(&nx) {
+                    a
+                } else {
+                    // root node will have no acceleration stored
+                    &Acceleration::new(0., 0.)
+                };
+                let (next_r, next_v) = symplectic_euler_calc(n.pos, n.v, *new_a, self.dt);
+                let new = n.update(next_r, next_v, *new_a);
+                new
+            },
+            |_, e| *e,
+        );
     }
 
     fn calc_acceleration(&self, affected_body: &Body, sources: Vec<Body>) -> Acceleration {
