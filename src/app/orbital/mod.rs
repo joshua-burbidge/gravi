@@ -243,32 +243,53 @@ impl Orbital {
     // determine all accelerations by traversing the hierarchy
     // then update the bodies in the hierarchy
     fn hierarchical_update(&self) {
-        // stack contains all the nodes that will be visited - removes node when visited, adds nodes when they are discovered
-        // let mut bfs1 = petgraph::visit::Bfs::new(&self.hierarchy, self.root);
-        // println!("initial: {:?}", bfs1.stack);
-        // println!("initial: {:?}", bfs1.discovered.to_string());
-
-        // let node1 = bfs1.next(&self.hierarchy);
-        // println!("1: {:?}", node1);
-        // println!("1: {:?}", bfs1.stack);
-        // println!("1: {:?}", bfs1.discovered.to_string());
-
-        // let node2 = bfs1.next(&self.hierarchy);
-        // println!("2: {:?}", node2);
-        // println!("2: {:?}", bfs1.stack);
-        // println!("2: {:?}", bfs1.discovered.to_string());
-
-        // let node3 = bfs1.next(&self.hierarchy);
-        // println!("3: {:?}", node3);
-        // println!("3: {:?}", bfs1.stack);
-        // println!("3: {:?}", bfs1.discovered.to_string());
-
         let mut bfs = petgraph::visit::Bfs::new(&self.hierarchy, self.root);
+        let graph = &self.hierarchy;
 
-        while let Some(nx) = bfs.next(&self.hierarchy) {
+        let mut accelerations: HashMap<NodeIndex, Acceleration> = HashMap::new();
+
+        while let Some(nx) = bfs.next(graph) {
             println!("visiting: {:?}", nx);
+            // calculate accelerations caused by all children on each other
+            let children = graph.neighbors_directed(nx, petgraph::Direction::Outgoing);
+            let children_vec: Vec<(NodeIndex, Body)> = children
+                .map(|nx| (nx, graph.node_weight(nx).expect("invalid index").copy()))
+                .collect();
+
+            for (child_idx, child) in children_vec.iter() {
+                let other_children: Vec<Body> = children_vec
+                    .iter()
+                    .filter(|(nx, _)| *nx != *child_idx)
+                    .map(|(_, b)| b.copy())
+                    .collect();
+                println!("current child: {:?}", child);
+                println!("others: {:?}", other_children);
+
+                let acceleration = self.calc_acceleration(child, other_children);
+                accelerations.insert(*child_idx, acceleration);
+            }
+
+            // let cur_v = affected.v;
+            // let cur_r = affected.pos;
+            // let (next_r, next_v) = symplectic_euler_calc(cur_r, cur_v, *new_a, dt);
         }
+        println!("{:?}", accelerations);
+
         println!("finished BFS");
+    }
+
+    fn calc_acceleration(&self, affected_body: &Body, sources: Vec<Body>) -> Acceleration {
+        let total_a_for_body = sources
+            .iter()
+            .map(|source| {
+                let a_from_source =
+                    gravitational_acceleration(source.pos, affected_body.pos, source.mass);
+
+                a_from_source
+            })
+            .fold(Acceleration::default(), |acc, a| acc.add(a));
+
+        total_a_for_body
     }
 
     // run function contains calculations necessary for the iteration process
