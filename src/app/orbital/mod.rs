@@ -183,6 +183,15 @@ impl Orbital {
         };
     }
 
+    fn bodies_list(&self) -> Vec<String> {
+        // I'm assuming indices in the vec and graph are the same
+        self.bodies
+            .iter()
+            .enumerate()
+            .map(|(i, b)| format!("Body {}: {}", i + 1, b.name))
+            .collect()
+    }
+
     // Set circular or orbital velocity for any body that is locked to one of those.
     // Only applies when setting initial conditions before starting.
     fn set_velocities(&mut self) {

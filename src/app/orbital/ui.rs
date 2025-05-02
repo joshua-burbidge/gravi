@@ -44,7 +44,7 @@ pub fn ui(app: &mut Orbital, ctx: &egui::Context) {
             }
         });
 
-        let len = app.bodies.len();
+        let bodies_list = app.bodies_list();
 
         for (i, body) in app.bodies.iter_mut().enumerate() {
             let x_range = -10000.0..=10000.;
@@ -86,8 +86,8 @@ pub fn ui(app: &mut Orbital, ctx: &egui::Context) {
                             egui::ComboBox::from_label("Around body").show_index(
                                 ui,
                                 &mut body.selected_vel_lock,
-                                len,
-                                |i| format!("Body {}", i + 1),
+                                bodies_list.len(),
+                                |i| bodies_list[i].clone(),
                             );
                         });
                         ui.add_enabled_ui(!vel_lock_enabled, |ui| {
