@@ -362,6 +362,7 @@ impl Orbital {
         let initial_bodies: Vec<Body> = self
             .bodies
             .iter()
+            .filter(|body| !body.is_barycenter)
             .map(|body| match body.trajectory.get(0) {
                 Some(initial_body) => initial_body.clone(),
                 None => body.clone(),

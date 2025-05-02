@@ -336,6 +336,7 @@ fn map_to_bodies(graph: DiGraph<Node, ()>) -> DiGraph<Body, ()> {
                     mass: n.mass(),
                     radius: 0.,
                     is_fixed: false,
+                    is_barycenter: true,
                     color: (0, 30, 220),
                     ..Body::default()
                 },
