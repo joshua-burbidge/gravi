@@ -168,12 +168,12 @@ impl Preset {
         };
         let barycenter_earth = Body {
             is_fixed: false,
-            lock_to_circular_velocity: true,
+            // lock_to_circular_velocity: true,
             selected_vel_lock: 1,
             ..Body::earth()
         };
         let moon_orbiting_earth = Body {
-            lock_to_circular_velocity: true,
+            // lock_to_circular_velocity: true,
             selected_vel_lock: 0,
             ..Body::moon()
         };
@@ -237,16 +237,32 @@ impl Preset {
 
     pub fn sun_earth_moon() -> Self {
         let sun = Body::sun();
+
+        let earth_pos = Position::new(0., 149597870_f32);
+        let default_earth = Body::earth();
+
+        let default_moon = Body::moon();
+        let moon_pos = earth_pos.add(default_moon.absolute_pos);
+
         let earth = Body {
             absolute_pos: Position::new(0., 149597870_f32),
-            lock_to_circular_velocity: true,
+            // lock_to_circular_velocity: true,
+            v: circ_velocity_barycenter(default_earth.mass, earth_pos, default_moon.mass, moon_pos)
+                .0,
             selected_vel_lock: 0,
-            ..Body::earth()
+            ..default_earth
         };
-        let default_moon = Body::moon();
+
         let moon = Body {
-            absolute_pos: earth.absolute_pos.add(default_moon.absolute_pos),
-            lock_to_circular_velocity: true,
+            absolute_pos: moon_pos,
+            // lock_to_circular_velocity: true,
+            v: circ_velocity_barycenter(
+                default_moon.mass,
+                moon_pos,
+                earth.mass,
+                earth.absolute_pos,
+            )
+            .0,
             selected_vel_lock: 1,
             ..default_moon
         };
