@@ -52,7 +52,7 @@ impl App for Orbital {
         self.analyze();
 
         println!("");
-        for b in self.bodies.iter() {
+        for b in self.bodies_vec().iter() {
             println!("{}: abs: {:?}, rel: {:?}", b.name, b.absolute_pos, b.pos);
         }
 
@@ -72,7 +72,7 @@ impl App for Orbital {
 
         let ticks_per_graph_point = (self.draw_frequency as f32 / self.dt).ceil() as usize;
 
-        for b in self.bodies.iter() {
+        for b in self.bodies_vec().iter() {
             draw_body(canvas, b, self.distance_per_px);
 
             draw_line_thru_points(
@@ -129,6 +129,7 @@ impl Orbital {
         app
     }
 
+    // TODO not accurate if you change dt
     fn t(&self) -> f32 {
         let body = self.bodies.first();
         let len = match body {
@@ -181,6 +182,7 @@ impl Orbital {
             }
             None => {}
         };
+        self.create_hierarchy();
     }
 
     fn bodies_list(&self) -> Vec<String> {
@@ -191,6 +193,13 @@ impl Orbital {
             .map(|(i, b)| format!("Body {}: {}", i + 1, b.name))
             .collect()
     }
+    fn original_bodies(&self) -> Vec<Body> {
+        self.bodies
+            .iter()
+            .filter(|b| !b.is_barycenter)
+            .cloned()
+            .collect()
+    }
 
     // Set circular or orbital velocity for any body that is locked to one of those.
     // Only applies when setting initial conditions before starting.
@@ -199,23 +208,38 @@ impl Orbital {
             return;
         }
 
-        let positions: Vec<(Position, Velocity, f32)> =
-            self.bodies.iter().map(|b| (b.pos, b.v, b.mass)).collect();
+        let positions: Vec<(Position, Velocity, f32)> = self
+            .bodies_vec()
+            .iter()
+            .map(|b| (b.pos, b.v, b.mass))
+            .collect();
 
-        for body in self.bodies.iter_mut() {
+        for (i, body) in self.bodies_vec_mut().iter_mut().enumerate() {
+            // let mut_node = self
+            //     .hierarchy
+            //     .node_weight_mut(NodeIndex::new(i))
+            //     .expect("circ vel - invalid node index");
+
             if body.lock_to_circular_velocity {
-                let (locked_body_pos, _locked_body_v, locked_body_m) =
-                    positions.get(body.selected_vel_lock).unwrap();
+                let (locked_body_pos, _locked_body_v, locked_body_m) = positions
+                    .get(body.selected_vel_lock)
+                    .expect("invalid index");
 
                 let circ_vel =
                     circ_velocity_barycenter(body.mass, body.pos, *locked_body_m, *locked_body_pos)
                         .0;
+
+                println!("node: {:?}", body);
+                println!("locked circ v {:?}", circ_vel);
                 //.add(*_locked_body_v); // this works if the locked body velocity is not influenced by the current body (ie, hierarchical sun-earth-moon)
                 // but does not work for calcualting both parts of a 2-body system
                 body.v = circ_vel;
+
+                // mut_node.v = circ_vel;
             } else if body.lock_to_escape_velocity {
-                let (locked_body_pos, _locked_body_v, locked_body_m) =
-                    positions.get(body.selected_vel_lock).unwrap();
+                let (locked_body_pos, _locked_body_v, locked_body_m) = positions
+                    .get(body.selected_vel_lock)
+                    .expect("invalid index");
 
                 let esc_vel = escape_velocity_barycenter(
                     body.mass,
@@ -223,37 +247,27 @@ impl Orbital {
                     *locked_body_m,
                     *locked_body_pos,
                 );
+
+                // mut_node.v = esc_vel;
                 body.v = esc_vel;
             }
         }
     }
 
-    pub fn start(&mut self) {
+    fn create_hierarchy(&mut self) {
         let (hierarchy, root_index) = build_hierarchy(&self.bodies);
         self.hierarchy = hierarchy;
         self.root = root_index;
 
-        // map of a body to the list of bodies that have a gravitational effect on it
-        let mut map_body_to_sources: HashMap<usize, Vec<usize>> = HashMap::new();
+        self.bodies = self.tree_to_vec();
+    }
 
-        for (effected_i, affected_body) in self.bodies.iter().enumerate() {
-            let significant_sources: Vec<usize> = self
-                .bodies
-                .iter()
-                .enumerate()
-                .filter(|(source_i, source_body)| {
-                    *source_i != effected_i && is_mass_significant(source_body, affected_body)
-                })
-                .map(|(source_i, _)| (source_i))
-                .collect();
+    pub fn start(&mut self) {
+        // self.create_hierarchy();
 
-            map_body_to_sources.insert(effected_i, significant_sources);
-        }
-
-        self.relationships = map_body_to_sources;
         self.started = true;
 
-        for b in self.bodies.iter_mut() {
+        for b in self.bodies_vec().iter_mut() {
             b.trajectory.push(b.copy());
         }
 
@@ -263,6 +277,14 @@ impl Orbital {
     fn tree_to_vec(&self) -> Vec<Body> {
         let bodies_vec: Vec<Body> = self.hierarchy.node_weights().map(|b| b.clone()).collect();
         bodies_vec
+    }
+    fn bodies_vec(&self) -> Vec<Body> {
+        // return a vec of the bodies with same indices as graph
+        self.hierarchy.node_weights().map(|b| b.clone()).collect()
+    }
+    fn bodies_vec_mut(&mut self) -> Vec<&mut Body> {
+        // return a vec of the bodies with same indices as graph
+        self.hierarchy.node_weights_mut().collect()
     }
 
     // determine all accelerations by traversing the hierarchy
@@ -352,7 +374,7 @@ impl Orbital {
     }
 
     fn check_collisions(&mut self) -> bool {
-        for (i, b) in self.bodies.iter().enumerate() {
+        for (i, b) in self.bodies_vec().iter().enumerate() {
             for b2 in self.bodies[i + 1..].iter() {
                 if b.is_barycenter || b2.is_barycenter {
                     continue;
@@ -383,6 +405,7 @@ impl Orbital {
             })
             .collect();
         self.bodies = initial_bodies;
+        self.create_hierarchy();
 
         self.started = false;
         self.stopped = false;

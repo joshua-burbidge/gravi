@@ -28,6 +28,10 @@ pub fn ui(app: &mut Orbital, ctx: &egui::Context) {
                 }
             });
 
+        if ui.button("build hierarchy").clicked() {
+            app.create_hierarchy();
+        }
+
         ui.add_space(20.);
 
         ui.label(RichText::new("General").heading());
@@ -45,8 +49,9 @@ pub fn ui(app: &mut Orbital, ctx: &egui::Context) {
         });
 
         let bodies_list = app.bodies_list();
+        let started = app.started;
 
-        for (i, body) in app.bodies.iter_mut().enumerate() {
+        for (i, body) in app.bodies_vec_mut().iter_mut().enumerate() {
             let x_range = -10000.0..=10000.;
             let y_range = -10000.0..=10000.;
 
@@ -61,7 +66,7 @@ pub fn ui(app: &mut Orbital, ctx: &egui::Context) {
             )
             .default_open(body.default_expanded)
             .show(ui, |ui| {
-                ui.add_enabled_ui(!app.started, |ui| {
+                ui.add_enabled_ui(!started, |ui| {
                     text_sized(ui, "Position (km)", 14.);
                     ui.add(XYInput::new(
                         &mut body.absolute_pos.x,
@@ -115,7 +120,7 @@ pub fn ui(app: &mut Orbital, ctx: &egui::Context) {
             ui.add_space(20.);
         }
 
-        // app.set_velocities();
+        app.set_velocities();
 
         if ui.button("Start").clicked() {
             app.start();
