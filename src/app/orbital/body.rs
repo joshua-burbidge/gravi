@@ -1,6 +1,6 @@
 use crate::app::core::physics::{
-    circ_velocity_barycenter, circular_velocity, Acceleration, Position, Velocity, R_EARTH_KM,
-    R_MOON_KM,
+    barycenter_abs, circ_velocity_barycenter, circular_velocity, Acceleration, Position, Velocity,
+    R_EARTH_KM, R_MOON_KM,
 };
 
 #[derive(Clone, Debug)]
@@ -257,34 +257,49 @@ impl Preset {
     pub fn sun_earth_moon() -> Self {
         let sun = Body::sun();
 
-        let earth_pos = Position::new(0., 149597870_f32);
-        let default_earth = Body::earth();
-
-        let default_moon = Body::moon();
-        let moon_pos = earth_pos.add(default_moon.absolute_pos);
-
-        let earth = Body {
+        let mut earth = Body {
             absolute_pos: Position::new(0., 149597870_f32),
             // lock_to_circular_velocity: true,
-            v: circ_velocity_barycenter(default_earth.mass, earth_pos, default_moon.mass, moon_pos)
-                .0,
             selected_vel_lock: 0,
-            ..default_earth
+            ..Body::earth()
         };
 
-        let moon = Body {
-            absolute_pos: moon_pos,
+        let default_moon = Body::moon();
+        let mut moon = Body {
+            absolute_pos: earth.absolute_pos.add(default_moon.absolute_pos),
             // lock_to_circular_velocity: true,
-            v: circ_velocity_barycenter(
-                default_moon.mass,
-                moon_pos,
-                earth.mass,
-                earth.absolute_pos,
-            )
-            .0,
             selected_vel_lock: 1,
             ..default_moon
         };
+
+        let earth_circ_v =
+            circ_velocity_barycenter(earth.mass, earth.absolute_pos, moon.mass, moon.absolute_pos)
+                .0;
+        let moon_circ_v =
+            circ_velocity_barycenter(moon.mass, moon.absolute_pos, earth.mass, earth.absolute_pos)
+                .0;
+
+        println!("{:?}", earth_circ_v);
+        println!("{:?}", moon_circ_v);
+
+        let mut e_m_barycenter = Body {
+            absolute_pos: barycenter_abs(vec![earth.clone(), moon.clone()]),
+            mass: earth.mass + moon.mass,
+            ..Body::default()
+        };
+
+        let e_m_circ_v = circ_velocity_barycenter(
+            e_m_barycenter.mass,
+            e_m_barycenter.absolute_pos,
+            sun.mass,
+            sun.absolute_pos,
+        )
+        .0;
+        println!("{:?}", e_m_circ_v);
+
+        e_m_barycenter.v = e_m_circ_v;
+        earth.v = earth_circ_v.add(e_m_circ_v);
+        moon.v = moon_circ_v.add(e_m_circ_v);
 
         Self {
             name: "Sun + earth + moon".to_string(),
