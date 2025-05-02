@@ -252,19 +252,22 @@ impl Preset {
     }
 
     pub fn sun_earth_moon() -> Self {
-        let sun = Body::sun();
+        let sun = Body {
+            is_fixed: false,
+            ..Body::sun()
+        };
 
         let mut earth = Body {
             absolute_pos: Position::new(0., 149597870_f32),
-            // lock_to_circular_velocity: true,
-            selected_vel_lock: 0,
+            lock_to_circular_velocity: true,
+            selected_vel_lock: 2,
             ..Body::earth()
         };
 
         let default_moon = Body::moon();
         let mut moon = Body {
             absolute_pos: earth.absolute_pos.add(default_moon.absolute_pos),
-            // lock_to_circular_velocity: true,
+            lock_to_circular_velocity: true,
             selected_vel_lock: 1,
             ..default_moon
         };
