@@ -53,8 +53,7 @@ text disappears at smaller scales - when deployed, it only appears at large scal
 
 ----------
 
-WIP:
-adding absolute pos. Use this for setting initial positions, and for drawing
-As local position is updated, how do i update absolute pos?
-want to use the bodies array before starting, then use the tree after starting
-  - or update the bodies array after starting?
+WIP - hierarchy:
+- want to use the bodies array before starting, then use the tree after starting
+    - or update the bodies array after starting?
+

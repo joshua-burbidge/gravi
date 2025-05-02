@@ -28,8 +28,8 @@ pub fn ui(app: &mut Orbital, ctx: &egui::Context) {
                 }
             });
 
-        if ui.button("build hierarchy").clicked() {
-            app.create_hierarchy();
+        if ui.button("refresh hierarchy").clicked() {
+            app.refresh_hierarchy();
         }
 
         ui.add_space(20.);

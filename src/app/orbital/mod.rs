@@ -48,7 +48,7 @@ impl App for Orbital {
         for _ in 0..self.num_ticks {
             self.run_euler();
         }
-        self.bodies = self.tree_to_vec();
+        // self.bodies = self.tree_to_vec();
         self.analyze();
 
         println!("");
@@ -125,7 +125,7 @@ impl Orbital {
             hierarchy: DiGraph::new(),
             root: NodeIndex::new(0),
         };
-        app.load_preset(3);
+        app.load_preset(0);
         app
     }
 
@@ -174,6 +174,7 @@ impl Orbital {
 
         match preset {
             Some(preset) => {
+                // this is the one place that self.bodies should be set
                 self.bodies = preset.bodies.clone();
                 self.distance_per_px = preset.distance_per_px as f32;
                 self.num_ticks = preset.ticks_per_press;
@@ -186,15 +187,14 @@ impl Orbital {
     }
 
     fn bodies_list(&self) -> Vec<String> {
-        // I'm assuming indices in the vec and graph are the same
-        self.bodies
+        self.bodies_vec()
             .iter()
             .enumerate()
             .map(|(i, b)| format!("Body {}: {}", i + 1, b.name))
             .collect()
     }
     fn original_bodies(&self) -> Vec<Body> {
-        self.bodies
+        self.bodies_vec()
             .iter()
             .filter(|b| !b.is_barycenter)
             .cloned()
@@ -214,12 +214,7 @@ impl Orbital {
             .map(|b| (b.pos, b.v, b.mass))
             .collect();
 
-        for (i, body) in self.bodies_vec_mut().iter_mut().enumerate() {
-            // let mut_node = self
-            //     .hierarchy
-            //     .node_weight_mut(NodeIndex::new(i))
-            //     .expect("circ vel - invalid node index");
-
+        for body in self.bodies_vec_mut().iter_mut() {
             if body.lock_to_circular_velocity {
                 let (locked_body_pos, _locked_body_v, locked_body_m) = positions
                     .get(body.selected_vel_lock)
@@ -234,8 +229,6 @@ impl Orbital {
                 //.add(*_locked_body_v); // this works if the locked body velocity is not influenced by the current body (ie, hierarchical sun-earth-moon)
                 // but does not work for calcualting both parts of a 2-body system
                 body.v = circ_vel;
-
-                // mut_node.v = circ_vel;
             } else if body.lock_to_escape_velocity {
                 let (locked_body_pos, _locked_body_v, locked_body_m) = positions
                     .get(body.selected_vel_lock)
@@ -248,23 +241,23 @@ impl Orbital {
                     *locked_body_pos,
                 );
 
-                // mut_node.v = esc_vel;
                 body.v = esc_vel;
             }
         }
     }
 
+    fn refresh_hierarchy(&mut self) {
+        let (hierarchy, root_index) = build_hierarchy(&self.original_bodies());
+        self.hierarchy = hierarchy;
+        self.root = root_index;
+    }
     fn create_hierarchy(&mut self) {
         let (hierarchy, root_index) = build_hierarchy(&self.bodies);
         self.hierarchy = hierarchy;
         self.root = root_index;
-
-        self.bodies = self.tree_to_vec();
     }
 
     pub fn start(&mut self) {
-        // self.create_hierarchy();
-
         self.started = true;
 
         for b in self.bodies_vec().iter_mut() {
@@ -274,10 +267,6 @@ impl Orbital {
         self.analysis = self.analysis.initialize(self);
     }
 
-    fn tree_to_vec(&self) -> Vec<Body> {
-        let bodies_vec: Vec<Body> = self.hierarchy.node_weights().map(|b| b.clone()).collect();
-        bodies_vec
-    }
     fn bodies_vec(&self) -> Vec<Body> {
         // return a vec of the bodies with same indices as graph
         self.hierarchy.node_weights().map(|b| b.clone()).collect()
@@ -375,7 +364,7 @@ impl Orbital {
 
     fn check_collisions(&mut self) -> bool {
         for (i, b) in self.bodies_vec().iter().enumerate() {
-            for b2 in self.bodies[i + 1..].iter() {
+            for b2 in self.bodies_vec()[i + 1..].iter() {
                 if b.is_barycenter || b2.is_barycenter {
                     continue;
                 }
@@ -395,16 +384,17 @@ impl Orbital {
     }
 
     fn reset(&mut self) {
-        let initial_bodies: Vec<Body> = self
-            .bodies
-            .iter()
-            .filter(|body| !body.is_barycenter)
-            .map(|body| match body.trajectory.get(0) {
-                Some(initial_body) => initial_body.clone(),
-                None => body.clone(),
-            })
-            .collect();
-        self.bodies = initial_bodies;
+        // let initial_bodies: Vec<Body> = self
+        //     .bodies
+        //     .iter()
+        //     .filter(|body| !body.is_barycenter)
+        //     .map(|body| match body.trajectory.get(0) {
+        //         Some(initial_body) => initial_body.clone(),
+        //         None => body.clone(),
+        //     })
+        //     .collect();
+        // self.bodies = initial_bodies;
+        // doesn't maintain manually changed settings?
         self.create_hierarchy();
 
         self.started = false;
