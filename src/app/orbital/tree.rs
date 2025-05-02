@@ -9,7 +9,7 @@ use petgraph::{
     graph::{DiGraph, NodeIndex, UnGraph},
 };
 
-use crate::app::core::physics::{barycenter, Position};
+use crate::app::core::physics::{barycenter, barycenter_abs, Position};
 
 use super::body::Body;
 
@@ -54,10 +54,10 @@ impl Node {
     }
     fn pos(&self) -> Position {
         match self {
-            Node::Leaf { body } => body.pos,
+            Node::Leaf { body } => body.absolute_pos,
             Node::Group { .. } => {
                 let bodies = self.bodies();
-                barycenter(bodies)
+                barycenter_abs(bodies)
             }
         }
     }
@@ -331,7 +331,7 @@ fn map_to_bodies(graph: DiGraph<Node, ()>) -> DiGraph<Body, ()> {
                 Node::Leaf { body } => body.copy(),
                 Node::Group { .. } => Body {
                     name: n.label() + " barycenter",
-                    pos: n.pos(),
+                    absolute_pos: n.pos(),
                     mass: n.mass(),
                     radius: 0.,
                     is_fixed: false,
@@ -357,14 +357,17 @@ fn map_to_localized(graph: DiGraph<Body, ()>) -> DiGraph<Body, ()> {
             // let parent_idx = neighbors.next().expect("no parent found");
             let localized_body = if let Some(parent_idx) = neighbors.next() {
                 let parent = graph.node_weight(parent_idx).expect("invalid index");
-                let localized_position = n.pos.minus(parent.pos);
+                let localized_position = n.absolute_pos.minus(parent.absolute_pos);
                 Body {
                     pos: localized_position,
                     ..n.copy()
                 }
             } else {
                 // if there are no neighbors, it must be the root
-                n.copy()
+                Body {
+                    pos: n.absolute_pos,
+                    ..n.copy()
+                }
             };
             localized_body
         },

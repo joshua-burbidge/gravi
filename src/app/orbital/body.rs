@@ -12,6 +12,7 @@ pub struct Body {
     pub radius: f32,
     pub trajectory: Vec<Body>,
     pub computed_a: Acceleration,
+    pub absolute_pos: Position,
     pub is_fixed: bool,
     pub lock_to_circular_velocity: bool,
     pub lock_to_escape_velocity: bool,
@@ -28,6 +29,7 @@ impl Default for Body {
             radius: Default::default(),
             trajectory: Default::default(),
             computed_a: Acceleration::default(),
+            absolute_pos: Position::default(),
             is_fixed: Default::default(),
             lock_to_circular_velocity: Default::default(),
             lock_to_escape_velocity: Default::default(),
@@ -48,6 +50,7 @@ impl Body {
             mass: self.mass,
             radius: self.radius,
             computed_a: self.computed_a,
+            absolute_pos: self.absolute_pos,
             is_fixed: self.is_fixed,
             lock_to_circular_velocity: self.lock_to_circular_velocity,
             lock_to_escape_velocity: self.lock_to_escape_velocity,
@@ -70,16 +73,11 @@ impl Body {
         }
     }
 
-    // return the mass ratio of this and another body, always converted to the >1 version
-    pub fn mass_ratio(&self, other: &Body) -> f32 {
-        (self.mass / other.mass).max(other.mass / self.mass)
-    }
-
     // --------------- Constructors ------------------
     // starting conditions for a low earth orbit, modeled after the ISS
     pub fn outer_low() -> Self {
         let earth_mass = Self::earth().mass;
-        let earth_pos = Self::earth().pos;
+        let earth_pos = Self::earth().absolute_pos;
 
         let r = 400. + R_EARTH_KM;
         let x = 3000_f32;
@@ -89,20 +87,11 @@ impl Body {
         Self {
             name: "Orbiting Object".to_string(),
             mass: 400000., // kg
-            pos: position,
+            absolute_pos: position,
             v: circular_velocity(earth_pos, earth_mass, position), // km/s
             trajectory: Vec::new(),
             default_expanded: true,
             color: (255, 0, 0),
-            ..Default::default()
-        }
-    }
-    fn _outer_med() -> Self {
-        Self {
-            mass: 5000.,
-            pos: Position::new(5000., 15000.),
-            v: Velocity::new(3.9, 0.),
-            default_expanded: true,
             ..Default::default()
         }
     }
@@ -116,7 +105,7 @@ impl Body {
     }
     pub fn moon() -> Self {
         let earth_mass = Self::earth().mass;
-        let earth_pos = Self::earth().pos;
+        let earth_pos = Self::earth().absolute_pos;
         let position = Position::new(0., 3.844e5 + R_EARTH_KM);
         let moon_mass = 7.34e22;
 
@@ -124,7 +113,7 @@ impl Body {
             name: "Moon".to_string(),
             mass: moon_mass,
             radius: R_MOON_KM,
-            pos: position,
+            absolute_pos: position,
             v: circ_velocity_barycenter(moon_mass, position, earth_mass, earth_pos).0, // km/s
             default_expanded: true,
             color: (160, 160, 160),
@@ -134,7 +123,7 @@ impl Body {
     pub fn sun() -> Self {
         Self {
             name: "Sun".to_string(),
-            pos: Position::new(0., 0.),
+            absolute_pos: Position::new(0., 0.),
             mass: 1.989e30,
             radius: 6.963e5,
             is_fixed: true,
@@ -215,7 +204,7 @@ impl Preset {
             name: String::from("1"),
             radius: 1000.,
             mass: 1e21,
-            pos: Position::new(-5000., -5000.),
+            absolute_pos: Position::new(-5000., -5000.),
             lock_to_circular_velocity: true,
             selected_vel_lock: 1,
             color: (0, 255, 0),
@@ -223,7 +212,7 @@ impl Preset {
         };
         let b2 = Body {
             name: String::from("2"),
-            pos: Position::new(0., 5000.),
+            absolute_pos: Position::new(0., 5000.),
             lock_to_circular_velocity: true,
             selected_vel_lock: 0,
             color: (255, 0, 0),
@@ -231,7 +220,7 @@ impl Preset {
         };
         let b3: Body = Body {
             name: String::from("3"),
-            pos: Position::new(7000., -5000.),
+            absolute_pos: Position::new(7000., -5000.),
             v: Velocity::new(-0.2, 0.08),
             lock_to_circular_velocity: false,
             color: (0, 70, 180),
@@ -249,14 +238,14 @@ impl Preset {
     pub fn sun_earth_moon() -> Self {
         let sun = Body::sun();
         let earth = Body {
-            pos: Position::new(0., 149597870_f32),
+            absolute_pos: Position::new(0., 149597870_f32),
             lock_to_circular_velocity: true,
             selected_vel_lock: 0,
             ..Body::earth()
         };
         let default_moon = Body::moon();
         let moon = Body {
-            pos: earth.pos.add(default_moon.pos),
+            absolute_pos: earth.absolute_pos.add(default_moon.absolute_pos),
             lock_to_circular_velocity: true,
             selected_vel_lock: 1,
             ..default_moon
@@ -278,34 +267,34 @@ impl Preset {
         let cluster_y = -599_597_870_f32;
         let earth_2 = Body {
             name: "Earth 2".to_string(),
-            pos: Position::new(0., cluster_y - 5_978_700.),
+            absolute_pos: Position::new(0., cluster_y - 5_978_700.),
             ..Body::earth()
         };
         let moon_2 = Body {
             name: "Moon 2".to_string(),
-            pos: earth_2.pos.add(Body::moon().pos),
+            absolute_pos: earth_2.absolute_pos.add(Body::moon().absolute_pos),
             ..Body::moon()
         };
 
         let earth_3 = Body {
             name: "Earth 3".to_string(),
-            pos: Position::new(0., cluster_y + 9_597_870.),
+            absolute_pos: Position::new(0., cluster_y + 9_597_870.),
             ..Body::earth()
         };
         let moon_3 = Body {
             name: "Moon 3".to_string(),
-            pos: earth_3.pos.add(Body::moon().pos),
+            absolute_pos: earth_3.absolute_pos.add(Body::moon().absolute_pos),
             ..Body::moon()
         };
         let third = Body {
             name: "Third body".to_string(),
-            pos: earth_3.pos.minus(Body::moon().pos),
+            absolute_pos: earth_3.absolute_pos.minus(Body::moon().absolute_pos),
             ..Body::moon()
         };
         let small = Body {
             name: "Small test particle".to_string(),
             mass: 10.,
-            pos: third.pos.add(Position::new(100., 100.)),
+            absolute_pos: third.absolute_pos.add(Position::new(100., 100.)),
             ..Body::default()
         };
 
@@ -329,7 +318,7 @@ impl Preset {
             name: "1".to_string(),
             mass: 1.23e22,
             radius: 8000.,
-            pos: Position::new(50000., 0.),
+            absolute_pos: Position::new(50000., 0.),
             lock_to_circular_velocity: true,
             selected_vel_lock: 1,
             default_expanded: true,
@@ -337,7 +326,7 @@ impl Preset {
         };
         let body2 = Body {
             name: "2".to_string(),
-            pos: Position::new(-50000., 0.),
+            absolute_pos: Position::new(-50000., 0.),
             selected_vel_lock: 0,
             color: (220, 0, 0),
             ..body1.clone()
@@ -371,7 +360,7 @@ impl Preset {
             name: "1".to_string(),
             mass: body1_mass,
             radius: 8000.,
-            pos: body1_pos,
+            absolute_pos: body1_pos,
             v: body1_circ_v.add(Velocity::new(0.02, -0.02)),
             lock_to_circular_velocity: false,
             selected_vel_lock: 1,
@@ -381,7 +370,7 @@ impl Preset {
         let body2 = Body {
             name: "2".to_string(),
             mass: 1.23e22,
-            pos: body2_pos,
+            absolute_pos: body2_pos,
             lock_to_circular_velocity: true,
             selected_vel_lock: 0,
             color: (220, 0, 0),

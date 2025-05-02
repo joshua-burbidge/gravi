@@ -152,3 +152,11 @@ pub fn barycenter(bodies: Vec<Body>) -> Position {
 
     weighted_pos_sum.divide(mass_sum)
 }
+pub fn barycenter_abs(bodies: Vec<Body>) -> Position {
+    let mass_sum = bodies.iter().fold(0., |acc, b| acc + b.mass);
+    let weighted_pos_sum = bodies.iter().fold(Position::default(), |acc, b| {
+        acc.add(b.absolute_pos.scale(b.mass))
+    });
+
+    weighted_pos_sum.divide(mass_sum)
+}

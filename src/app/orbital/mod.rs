@@ -77,7 +77,12 @@ impl App for Orbital {
                 b.color,
             );
 
-            draw_text(canvas, b.name.clone(), &b.pos, self.distance_per_px);
+            draw_text(
+                canvas,
+                b.name.clone(),
+                &b.absolute_pos,
+                self.distance_per_px,
+            );
         }
 
         for bary in &self.analysis.barycenters {
@@ -267,6 +272,10 @@ impl Orbital {
 
                 let acceleration = self.calc_acceleration(child, other_children);
                 accelerations.insert(*child_idx, acceleration);
+
+                // let (next_r, next_v) =
+                //     symplectic_euler_calc(child.pos, child.v, acceleration, self.dt);
+                // let new = child.update(next_r, next_v, acceleration);
             }
         }
         println!("{:?}", accelerations);

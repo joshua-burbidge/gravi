@@ -64,8 +64,8 @@ pub fn ui(app: &mut Orbital, ctx: &egui::Context) {
                 ui.add_enabled_ui(!app.started, |ui| {
                     text_sized(ui, "Position (km)", 14.);
                     ui.add(XYInput::new(
-                        &mut body.pos.x,
-                        &mut body.pos.y,
+                        &mut body.absolute_pos.x,
+                        &mut body.absolute_pos.y,
                         x_range,
                         y_range,
                     ));

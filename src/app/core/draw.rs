@@ -208,7 +208,7 @@ pub fn draw_body<T: Renderer>(canvas: &mut Canvas<T>, body: &Body, distance_per_
     let (r, g, b) = body.color;
     let paint = Paint::color(Color::rgb(r, g, b));
 
-    draw_circle_paint(canvas, &body.pos, radius, distance_per_px, paint);
+    draw_circle_paint(canvas, &body.absolute_pos, radius, distance_per_px, paint);
 }
 
 pub fn draw_barycenter<T: Renderer>(
