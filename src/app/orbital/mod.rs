@@ -2,7 +2,7 @@ pub mod body;
 mod tree;
 mod ui;
 
-use body::{is_mass_significant, Body, Preset};
+use body::{Body, Preset};
 use petgraph::graph::{DiGraph, NodeIndex};
 use std::{collections::HashMap, f32};
 use tree::build_hierarchy;
@@ -14,9 +14,9 @@ use super::{
             get_scale,
         },
         physics::{
-            barycenter, circ_velocity_barycenter, escape_velocity_barycenter,
-            gravitational_acceleration, gravitational_potential_energy, kinetic_energy,
-            symplectic_euler_calc, Acceleration, Position, Velocity,
+            circ_velocity_barycenter, escape_velocity_barycenter, gravitational_acceleration,
+            gravitational_potential_energy, kinetic_energy, symplectic_euler_calc, Acceleration,
+            Position, Velocity,
         },
     },
     App,
@@ -31,7 +31,6 @@ pub struct Orbital {
     started: bool,
     stopped: bool,
     bodies: Vec<Body>,
-    relationships: HashMap<usize, Vec<usize>>,
     presets: Vec<Preset>,
     analysis: Analysis,
     hierarchy: DiGraph<Body, ()>,
@@ -48,7 +47,6 @@ impl App for Orbital {
         for _ in 0..self.num_ticks {
             self.run_euler();
         }
-        // self.bodies = self.tree_to_vec();
         self.analyze();
 
         println!("");
@@ -119,7 +117,6 @@ impl Orbital {
             started: false,
             stopped: false,
             bodies: vec![Body::earth()],
-            relationships: HashMap::new(),
             presets: Preset::defaults(),
             analysis: Analysis::default(),
             hierarchy: DiGraph::new(),
@@ -215,6 +212,7 @@ impl Orbital {
             .map(|b| (b.pos, b.v, b.mass))
             .collect();
 
+        // with this approach it propagates immediately
         for body in self.bodies_vec_mut().iter_mut() {
             if body.lock_to_circular_velocity {
                 let (locked_body_pos, _locked_body_v, locked_body_m) = positions
@@ -225,10 +223,6 @@ impl Orbital {
                     circ_velocity_barycenter(body.mass, body.pos, *locked_body_m, *locked_body_pos)
                         .0;
 
-                println!("node: {:?}", body);
-                println!("locked circ v {:?}", circ_vel);
-                //.add(*_locked_body_v); // this works if the locked body velocity is not influenced by the current body (ie, hierarchical sun-earth-moon)
-                // but does not work for calcualting both parts of a 2-body system
                 body.v = circ_vel;
             } else if body.lock_to_escape_velocity {
                 let (locked_body_pos, _locked_body_v, locked_body_m) = positions
@@ -479,23 +473,6 @@ impl Analysis {
 
         let total = total_kinetic + total_gravitational;
         (total_kinetic, total_gravitational, total)
-    }
-
-    fn barycenters(&self, app: &Orbital) -> Vec<Position> {
-        let mut barycenters = vec![];
-
-        for (affected_i, sources) in app.relationships.iter() {
-            let affected = app.bodies.get(*affected_i).unwrap();
-
-            for source_i in sources.iter() {
-                let source = app.bodies.get(*source_i).unwrap();
-
-                let barycenter = barycenter(&vec![source.copy(), affected.copy()]);
-                barycenters.push(barycenter);
-            }
-        }
-
-        barycenters
     }
 
     fn initialize(&self, app: &Orbital) -> Analysis {
