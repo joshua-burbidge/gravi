@@ -448,14 +448,14 @@ impl Analysis {
             0.
         };
 
-        let barycenters = self.barycenters(app);
+        // let barycenters = self.barycenters(app);
 
         Analysis {
             kinetic_e: kinetic_mj,
             gravitational_e: grav_potential_mj,
             diff_percentage,
             initial_e: self.initial_e,
-            barycenters,
+            barycenters: vec![],
         }
     }
 

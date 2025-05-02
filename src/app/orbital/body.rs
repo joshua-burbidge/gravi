@@ -183,17 +183,33 @@ impl Preset {
             lock_to_escape_velocity: false,
             ..Body::earth()
         };
-        let barycenter_earth = Body {
+        let mut barycenter_earth = Body {
             is_fixed: false,
             // lock_to_circular_velocity: true,
             selected_vel_lock: 1,
             ..Body::earth()
         };
-        let moon_orbiting_earth = Body {
+        let mut moon_orbiting_earth = Body {
             // lock_to_circular_velocity: true,
             selected_vel_lock: 0,
             ..Body::moon()
         };
+        let circ_v_earth = circ_velocity_barycenter(
+            barycenter_earth.mass,
+            barycenter_earth.absolute_pos,
+            moon_orbiting_earth.mass,
+            moon_orbiting_earth.absolute_pos,
+        )
+        .0;
+        let circ_v_moon = circ_velocity_barycenter(
+            moon_orbiting_earth.mass,
+            moon_orbiting_earth.absolute_pos,
+            barycenter_earth.mass,
+            barycenter_earth.absolute_pos,
+        )
+        .0;
+        barycenter_earth.v = circ_v_earth;
+        moon_orbiting_earth.v = circ_v_moon;
         vec![
             Preset {
                 bodies: vec![fixed_earth, Body::outer_low()],
