@@ -339,18 +339,23 @@ impl Orbital {
 
         self.hierarchical_update();
 
-        // self.check_collisions();
+        self.check_collisions();
     }
 
     fn check_collisions(&mut self) -> bool {
         for (i, b) in self.bodies.iter().enumerate() {
             for b2 in self.bodies[i + 1..].iter() {
-                let distance_between = b.pos.minus(b2.pos).mag();
+                if b.is_barycenter || b2.is_barycenter {
+                    continue;
+                }
+
+                let distance_between = b.absolute_pos.minus(b2.absolute_pos).mag();
 
                 let is_collided = distance_between <= (b.radius + b2.radius);
 
                 if is_collided {
                     self.stopped = true;
+                    println!("collided: {}, {}", b.name, b2.name);
                     return true;
                 }
             }
