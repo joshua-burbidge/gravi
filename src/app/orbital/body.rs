@@ -169,6 +169,24 @@ impl Preset {
             lock_to_escape_velocity: false,
             ..Body::earth()
         };
+
+        vec![
+            Preset {
+                bodies: vec![fixed_earth, Body::outer_low()],
+                name: String::from("Small object orbiting Earth"),
+                distance_per_px: 150,
+                ..Preset::default()
+            },
+            Self::earth_moon(),
+            Self::three_body(),
+            Self::sun_earth_moon(),
+            Self::equal_binary(),
+            Self::unequal_binary(),
+            Self::hierarchy_test(),
+        ]
+    }
+
+    pub fn earth_moon() -> Self {
         let mut barycenter_earth = Body {
             is_fixed: false,
             // lock_to_circular_velocity: true,
@@ -185,28 +203,15 @@ impl Preset {
 
         barycenter_earth.v = circ_v_earth;
         moon_orbiting_earth.v = circ_v_moon;
-        vec![
-            Preset {
-                bodies: vec![fixed_earth, Body::outer_low()],
-                name: String::from("Small object orbiting Earth"),
-                distance_per_px: 150,
-                ..Preset::default()
-            },
-            Preset {
-                bodies: vec![barycenter_earth, moon_orbiting_earth],
-                name: String::from("Moon orbiting Earth"),
-                distance_per_px: 4000,
-                ticks_per_press: 100000,
-                ..Preset::default()
-            },
-            Self::three_body(),
-            Self::sun_earth_moon(),
-            Self::equal_binary(),
-            Self::unequal_binary(),
-            Self::hierarchy_test(),
-        ]
-    }
 
+        Preset {
+            bodies: vec![barycenter_earth, moon_orbiting_earth],
+            name: String::from("Moon orbiting Earth"),
+            distance_per_px: 4000,
+            ticks_per_press: 100000,
+            ..Preset::default()
+        }
+    }
     pub fn three_body() -> Self {
         let b1 = Body {
             name: String::from("1"),

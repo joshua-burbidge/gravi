@@ -51,6 +51,11 @@ impl App for Orbital {
         self.bodies = self.tree_to_vec();
         self.analyze();
 
+        println!("");
+        for b in self.bodies.iter() {
+            println!("{}: abs: {:?}, rel: {:?}", b.name, b.absolute_pos, b.pos);
+        }
+
         // let duration = start.elapsed();
         // println!("Run: Time elapsed = {:?}", duration);
     }
@@ -333,37 +338,6 @@ impl Orbital {
         }
 
         self.hierarchical_update();
-
-        // let dt = self.dt;
-
-        // let mut accelerations: HashMap<usize, Acceleration> = HashMap::new();
-
-        // for (affected_i, sources) in self.relationships.iter() {
-        //     let affected = self.bodies.get(*affected_i).unwrap();
-
-        //     let total_a_for_body = sources
-        //         .iter()
-        //         .map(|source_i| {
-        //             let source = self.bodies.get(*source_i).unwrap();
-        //             let a_from_source =
-        //                 gravitational_acceleration(source.pos, affected.pos, source.mass);
-
-        //             a_from_source
-        //         })
-        //         .fold(Acceleration::default(), |acc, a| acc.add(a));
-
-        //     accelerations.insert(*affected_i, total_a_for_body);
-        // }
-
-        // for (body_i, new_a) in accelerations.iter() {
-        //     let affected = self.bodies.get(*body_i).unwrap();
-
-        //     let cur_v = affected.v;
-        //     let cur_r = affected.pos;
-        //     let (next_r, next_v) = symplectic_euler_calc(cur_r, cur_v, *new_a, dt);
-
-        //     self.bodies[*body_i].update(next_r, next_v, *new_a);
-        // }
 
         // self.check_collisions();
     }
