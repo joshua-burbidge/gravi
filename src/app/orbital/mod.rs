@@ -4,7 +4,7 @@ mod ui;
 
 use body::{is_mass_significant, Body, Preset};
 use petgraph::graph::{DiGraph, NodeIndex};
-use std::{collections::HashMap, f32, hash::Hash};
+use std::{collections::HashMap, f32};
 use tree::build_hierarchy;
 
 use crate::app::core::physics::symplectic_euler_with_abs_pos;
@@ -50,6 +50,7 @@ impl App for Orbital {
         for _ in 0..self.num_ticks {
             self.run_euler();
         }
+        self.bodies = self.tree_to_vec();
         self.analyze();
 
         // let duration = start.elapsed();
@@ -68,7 +69,7 @@ impl App for Orbital {
 
         let ticks_per_graph_point = (self.draw_frequency as f32 / self.dt).ceil() as usize;
 
-        for b in self.bodies.iter() {
+        for b in self.tree_to_vec().iter() {
             draw_body(canvas, b, self.distance_per_px);
 
             draw_line_thru_points(
@@ -247,8 +248,8 @@ impl Orbital {
         self.analysis = self.analysis.initialize(self);
     }
 
-    fn tree_to_vec(&self) -> Vec<&Body> {
-        let bodies_vec: Vec<&Body> = self.hierarchy.node_weights().collect();
+    fn tree_to_vec(&self) -> Vec<Body> {
+        let bodies_vec: Vec<Body> = self.hierarchy.node_weights().map(|b| b.clone()).collect();
         bodies_vec
     }
 
@@ -281,7 +282,7 @@ impl Orbital {
                 .map(|child_nx| {
                     (
                         child_nx,
-                        graph.node_weight(child_nx).expect("invalid index").copy(),
+                        graph.node_weight(child_nx).expect("invalid index").clone(),
                     )
                 })
                 .collect();
@@ -376,7 +377,7 @@ impl Orbital {
         //     self.bodies[*body_i].update(next_r, next_v, *new_a);
         // }
 
-        self.check_collisions();
+        // self.check_collisions();
     }
 
     fn check_collisions(&mut self) -> bool {
