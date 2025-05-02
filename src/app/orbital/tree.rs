@@ -9,7 +9,7 @@ use petgraph::{
     graph::{DiGraph, NodeIndex, UnGraph},
 };
 
-use crate::app::core::physics::{barycenter, barycenter_abs, Position};
+use crate::app::core::physics::{barycenter_abs, Position};
 
 use super::body::Body;
 
@@ -57,7 +57,7 @@ impl Node {
             Node::Leaf { body } => body.absolute_pos,
             Node::Group { .. } => {
                 let bodies = self.bodies();
-                barycenter_abs(bodies)
+                barycenter_abs(&bodies)
             }
         }
     }

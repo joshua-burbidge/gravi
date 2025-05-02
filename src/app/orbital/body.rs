@@ -1,6 +1,6 @@
 use crate::app::core::physics::{
-    barycenter_abs, circ_velocity_barycenter, circular_velocity, Acceleration, Position, Velocity,
-    R_EARTH_KM, R_MOON_KM,
+    barycenter_abs, circ_velocity_barycenter, circ_velocity_bodies, circular_velocity,
+    Acceleration, Position, Velocity, R_EARTH_KM, R_MOON_KM,
 };
 
 #[derive(Clone, Debug)]
@@ -180,20 +180,9 @@ impl Preset {
             selected_vel_lock: 0,
             ..Body::moon()
         };
-        let circ_v_earth = circ_velocity_barycenter(
-            barycenter_earth.mass,
-            barycenter_earth.absolute_pos,
-            moon_orbiting_earth.mass,
-            moon_orbiting_earth.absolute_pos,
-        )
-        .0;
-        let circ_v_moon = circ_velocity_barycenter(
-            moon_orbiting_earth.mass,
-            moon_orbiting_earth.absolute_pos,
-            barycenter_earth.mass,
-            barycenter_earth.absolute_pos,
-        )
-        .0;
+        let (circ_v_earth, circ_v_moon) =
+            circ_velocity_bodies(&barycenter_earth, &moon_orbiting_earth);
+
         barycenter_earth.v = circ_v_earth;
         moon_orbiting_earth.v = circ_v_moon;
         vec![
@@ -272,30 +261,15 @@ impl Preset {
             ..default_moon
         };
 
-        let earth_circ_v =
-            circ_velocity_barycenter(earth.mass, earth.absolute_pos, moon.mass, moon.absolute_pos)
-                .0;
-        let moon_circ_v =
-            circ_velocity_barycenter(moon.mass, moon.absolute_pos, earth.mass, earth.absolute_pos)
-                .0;
-
-        println!("{:?}", earth_circ_v);
-        println!("{:?}", moon_circ_v);
+        let (earth_circ_v, moon_circ_v) = circ_velocity_bodies(&earth, &moon);
 
         let mut e_m_barycenter = Body {
-            absolute_pos: barycenter_abs(vec![earth.clone(), moon.clone()]),
+            absolute_pos: barycenter_abs(&vec![earth.clone(), moon.clone()]),
             mass: earth.mass + moon.mass,
             ..Body::default()
         };
 
-        let e_m_circ_v = circ_velocity_barycenter(
-            e_m_barycenter.mass,
-            e_m_barycenter.absolute_pos,
-            sun.mass,
-            sun.absolute_pos,
-        )
-        .0;
-        println!("{:?}", e_m_circ_v);
+        let e_m_circ_v = circ_velocity_bodies(&e_m_barycenter, &sun).0;
 
         e_m_barycenter.v = e_m_circ_v;
         earth.v = earth_circ_v.add(e_m_circ_v);
@@ -364,7 +338,7 @@ impl Preset {
     // binary system with equal masses and circular velocities
     // both bodies will move in the exact same circle
     pub fn equal_binary() -> Self {
-        let body1 = Body {
+        let mut body1 = Body {
             name: "1".to_string(),
             mass: 1.23e22,
             radius: 8000.,
@@ -374,13 +348,18 @@ impl Preset {
             default_expanded: true,
             ..Body::default()
         };
-        let body2 = Body {
+        let mut body2 = Body {
             name: "2".to_string(),
             absolute_pos: Position::new(-50000., 0.),
             selected_vel_lock: 0,
             color: (220, 0, 0),
             ..body1.clone()
         };
+
+        let (v1, v2) = circ_velocity_bodies(&body1, &body2);
+        println!("circ_vs {:?}, {:?}", v1, v2);
+        body1.v = v1;
+        body2.v = v2;
 
         Self {
             name: "Equal circular binary system".to_string(),
@@ -400,24 +379,19 @@ impl Preset {
     pub fn unequal_binary() -> Self {
         let body1_mass = 6.23e22;
         let body1_pos = Position::new(-100000., 150000.);
-        let body2_mass = body1_mass / 5.;
         let body2_pos = Position::new(-200000., 150000.);
 
-        let (body1_circ_v, _body2_circ_v) =
-            circ_velocity_barycenter(body1_mass, body1_pos, body2_mass, body2_pos);
-
-        let body1 = Body {
+        let mut body1 = Body {
             name: "1".to_string(),
             mass: body1_mass,
             radius: 8000.,
             absolute_pos: body1_pos,
-            v: body1_circ_v.add(Velocity::new(0.02, -0.02)),
             lock_to_circular_velocity: false,
             selected_vel_lock: 1,
             default_expanded: true,
             ..Body::default()
         };
-        let body2 = Body {
+        let mut body2 = Body {
             name: "2".to_string(),
             mass: 1.23e22,
             absolute_pos: body2_pos,
@@ -426,6 +400,10 @@ impl Preset {
             color: (220, 0, 0),
             ..body1.clone()
         };
+
+        let (body1_circ_v, body2_circ_v) = circ_velocity_bodies(&body1, &body2);
+        body1.v = body1_circ_v.add(Velocity::new(0.02, -0.02));
+        body2.v = body2_circ_v;
 
         Self {
             name: "Unequal binary system".to_string(),

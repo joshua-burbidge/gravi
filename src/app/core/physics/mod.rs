@@ -51,7 +51,24 @@ pub fn circ_velocity_barycenter(
 
     // split the whole vc based on mass ratio to get individual velocities
     let v1 = overall_vc.scale(m2 / (m1 + m2));
-    let v2 = overall_vc.scale(m1 / (m1 + m2));
+    let v2 = overall_vc.scale(-m1 / (m1 + m2));
+
+    (v1, v2)
+}
+
+pub fn circ_velocity_bodies(body1: &Body, body2: &Body) -> (Velocity, Velocity) {
+    let r = body2.absolute_pos.minus(body1.absolute_pos);
+
+    let circ_v_mag = circular_velocity_magnitude(body1.mass + body2.mass, r.mag());
+
+    let r_unit_vector = r.divide(r.mag());
+    let v_unit_vector = r_unit_vector.perpendicular_cw();
+
+    let vc = Velocity::from(v_unit_vector.scale(circ_v_mag));
+
+    let mass_sum = body1.mass + body2.mass;
+    let v1 = vc.scale(-body2.mass / mass_sum);
+    let v2 = vc.scale(body1.mass / mass_sum);
 
     (v1, v2)
 }
@@ -144,7 +161,7 @@ pub fn gravitational_potential_energy(m1: f32, m2: f32, pos1: Position, pos2: Po
 // Compute the barycenter of multiple bodies - the point around which two bodies both orbit
 // Same as center of mass for spherical bodies in normal conditions.
 // Rb = m1*r1 + m2*r2 + ... +mn*rn / (m1 + m2 + ... + mn)
-pub fn barycenter(bodies: Vec<Body>) -> Position {
+pub fn barycenter(bodies: &Vec<Body>) -> Position {
     let mass_sum = bodies.iter().fold(0., |acc, b| acc + b.mass);
     let weighted_pos_sum = bodies
         .iter()
@@ -152,7 +169,7 @@ pub fn barycenter(bodies: Vec<Body>) -> Position {
 
     weighted_pos_sum.divide(mass_sum)
 }
-pub fn barycenter_abs(bodies: Vec<Body>) -> Position {
+pub fn barycenter_abs(bodies: &Vec<Body>) -> Position {
     let mass_sum = bodies.iter().fold(0., |acc, b| acc + b.mass);
     let weighted_pos_sum = bodies.iter().fold(Position::default(), |acc, b| {
         acc.add(b.absolute_pos.scale(b.mass))

@@ -482,7 +482,7 @@ impl Analysis {
             for source_i in sources.iter() {
                 let source = app.bodies.get(*source_i).unwrap();
 
-                let barycenter = barycenter(vec![source.copy(), affected.copy()]);
+                let barycenter = barycenter(&vec![source.copy(), affected.copy()]);
                 barycenters.push(barycenter);
             }
         }
