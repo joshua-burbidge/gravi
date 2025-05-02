@@ -237,13 +237,13 @@ pub fn draw_line_thru_points<T: Renderer>(
     let initial_state = trajectory_iter.next();
     match initial_state {
         Some(b) => {
-            let canvas_pos = pos_to_canvas(&b.pos, distance_per_px);
+            let canvas_pos = pos_to_canvas(&b.absolute_pos, distance_per_px);
             trajectory_path.move_to(canvas_pos.x, canvas_pos.y);
         }
         None => {}
     }
     for b in trajectory_iter.step_by(ticks_per_graph_point) {
-        let canvas_pos = pos_to_canvas(&b.pos, distance_per_px);
+        let canvas_pos = pos_to_canvas(&b.absolute_pos, distance_per_px);
         trajectory_path.line_to(canvas_pos.x, canvas_pos.y);
     }
 

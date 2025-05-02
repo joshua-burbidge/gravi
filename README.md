@@ -49,3 +49,12 @@ Performance gets worse when there are long trajectories
 text disappears at smaller scales - when deployed, it only appears at large scales
 - try increasing the scale
 - scale == 0.05, font == 930 is visible
+
+
+----------
+
+WIP:
+adding absolute pos. Use this for setting initial positions, and for drawing
+As local position is updated, how do i update absolute pos?
+want to use the bodies array before starting, then use the tree after starting
+  - or update the bodies array after starting?

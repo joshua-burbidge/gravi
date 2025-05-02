@@ -257,6 +257,7 @@ pub fn build_hierarchy(bodies: &Vec<Body>) -> (DiGraph<Body, ()>, NodeIndex) {
         // TODO refactor this to share code with normal node creation
         if root_nodes.len() == new_groups.len() {
             // add the final root node
+            // TODO should the root node be at 0,0 or the barycenter?
             let new_final_node = Node::Group {
                 children: root_nodes.clone(),
             };

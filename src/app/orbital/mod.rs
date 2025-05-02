@@ -4,8 +4,10 @@ mod ui;
 
 use body::{is_mass_significant, Body, Preset};
 use petgraph::graph::{DiGraph, NodeIndex};
-use std::{collections::HashMap, f32};
+use std::{collections::HashMap, f32, hash::Hash};
 use tree::build_hierarchy;
+
+use crate::app::core::physics::symplectic_euler_with_abs_pos;
 
 use super::{
     core::{
@@ -245,20 +247,43 @@ impl Orbital {
         self.analysis = self.analysis.initialize(self);
     }
 
+    fn tree_to_vec(&self) -> Vec<&Body> {
+        let bodies_vec: Vec<&Body> = self.hierarchy.node_weights().collect();
+        bodies_vec
+    }
+
     // determine all accelerations by traversing the hierarchy
     // then update the bodies in the hierarchy
     fn hierarchical_update(&mut self) {
         let mut bfs = petgraph::visit::Bfs::new(&self.hierarchy, self.root);
         let graph = &self.hierarchy;
 
-        let mut accelerations: HashMap<NodeIndex, Acceleration> = HashMap::new();
+        // let mut accelerations: HashMap<NodeIndex, Acceleration> = HashMap::new();
+        let mut updated_nodes: HashMap<NodeIndex, Body> = HashMap::new();
+
+        // let root_node_nx = bfs.next(graph).expect("no root node found");
+        let root_node = graph
+            .node_weight(self.root)
+            .expect("invalid root node index");
+
+        // TODO use update?
+        updated_nodes.insert(self.root, root_node.clone());
 
         while let Some(nx) = bfs.next(graph) {
-            println!("visiting: {:?}", nx);
+            // println!("visiting: {:?}", nx);
             // calculate accelerations caused by all children on each other
+            let parent_updated = updated_nodes
+                .get(&nx)
+                .expect("invalid current node index")
+                .clone();
             let children = graph.neighbors_directed(nx, petgraph::Direction::Outgoing);
             let children_vec: Vec<(NodeIndex, Body)> = children
-                .map(|nx| (nx, graph.node_weight(nx).expect("invalid index").copy()))
+                .map(|child_nx| {
+                    (
+                        child_nx,
+                        graph.node_weight(child_nx).expect("invalid index").copy(),
+                    )
+                })
                 .collect();
 
             for (child_idx, child) in children_vec.iter() {
@@ -267,30 +292,31 @@ impl Orbital {
                     .filter(|(nx, _)| *nx != *child_idx)
                     .map(|(_, b)| b.copy())
                     .collect();
-                println!("current child: {:?}", child);
-                println!("others: {:?}", other_children);
+                // println!("current child: {:?}", child);
+                // println!("others: {:?}", other_children);
 
                 let acceleration = self.calc_acceleration(child, other_children);
-                accelerations.insert(*child_idx, acceleration);
+                // accelerations.insert(*child_idx, acceleration);
 
-                // let (next_r, next_v) =
-                //     symplectic_euler_calc(child.pos, child.v, acceleration, self.dt);
-                // let new = child.update(next_r, next_v, acceleration);
+                let (next_r, next_abs_r, next_v) = symplectic_euler_with_abs_pos(
+                    child.pos,
+                    child.v,
+                    acceleration,
+                    &parent_updated,
+                    self.dt,
+                );
+                let new = child.update_with_abs(next_r, next_abs_r, next_v, acceleration);
+                updated_nodes.insert(*child_idx, new);
             }
         }
-        println!("{:?}", accelerations);
+        // println!("{:?}", accelerations);
 
-        let new_graph = self.hierarchy.map(
-            |nx, n| {
-                let new_a = if let Some(a) = accelerations.get(&nx) {
-                    a
-                } else {
-                    // root node will have no acceleration stored
-                    &Acceleration::new(0., 0.)
-                };
-                let (next_r, next_v) = symplectic_euler_calc(n.pos, n.v, *new_a, self.dt);
-                let new = n.update(next_r, next_v, *new_a);
-                new
+        let new_graph: DiGraph<Body, ()> = self.hierarchy.map(
+            |nx, _n| {
+                let updated_body = updated_nodes
+                    .get(&nx)
+                    .expect(&format!("did not find updated body {:?}", nx));
+                updated_body.clone()
             },
             |_, e| *e,
         );
@@ -319,36 +345,36 @@ impl Orbital {
 
         self.hierarchical_update();
 
-        let dt = self.dt;
+        // let dt = self.dt;
 
-        let mut accelerations: HashMap<usize, Acceleration> = HashMap::new();
+        // let mut accelerations: HashMap<usize, Acceleration> = HashMap::new();
 
-        for (affected_i, sources) in self.relationships.iter() {
-            let affected = self.bodies.get(*affected_i).unwrap();
+        // for (affected_i, sources) in self.relationships.iter() {
+        //     let affected = self.bodies.get(*affected_i).unwrap();
 
-            let total_a_for_body = sources
-                .iter()
-                .map(|source_i| {
-                    let source = self.bodies.get(*source_i).unwrap();
-                    let a_from_source =
-                        gravitational_acceleration(source.pos, affected.pos, source.mass);
+        //     let total_a_for_body = sources
+        //         .iter()
+        //         .map(|source_i| {
+        //             let source = self.bodies.get(*source_i).unwrap();
+        //             let a_from_source =
+        //                 gravitational_acceleration(source.pos, affected.pos, source.mass);
 
-                    a_from_source
-                })
-                .fold(Acceleration::default(), |acc, a| acc.add(a));
+        //             a_from_source
+        //         })
+        //         .fold(Acceleration::default(), |acc, a| acc.add(a));
 
-            accelerations.insert(*affected_i, total_a_for_body);
-        }
+        //     accelerations.insert(*affected_i, total_a_for_body);
+        // }
 
-        for (body_i, new_a) in accelerations.iter() {
-            let affected = self.bodies.get(*body_i).unwrap();
+        // for (body_i, new_a) in accelerations.iter() {
+        //     let affected = self.bodies.get(*body_i).unwrap();
 
-            let cur_v = affected.v;
-            let cur_r = affected.pos;
-            let (next_r, next_v) = symplectic_euler_calc(cur_r, cur_v, *new_a, dt);
+        //     let cur_v = affected.v;
+        //     let cur_r = affected.pos;
+        //     let (next_r, next_v) = symplectic_euler_calc(cur_r, cur_v, *new_a, dt);
 
-            self.bodies[*body_i].update(next_r, next_v, *new_a);
-        }
+        //     self.bodies[*body_i].update(next_r, next_v, *new_a);
+        // }
 
         self.check_collisions();
     }

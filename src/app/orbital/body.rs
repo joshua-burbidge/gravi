@@ -72,6 +72,23 @@ impl Body {
             ..self.copy()
         }
     }
+    pub fn update_with_abs(
+        &self,
+        new_pos: Position,
+        new_abs_pos: Position,
+        new_vel: Velocity,
+        new_acc: Acceleration,
+    ) -> Self {
+        // TODO probably have to remove this clone
+        Body {
+            pos: new_pos,
+            absolute_pos: new_abs_pos,
+            v: new_vel,
+            computed_a: new_acc,
+            trajectory: [self.trajectory.clone(), vec![self.copy()]].concat(),
+            ..self.copy()
+        }
+    }
 
     // --------------- Constructors ------------------
     // starting conditions for a low earth orbit, modeled after the ISS
