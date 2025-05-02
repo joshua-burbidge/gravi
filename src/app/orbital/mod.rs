@@ -128,11 +128,8 @@ impl Orbital {
 
     // TODO not accurate if you change dt
     fn t(&self) -> f32 {
-        let body = self.bodies.first();
-        let len = match body {
-            Some(b) => b.trajectory.len(),
-            None => 0,
-        };
+        let body = self.bodies_vec()[0];
+        let len = body.trajectory.len();
 
         if len > 0 {
             (len - 1) as f32 * self.dt
@@ -212,7 +209,6 @@ impl Orbital {
             .map(|b| (b.pos, b.v, b.mass))
             .collect();
 
-        // with this approach it propagates immediately
         for body in self.bodies_vec_mut().iter_mut() {
             if body.lock_to_circular_velocity {
                 let (locked_body_pos, _locked_body_v, locked_body_m) = positions
