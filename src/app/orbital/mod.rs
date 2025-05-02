@@ -198,6 +198,7 @@ impl Orbital {
             .iter()
             .filter(|b| !b.is_barycenter)
             .cloned()
+            .cloned()
             .collect()
     }
 
@@ -260,16 +261,19 @@ impl Orbital {
     pub fn start(&mut self) {
         self.started = true;
 
-        for b in self.bodies_vec().iter_mut() {
+        for b in self.bodies_vec_mut().iter_mut() {
             b.trajectory.push(b.copy());
         }
 
         self.analysis = self.analysis.initialize(self);
     }
 
-    fn bodies_vec(&self) -> Vec<Body> {
+    fn current_bodies(&self) -> Vec<Body> {
+        self.hierarchy.node_weights().map(|b| b.copy()).collect()
+    }
+    fn bodies_vec(&self) -> Vec<&Body> {
         // return a vec of the bodies with same indices as graph
-        self.hierarchy.node_weights().map(|b| b.clone()).collect()
+        self.hierarchy.node_weights().map(|b| b).collect()
     }
     fn bodies_vec_mut(&mut self) -> Vec<&mut Body> {
         // return a vec of the bodies with same indices as graph
@@ -363,8 +367,10 @@ impl Orbital {
     }
 
     fn check_collisions(&mut self) -> bool {
-        for (i, b) in self.bodies_vec().iter().enumerate() {
-            for b2 in self.bodies_vec()[i + 1..].iter() {
+        let bodies = self.current_bodies();
+
+        for (i, b) in bodies.iter().enumerate() {
+            for b2 in bodies[i + 1..].iter() {
                 if b.is_barycenter || b2.is_barycenter {
                     continue;
                 }
