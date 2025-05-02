@@ -69,7 +69,7 @@ impl App for Orbital {
 
         let ticks_per_graph_point = (self.draw_frequency as f32 / self.dt).ceil() as usize;
 
-        for b in self.tree_to_vec().iter() {
+        for b in self.bodies.iter() {
             draw_body(canvas, b, self.distance_per_px);
 
             draw_line_thru_points(
@@ -259,10 +259,8 @@ impl Orbital {
         let mut bfs = petgraph::visit::Bfs::new(&self.hierarchy, self.root);
         let graph = &self.hierarchy;
 
-        // let mut accelerations: HashMap<NodeIndex, Acceleration> = HashMap::new();
         let mut updated_nodes: HashMap<NodeIndex, Body> = HashMap::new();
 
-        // let root_node_nx = bfs.next(graph).expect("no root node found");
         let root_node = graph
             .node_weight(self.root)
             .expect("invalid root node index");
@@ -271,7 +269,6 @@ impl Orbital {
         updated_nodes.insert(self.root, root_node.clone());
 
         while let Some(nx) = bfs.next(graph) {
-            // println!("visiting: {:?}", nx);
             // calculate accelerations caused by all children on each other
             let parent_updated = updated_nodes
                 .get(&nx)
@@ -293,11 +290,8 @@ impl Orbital {
                     .filter(|(nx, _)| *nx != *child_idx)
                     .map(|(_, b)| b.copy())
                     .collect();
-                // println!("current child: {:?}", child);
-                // println!("others: {:?}", other_children);
 
                 let acceleration = self.calc_acceleration(child, other_children);
-                // accelerations.insert(*child_idx, acceleration);
 
                 let (next_r, next_abs_r, next_v) = symplectic_euler_with_abs_pos(
                     child.pos,
@@ -310,7 +304,6 @@ impl Orbital {
                 updated_nodes.insert(*child_idx, new);
             }
         }
-        // println!("{:?}", accelerations);
 
         let new_graph: DiGraph<Body, ()> = self.hierarchy.map(
             |nx, _n| {
