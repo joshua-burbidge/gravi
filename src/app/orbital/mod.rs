@@ -7,8 +7,6 @@ use petgraph::graph::{DiGraph, NodeIndex};
 use std::{collections::HashMap, f32};
 use tree::build_hierarchy;
 
-use crate::app::core::physics::symplectic_euler_with_abs_pos;
-
 use super::{
     core::{
         draw::{
@@ -257,67 +255,64 @@ impl Orbital {
     // then update the bodies in the hierarchy
     fn hierarchical_update(&mut self) {
         let mut bfs = petgraph::visit::Bfs::new(&self.hierarchy, self.root);
-        let graph = &self.hierarchy;
+        let mut order = Vec::new();
+        while let Some(nx) = bfs.next(&self.hierarchy) {
+            order.push(nx);
+        }
 
-        let mut updated_nodes: HashMap<NodeIndex, Body> = HashMap::new();
+        let mut updates: HashMap<NodeIndex, (Position, Velocity, Acceleration)> = HashMap::new();
 
-        let root_node = graph
-            .node_weight(self.root)
-            .expect("invalid root node index");
-
-        // TODO use update?
-        updated_nodes.insert(self.root, root_node.clone());
-
-        while let Some(nx) = bfs.next(graph) {
+        // TODO add velocity to root node when initializing, then include it in updates
+        for &nx in order.iter() {
             // calculate accelerations caused by all children on each other
-            let parent_updated = updated_nodes
-                .get(&nx)
-                .expect("invalid current node index")
-                .clone();
-            let children = graph.neighbors_directed(nx, petgraph::Direction::Outgoing);
-            let children_vec: Vec<(NodeIndex, Body)> = children
-                .map(|child_nx| {
-                    (
-                        child_nx,
-                        graph.node_weight(child_nx).expect("invalid index").clone(),
-                    )
-                })
+            let children: Vec<NodeIndex> = self
+                .hierarchy
+                .neighbors_directed(nx, petgraph::Direction::Outgoing)
                 .collect();
 
-            for (child_idx, child) in children_vec.iter() {
-                let other_children: Vec<Body> = children_vec
+            for &child_idx in &children {
+                let child = &self.hierarchy[child_idx];
+                let other_children: Vec<&Body> = children
                     .iter()
-                    .filter(|(nx, _)| *nx != *child_idx)
-                    .map(|(_, b)| b.copy())
+                    .filter(|&&nx| nx != child_idx)
+                    .map(|&nx| &self.hierarchy[nx])
                     .collect();
 
                 let acceleration = self.calc_acceleration(child, other_children);
 
-                let (next_r, next_abs_r, next_v) = symplectic_euler_with_abs_pos(
-                    child.pos,
-                    child.v,
-                    acceleration,
-                    &parent_updated,
-                    self.dt,
-                );
-                let new = child.update_with_abs(next_r, next_abs_r, next_v, acceleration);
-                updated_nodes.insert(*child_idx, new);
+                let (next_r, next_v) =
+                    symplectic_euler_calc(child.pos, child.v, acceleration, self.dt);
+                updates.insert(child_idx, (next_r, next_v, acceleration));
             }
         }
 
-        let new_graph: DiGraph<Body, ()> = self.hierarchy.map(
-            |nx, _n| {
-                let updated_body = updated_nodes
-                    .get(&nx)
-                    .expect(&format!("did not find updated body {:?}", nx));
-                updated_body.clone()
-            },
-            |_, e| *e,
-        );
-        self.hierarchy = new_graph;
+        for node_idx in order {
+            if let Some(update) = updates.get(&node_idx) {
+                let parent_idx = self
+                    .hierarchy
+                    .neighbors_directed(node_idx, petgraph::Direction::Incoming)
+                    .next()
+                    .expect("no parent index found when updating");
+                let updated_parent = self
+                    .hierarchy
+                    .node_weight(parent_idx)
+                    .expect("no parent found when updating");
+                // parent has already been updated because it's looping in BFS order
+                let parent_abs_pos = updated_parent.absolute_pos;
+                let node = self
+                    .hierarchy
+                    .node_weight_mut(node_idx)
+                    .expect("invalid index");
+
+                let (next_r, next_v, a) = update.clone();
+                node.update_with_abs(next_r, next_v, a, parent_abs_pos);
+            } else {
+                // root node - no update
+            }
+        }
     }
 
-    fn calc_acceleration(&self, affected_body: &Body, sources: Vec<Body>) -> Acceleration {
+    fn calc_acceleration(&self, affected_body: &Body, sources: Vec<&Body>) -> Acceleration {
         let total_a_for_body = sources
             .iter()
             .map(|source| {

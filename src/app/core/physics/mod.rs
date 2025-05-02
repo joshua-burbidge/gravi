@@ -123,24 +123,6 @@ pub fn symplectic_euler_calc(
 
     (next_r, next_v)
 }
-// assumes parent absolute_position has already been updated
-// TODO try to make this work with the *current* parent to avoid borrow issues
-pub fn symplectic_euler_with_abs_pos(
-    cur_r: Position,
-    cur_v: Velocity,
-    cur_a: Acceleration,
-    parent: &Body,
-    dt: f32,
-) -> (Position, Position, Velocity) {
-    // v(t + dt) = v(t) + a(t)*dt
-    let next_v = cur_v.update(&cur_a, dt);
-
-    // r(t + dt) = r(t) + v(t + dt)*dt
-    let next_r = cur_r.update_const_v(&next_v, dt);
-    let next_abs_r = parent.absolute_pos.add(next_r);
-
-    (next_r, next_abs_r, next_v)
-}
 
 // Ek = .5mv^2
 pub fn kinetic_energy(mass: f32, v: Velocity) -> f32 {

@@ -62,32 +62,18 @@ impl Body {
         }
     }
 
-    pub fn update(&self, new_pos: Position, new_vel: Velocity, new_acc: Acceleration) -> Self {
-        // TODO probably have to remove this clone
-        Body {
-            pos: new_pos,
-            v: new_vel,
-            computed_a: new_acc,
-            trajectory: [self.trajectory.clone(), vec![self.copy()]].concat(),
-            ..self.copy()
-        }
-    }
     pub fn update_with_abs(
-        &self,
+        &mut self,
         new_pos: Position,
-        new_abs_pos: Position,
         new_vel: Velocity,
         new_acc: Acceleration,
-    ) -> Self {
-        // TODO probably have to remove this clone
-        Body {
-            pos: new_pos,
-            absolute_pos: new_abs_pos,
-            v: new_vel,
-            computed_a: new_acc,
-            trajectory: [self.trajectory.clone(), vec![self.copy()]].concat(),
-            ..self.copy()
-        }
+        parent_abs_pos: Position,
+    ) {
+        self.pos = new_pos;
+        self.absolute_pos = parent_abs_pos.add(new_pos);
+        self.v = new_vel;
+        self.computed_a = new_acc;
+        self.trajectory.push(self.copy());
     }
 
     // --------------- Constructors ------------------
