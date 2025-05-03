@@ -269,9 +269,8 @@ impl Orbital {
     // Return groups of sibling bodies in BFS order.
     // Doesn't include the root node.
     // Should return Vec<&Body> or Vec<Index> or something else?
-    fn sibling_groups(&self) -> Vec<Vec<NodeIndex>> {
+    fn sibling_groups(&self) -> Vec<Vec<&Body>> {
         let mut bfs = petgraph::visit::Bfs::new(&self.hierarchy, self.root);
-        let mut groups: Vec<Vec<NodeIndex>> = Vec::new();
         let mut body_groups: Vec<Vec<&Body>> = Vec::new();
 
         while let Some(nx) = bfs.next(&self.hierarchy) {
@@ -285,12 +284,11 @@ impl Orbital {
                 .collect();
 
             if children.len() > 0 {
-                groups.push(children);
                 body_groups.push(bodies);
             }
         }
 
-        groups
+        body_groups
     }
 
     // determine all accelerations by traversing the hierarchy
@@ -468,12 +466,7 @@ impl Analysis {
         let (total_kinetic, total_potential) = app
             .sibling_groups()
             .iter()
-            .map(|group| {
-                let group_bodies: Vec<_> = group
-                    .iter()
-                    .map(|nx| app.hierarchy.node_weight(*nx).expect("invalid index"))
-                    .collect();
-
+            .map(|group_bodies| {
                 let (group_kinetic, group_potential) = group_bodies
                     .iter()
                     .enumerate()
