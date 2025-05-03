@@ -50,7 +50,7 @@ impl Node {
         names
     }
     fn label(&self) -> String {
-        self.names().join(", ")
+        self.names().join("+")
     }
     fn pos(&self) -> Position {
         match self {
@@ -337,7 +337,7 @@ fn map_to_bodies(graph: DiGraph<Node, ()>) -> DiGraph<Body, ()> {
                     radius: 0.,
                     is_fixed: false,
                     is_barycenter: true,
-                    color: (0, 30, 220),
+                    color: (0, 70, 200),
                     ..Body::default()
                 },
             };

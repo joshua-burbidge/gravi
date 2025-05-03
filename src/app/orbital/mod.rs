@@ -261,9 +261,6 @@ impl Orbital {
         }
 
         self.analysis = self.analysis.initialize(self);
-
-        let (groups, _) = self.sibling_groups();
-        println!("groups {:?}", groups);
     }
 
     // Return groups of sibling bodies in BFS order.
