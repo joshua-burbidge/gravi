@@ -262,16 +262,17 @@ impl Orbital {
 
         self.analysis = self.analysis.initialize(self);
 
-        let groups = self.sibling_groups();
+        let (groups, _) = self.sibling_groups();
         println!("groups {:?}", groups);
     }
 
     // Return groups of sibling bodies in BFS order.
     // Doesn't include the root node.
     // Should return Vec<&Body> or Vec<Index> or something else?
-    fn sibling_groups(&self) -> Vec<Vec<&Body>> {
+    fn sibling_groups(&self) -> (Vec<Vec<NodeIndex>>, Vec<Vec<&Body>>) {
         let mut bfs = petgraph::visit::Bfs::new(&self.hierarchy, self.root);
         let mut body_groups: Vec<Vec<&Body>> = Vec::new();
+        let mut index_groups: Vec<Vec<NodeIndex>> = Vec::new();
 
         while let Some(nx) = bfs.next(&self.hierarchy) {
             let children: Vec<NodeIndex> = self
@@ -285,36 +286,27 @@ impl Orbital {
 
             if children.len() > 0 {
                 body_groups.push(bodies);
+                index_groups.push(children);
             }
         }
 
-        body_groups
+        (index_groups, body_groups)
     }
 
-    // determine all accelerations by traversing the hierarchy
-    // then update the bodies in the hierarchy
+    // determine all accelerations and then update the bodies in the hierarchy
     fn hierarchical_update(&mut self) {
-        let mut bfs = petgraph::visit::Bfs::new(&self.hierarchy, self.root);
-        let mut order = Vec::new();
-        while let Some(nx) = bfs.next(&self.hierarchy) {
-            order.push(nx);
-        }
+        let (index_groups, _) = self.sibling_groups();
 
         let mut updates: HashMap<NodeIndex, (Position, Velocity, Acceleration)> = HashMap::new();
 
         // TODO add velocity to root node when initializing, then include it in updates
-        for &nx in order.iter() {
-            // calculate accelerations caused by all children on each other
-            let children: Vec<NodeIndex> = self
-                .hierarchy
-                .neighbors_directed(nx, petgraph::Direction::Outgoing)
-                .collect();
-
-            for &child_idx in &children {
+        for group in index_groups.iter() {
+            // calculate updates
+            for &child_idx in group.iter() {
                 let child = &self.hierarchy[child_idx];
-                let other_children: Vec<&Body> = children
+                let other_children: Vec<&Body> = group
                     .iter()
-                    .filter(|&&nx| nx != child_idx)
+                    .filter(|&&i| i != child_idx)
                     .map(|&nx| &self.hierarchy[nx])
                     .collect();
 
@@ -324,30 +316,31 @@ impl Orbital {
                     symplectic_euler_calc(child.pos, child.v, acceleration, self.dt);
                 updates.insert(child_idx, (next_r, next_v, acceleration));
             }
-        }
 
-        for node_idx in order {
-            if let Some(update) = updates.get(&node_idx) {
-                let parent_idx = self
-                    .hierarchy
-                    .neighbors_directed(node_idx, petgraph::Direction::Incoming)
-                    .next()
-                    .expect("no parent index found when updating");
-                let updated_parent = self
-                    .hierarchy
-                    .node_weight(parent_idx)
-                    .expect("no parent found when updating");
-                // parent has already been updated because it's looping in BFS order
-                let parent_abs_pos = updated_parent.absolute_pos;
-                let node = self
-                    .hierarchy
-                    .node_weight_mut(node_idx)
-                    .expect("invalid index");
+            // apply updates
+            for &node_idx in group {
+                if let Some(update) = updates.get(&node_idx) {
+                    let parent_idx = self
+                        .hierarchy
+                        .neighbors_directed(node_idx, petgraph::Direction::Incoming)
+                        .next()
+                        .expect("no parent index found when updating");
+                    let updated_parent = self
+                        .hierarchy
+                        .node_weight(parent_idx)
+                        .expect("no parent found when updating");
+                    // parent has already been updated because it's looping in BFS order
+                    let parent_abs_pos = updated_parent.absolute_pos;
+                    let node = self
+                        .hierarchy
+                        .node_weight_mut(node_idx)
+                        .expect("invalid index");
 
-                let (next_r, next_v, a) = update.clone();
-                node.update_with_abs(next_r, next_v, a, parent_abs_pos);
-            } else {
-                // root node - no update
+                    let (next_r, next_v, a) = update.clone();
+                    node.update_with_abs(next_r, next_v, a, parent_abs_pos);
+                } else {
+                    // root node - no update
+                }
             }
         }
     }
@@ -463,8 +456,9 @@ impl Analysis {
     }
 
     fn current_e(&self, app: &Orbital) -> (f64, f64, f64) {
-        let (total_kinetic, total_potential) = app
-            .sibling_groups()
+        let (_, body_groups) = app.sibling_groups();
+
+        let (total_kinetic, total_potential) = body_groups
             .iter()
             .map(|group_bodies| {
                 let (group_kinetic, group_potential) = group_bodies
