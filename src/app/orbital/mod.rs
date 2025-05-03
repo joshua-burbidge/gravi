@@ -9,10 +9,7 @@ use tree::build_hierarchy;
 
 use super::{
     core::{
-        draw::{
-            draw_barycenter, draw_body, draw_line_thru_points, draw_text, draw_tick_marks,
-            get_scale,
-        },
+        draw::{draw_body, draw_line_thru_points, draw_text, draw_tick_marks, get_scale},
         physics::{
             circ_velocity_barycenter, escape_velocity_barycenter, gravitational_acceleration,
             gravitational_potential_energy, kinetic_energy, symplectic_euler_calc, Acceleration,
@@ -89,9 +86,6 @@ impl App for Orbital {
             );
         }
 
-        for bary in &self.analysis.barycenters {
-            draw_barycenter(canvas, &bary, 5., self.distance_per_px);
-        }
         // let duration = start.elapsed();
         // println!("Draw: Time elapsed = {:?}", duration);
     }
@@ -450,7 +444,6 @@ struct Analysis {
     kinetic_e: f64,
     gravitational_e: f64,
     diff_percentage: f64,
-    barycenters: Vec<Position>,
 }
 
 // contains calculations not necessary for the iteration process, only for displaying
@@ -463,14 +456,11 @@ impl Analysis {
             0.
         };
 
-        // let barycenters = self.barycenters(app);
-
         Analysis {
             kinetic_e: kinetic_mj,
             gravitational_e: grav_potential_mj,
             diff_percentage,
             initial_e: self.initial_e,
-            barycenters: vec![],
         }
     }
 
