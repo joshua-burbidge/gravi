@@ -241,6 +241,7 @@ pub fn build_hierarchy(bodies: &Vec<Body>) -> (DiGraph<Body, ()>, NodeIndex) {
 
     loop {
         // TODO this function should return something better - one thing instead of 2
+        // it should just return the overall_graph indexes
         let (root_nodes, map_root_to_graph) = find_roots(&overall_graph);
 
         println!("roots: {:?}", root_nodes);
@@ -357,7 +358,6 @@ fn map_to_localized(graph: DiGraph<Body, ()>) -> DiGraph<Body, ()> {
         |nx, n| {
             // every node should have exactly one incoming neighbor, except the root which has zero
             let mut neighbors = graph.neighbors_directed(nx, petgraph::Direction::Incoming);
-            // let parent_idx = neighbors.next().expect("no parent found");
             let localized_body = if let Some(parent_idx) = neighbors.next() {
                 let parent = graph.node_weight(parent_idx).expect("invalid index");
                 let localized_position = n.absolute_pos.minus(parent.absolute_pos);
@@ -379,6 +379,3 @@ fn map_to_localized(graph: DiGraph<Body, ()>) -> DiGraph<Body, ()> {
 
     localized_graph
 }
-
-// TODO map tree into a tree of Bodies - group node is a Body at the barycenter
-// TODO each Body should be in a local coordinate system where 0,0 is the parent node position
