@@ -1,5 +1,5 @@
 // Modeling the group of orbital bodies as a tree,
-// where each node is a body or group of bodies
+// where each node is a body or group of bodies.
 
 use std::{collections::HashMap, fmt::Debug};
 
@@ -26,13 +26,11 @@ impl Debug for Node {
         let node_type = if self.is_leaf() { "Leaf" } else { "Group" };
         let children = match self {
             Node::Leaf { .. } => "".to_string(),
-            // Node::Group { children } => children.iter().map(|c| format!("{:?}", c)).join(" ,"),
             Node::Group { children } => children.len().to_string(),
         };
 
         d.field("type", &node_type.to_string())
             .field("names", &self.label())
-            // .field("position", &self.pos())
             .field("children", &children);
         d.finish()
     }
@@ -86,22 +84,25 @@ impl Node {
         }
     }
 }
+struct Edge {
+    source: usize,
+    dest: usize,
+}
+impl Edge {
+    fn new(source: usize, dest: usize) -> Self {
+        Edge { source, dest }
+    }
+}
 
 // group bodies into a tree
 // each node is a body or group
-// a group can be represented by a Body (?), where the position is the barycenter, and all properties are combined together
+// a group can be represented by a Body, where the position is the barycenter, and all properties are combined together
 // each node has children - more bodies/groups
-// fn group_one_level()
-
-// plan
-// start at one body
-// get distances to each other body in increasing order
-// if there is a jump of 10x, then they can be grouped together
 
 // bodies should be grouped if M inner >> M outer, r outer >> r inner, period outer >> period inner
 
 // returns nodes with no incoming edges
-// these are the nodes that should be considered for grouping
+// these are the nodes that should be considered for grouping as part of the current level
 fn find_roots<N: Clone, E: Debug>(graph: &DiGraph<N, E>) -> (Vec<N>, HashMap<usize, NodeIndex>) {
     let mut map_root_idx_to_graph_idx: HashMap<usize, NodeIndex> = HashMap::new();
     let mut result = vec![];
@@ -165,12 +166,12 @@ fn find_bodies_within_threshold(
     return vec![];
 }
 
-// the graph in here is just to group bodies, it's not the same graph that's used to construct the hierarchy
-fn group_bodies(bodies: &Vec<Node>) -> Vec<(usize, usize)> {
+// the graph in here is just to group bodies for this level, it's not the same graph that's used to construct the hierarchy
+fn group_bodies(bodies: &Vec<Node>) -> Vec<Edge> {
     let distance_ratio_threshold = 10.0_f32;
     let mass_ratio_threshold = 100.0_f32;
 
-    let mut edges: Vec<(usize, usize)> = vec![];
+    let mut edges: Vec<Edge> = vec![];
 
     for (cur_i, current_node) in bodies.iter().enumerate() {
         println!("current node: {:?}", current_node.names());
@@ -198,7 +199,7 @@ fn group_bodies(bodies: &Vec<Node>) -> Vec<(usize, usize)> {
 
         for (i, body, _) in within_threshold.iter() {
             if current_node.mass_ratio(body) <= mass_ratio_threshold {
-                edges.push((cur_i, *i));
+                edges.push(Edge::new(cur_i, *i));
             }
         }
     }
@@ -208,14 +209,14 @@ fn group_bodies(bodies: &Vec<Node>) -> Vec<(usize, usize)> {
 
 fn build_one_level(nodes: &Vec<Node>) -> Vec<Vec<NodeIndex>> {
     let mut graph = UnGraph::<Node, ()>::new_undirected();
-    for (_, n) in nodes.iter().enumerate() {
+    for n in nodes.iter() {
         graph.add_node(n.clone());
     }
 
     let edges = group_bodies(&nodes);
 
-    for (start, end) in edges.iter() {
-        graph.add_edge(NodeIndex::new(*start), NodeIndex::new(*end), ());
+    for edge in edges.iter() {
+        graph.add_edge(NodeIndex::new(edge.source), NodeIndex::new(edge.dest), ());
     }
 
     // tarjan algorithm finds all groups of connected nodes

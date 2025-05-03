@@ -62,3 +62,4 @@ barycenter names
 barycenters should move correctly
 shouldn't have to click refresh
 refactor tree code
+automatically set circular v for barycenters
