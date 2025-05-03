@@ -148,11 +148,14 @@ pub fn kinetic_energy(mass: f32, v: Velocity) -> f32 {
     body_kinetic_mj
 }
 
-pub fn gravitational_potential_energy(m1: f32, m2: f32, pos1: Position, pos2: Position) -> f32 {
+pub fn gravitational_potential_energy(m1: f32, m2: f32, pos1: Position, pos2: Position) -> f64 {
     // Gravitational energy between two masses
     // Eg = -G * M * m / r
     let r = pos1.minus(pos2).mag();
-    let grav_potential_kj = -G_KM * m1 * m2 / r; // KJ
+
+    let (m1, m2, r) = (m1 as f64, m2 as f64, r as f64);
+
+    let grav_potential_kj = -G_KM as f64 * m1 * m2 / r; // KJ
     let grav_potential_mj = grav_potential_kj * 1e-3; // MJ
 
     grav_potential_mj

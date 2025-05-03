@@ -137,7 +137,10 @@ pub fn ui(app: &mut Orbital, ctx: &egui::Context) {
         ui.monospace(format!("Total:      {:+.4e}", kinetic + potential));
         ui.monospace(format!("Initial:    {:+.4e}", app.analysis.initial_e));
         ui.monospace(format!("Diff:        {:.2}%", diff_percent));
-        ui.monospace(format!("Diff per t:  {:.2e}%", (100. - diff_percent) / t));
+        ui.monospace(format!(
+            "Diff per t:  {:.2e}%",
+            (100. - diff_percent) / t as f64
+        ));
     });
 }
 

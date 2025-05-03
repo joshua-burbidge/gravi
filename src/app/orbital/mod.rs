@@ -180,6 +180,28 @@ impl Orbital {
         self.create_hierarchy();
     }
 
+    // returns the current state of the bodies - without trajectory so cloning is cheaper
+    fn current_bodies(&self) -> Vec<Body> {
+        self.hierarchy.node_weights().map(|b| b.copy()).collect()
+    }
+    fn bodies_vec(&self) -> Vec<&Body> {
+        // return a vec of the bodies with same indices as graph
+        self.hierarchy.node_weights().map(|b| b).collect()
+    }
+    fn bodies_vec_mut(&mut self) -> Vec<&mut Body> {
+        // return a vec of the bodies with same indices as graph
+        self.hierarchy.node_weights_mut().collect()
+    }
+    fn refresh_hierarchy(&mut self) {
+        let (hierarchy, root_index) = build_hierarchy(&self.original_bodies());
+        self.hierarchy = hierarchy;
+        self.root = root_index;
+    }
+    fn create_hierarchy(&mut self) {
+        let (hierarchy, root_index) = build_hierarchy(&self.bodies);
+        self.hierarchy = hierarchy;
+        self.root = root_index;
+    }
     fn bodies_list(&self) -> Vec<String> {
         self.bodies_vec()
             .iter()
@@ -237,17 +259,6 @@ impl Orbital {
         }
     }
 
-    fn refresh_hierarchy(&mut self) {
-        let (hierarchy, root_index) = build_hierarchy(&self.original_bodies());
-        self.hierarchy = hierarchy;
-        self.root = root_index;
-    }
-    fn create_hierarchy(&mut self) {
-        let (hierarchy, root_index) = build_hierarchy(&self.bodies);
-        self.hierarchy = hierarchy;
-        self.root = root_index;
-    }
-
     pub fn start(&mut self) {
         self.started = true;
 
@@ -256,18 +267,36 @@ impl Orbital {
         }
 
         self.analysis = self.analysis.initialize(self);
+
+        let groups = self.sibling_groups();
+        println!("groups {:?}", groups);
     }
 
-    fn current_bodies(&self) -> Vec<Body> {
-        self.hierarchy.node_weights().map(|b| b.copy()).collect()
-    }
-    fn bodies_vec(&self) -> Vec<&Body> {
-        // return a vec of the bodies with same indices as graph
-        self.hierarchy.node_weights().map(|b| b).collect()
-    }
-    fn bodies_vec_mut(&mut self) -> Vec<&mut Body> {
-        // return a vec of the bodies with same indices as graph
-        self.hierarchy.node_weights_mut().collect()
+    // Return groups of sibling bodies in BFS order.
+    // Doesn't include the root node.
+    // Should return Vec<&Body> or Vec<Index> or something else?
+    fn sibling_groups(&self) -> Vec<Vec<NodeIndex>> {
+        let mut bfs = petgraph::visit::Bfs::new(&self.hierarchy, self.root);
+        let mut groups: Vec<Vec<NodeIndex>> = Vec::new();
+        let mut body_groups: Vec<Vec<&Body>> = Vec::new();
+
+        while let Some(nx) = bfs.next(&self.hierarchy) {
+            let children: Vec<NodeIndex> = self
+                .hierarchy
+                .neighbors_directed(nx, petgraph::Direction::Outgoing)
+                .collect();
+            let bodies: Vec<_> = children
+                .iter()
+                .map(|nx| self.hierarchy.node_weight(*nx).expect("invalid index"))
+                .collect();
+
+            if children.len() > 0 {
+                groups.push(children);
+                body_groups.push(bodies);
+            }
+        }
+
+        groups
     }
 
     // determine all accelerations by traversing the hierarchy
@@ -417,10 +446,10 @@ impl UiState {
 
 #[derive(Default)]
 struct Analysis {
-    initial_e: f32,
-    kinetic_e: f32,
-    gravitational_e: f32,
-    diff_percentage: f32,
+    initial_e: f64,
+    kinetic_e: f64,
+    gravitational_e: f64,
+    diff_percentage: f64,
     barycenters: Vec<Position>,
 }
 
@@ -445,30 +474,45 @@ impl Analysis {
         }
     }
 
-    fn current_e(&self, app: &Orbital) -> (f32, f32, f32) {
-        let (total_kinetic, total_gravitational) = app
-            .bodies
+    fn current_e(&self, app: &Orbital) -> (f64, f64, f64) {
+        let (total_kinetic, total_potential) = app
+            .sibling_groups()
             .iter()
-            .enumerate()
-            .map(|(i, b)| {
-                let body_kinetic_mj = kinetic_energy(b.mass, b.v);
+            .map(|group| {
+                let group_bodies: Vec<_> = group
+                    .iter()
+                    .map(|nx| app.hierarchy.node_weight(*nx).expect("invalid index"))
+                    .collect();
 
-                // loop over all other bodies, so start at the next index
-                let body_gravitational_mj = app.bodies[i + 1..].iter().fold(0., |acc, b2| {
-                    let grav_potential_mj =
-                        gravitational_potential_energy(b.mass, b2.mass, b.pos, b2.pos);
+                let (group_kinetic, group_potential) = group_bodies
+                    .iter()
+                    .enumerate()
+                    .map(|(i, b)| {
+                        let body_kinetic_mj = kinetic_energy(b.mass, b.v) as f64;
 
-                    acc + grav_potential_mj
-                });
+                        let body_gravitational_mj =
+                            group_bodies[i + 1..].iter().fold(0., |acc, b2| {
+                                let grav_potential_mj =
+                                    gravitational_potential_energy(b.mass, b2.mass, b.pos, b2.pos);
 
-                (body_kinetic_mj, body_gravitational_mj)
+                                acc + grav_potential_mj
+                            });
+
+                        (body_kinetic_mj, body_gravitational_mj)
+                    })
+                    .fold((0., 0.), |(acc_k, acc_g), (kinet, grav)| {
+                        (acc_k + kinet, acc_g + grav)
+                    });
+
+                (group_kinetic, group_potential)
             })
             .fold((0., 0.), |(acc_k, acc_g), (kinet, grav)| {
                 (acc_k + kinet, acc_g + grav)
             });
 
-        let total = total_kinetic + total_gravitational;
-        (total_kinetic, total_gravitational, total)
+        let total = total_kinetic + total_potential;
+
+        (total_kinetic, total_potential, total)
     }
 
     fn initialize(&self, app: &Orbital) -> Analysis {
