@@ -327,21 +327,48 @@ pub fn build_hierarchy(bodies: &Vec<Body>) -> (DiGraph<Body, ()>, NodeIndex) {
     (localized, root_index)
 }
 
+// TODO combine two mapping steps
 fn map_to_bodies(graph: DiGraph<Node, ()>) -> DiGraph<Body, ()> {
     let body_graph: DiGraph<Body, ()> = graph.map(
-        |_nx, n| {
+        |nx, n| {
             let body = match n {
                 Node::Leaf { body } => body.copy(),
-                Node::Group { .. } => Body {
-                    name: n.label() + " barycenter",
-                    absolute_pos: n.pos(),
-                    mass: n.mass(),
-                    radius: 0.,
-                    is_fixed: false,
-                    is_barycenter: true,
-                    color: (0, 70, 200),
-                    ..Body::default()
-                },
+                Node::Group { .. } => {
+                    let mut parents = graph.neighbors_directed(nx, petgraph::Direction::Incoming);
+
+                    let (should_use_circular, circular_vel_lock) =
+                        if let Some(parent) = parents.next() {
+                            println!("parent {:?}", parent);
+                            let siblings: Vec<_> = graph
+                                .neighbors_directed(parent, petgraph::Direction::Outgoing)
+                                .filter(|&s| nx != s)
+                                .collect();
+                            println!("siblings {:?}", siblings);
+
+                            let should_use_circular = siblings.len() == 1;
+                            let circular_vel_lock = if should_use_circular {
+                                siblings[0].index()
+                            } else {
+                                0
+                            };
+                            (should_use_circular, circular_vel_lock)
+                        } else {
+                            (false, 0)
+                        };
+
+                    Body {
+                        name: n.label() + " barycenter",
+                        absolute_pos: n.pos(),
+                        mass: n.mass(),
+                        radius: 0.,
+                        lock_to_circular_velocity: should_use_circular,
+                        selected_vel_lock: circular_vel_lock,
+                        is_fixed: false,
+                        is_barycenter: true,
+                        color: (0, 70, 200),
+                        ..Body::default()
+                    }
+                }
             };
             body
         },
