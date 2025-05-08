@@ -254,6 +254,8 @@ impl Preset {
     pub fn sun_earth_moon() -> Self {
         let sun = Body {
             is_fixed: false,
+            lock_to_circular_velocity: true,
+            selected_vel_lock: 3,
             ..Body::sun()
         };
 
