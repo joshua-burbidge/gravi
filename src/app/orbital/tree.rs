@@ -161,8 +161,7 @@ fn find_bodies_within_threshold(
     }
 
     // never found a big jump, everything is grouped together
-    // return distances.clone();
-    // that approach seems weird - i wouldn't want to group three different planets around the sun right?
+    // return distances.clone(); // if this happens, it needs to group everything regardless of mass
     return vec![];
 }
 
@@ -222,7 +221,6 @@ fn build_one_level(nodes: &Vec<Node>) -> Vec<Vec<NodeIndex>> {
     // tarjan algorithm finds all groups of connected nodes
     let groups = algo::tarjan_scc(&graph);
     println!("{:?}", groups);
-    println!("{:?}", Dot::with_config(&graph, &[Config::EdgeNoLabel]));
 
     groups
 }
@@ -245,7 +243,6 @@ pub fn build_hierarchy(bodies: &Vec<Body>) -> (DiGraph<Body, ()>, NodeIndex) {
         let (root_nodes, map_root_to_graph) = find_roots(&overall_graph);
 
         println!("roots: {:?}", root_nodes);
-        println!("root map: {:?}", map_root_to_graph);
 
         i += 1;
         if i > 10 {
@@ -259,7 +256,6 @@ pub fn build_hierarchy(bodies: &Vec<Body>) -> (DiGraph<Body, ()>, NodeIndex) {
         // TODO refactor this to share code with normal node creation
         if root_nodes.len() == new_groups.len() {
             // add the final root node
-            // TODO should the root node be at 0,0 or the barycenter?
             let new_final_node = Node::Group {
                 children: root_nodes.clone(),
             };
@@ -308,15 +304,7 @@ pub fn build_hierarchy(bodies: &Vec<Body>) -> (DiGraph<Body, ()>, NodeIndex) {
         );
     }
 
-    println!("looped {} times", i);
-
     let bodies_graph = map_to_bodies(overall_graph);
-
-    println!(
-        "final body graph: {:?}",
-        Dot::with_config(&bodies_graph, &[Config::EdgeNoLabel])
-    );
-
     let localized = map_to_localized(bodies_graph);
 
     println!(
@@ -393,7 +381,6 @@ fn map_to_localized(graph: DiGraph<Body, ()>) -> DiGraph<Body, ()> {
                     ..n.copy()
                 }
             } else {
-                // if there are no neighbors, it must be the root
                 Body {
                     pos: n.absolute_pos,
                     ..n.copy()
