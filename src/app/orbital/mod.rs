@@ -87,6 +87,9 @@ impl App for Orbital {
     fn ui(&mut self, ctx: &egui::Context) {
         ui::ui(self, ctx);
         ui::controls_panel(self, ctx);
+        if !self.started {
+            self.refresh_hierarchy();
+        }
         self.analyze();
     }
     fn panel_width(&self) -> f32 {
