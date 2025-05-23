@@ -28,10 +28,6 @@ pub fn ui(app: &mut Orbital, ctx: &egui::Context) {
                 }
             });
 
-        if ui.button("refresh hierarchy").clicked() {
-            app.refresh_hierarchy();
-        }
-
         ui.add_space(20.);
 
         ui.label(RichText::new("General").heading());
