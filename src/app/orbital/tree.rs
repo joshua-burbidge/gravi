@@ -3,6 +3,7 @@
 
 use std::{collections::HashMap, fmt::Debug};
 
+use log::debug;
 use petgraph::{
     algo,
     dot::{Config, Dot},
@@ -173,10 +174,10 @@ fn group_bodies(bodies: &Vec<Node>) -> Vec<Edge> {
     let mut edges: Vec<Edge> = vec![];
 
     for (cur_i, current_node) in bodies.iter().enumerate() {
-        println!("current node: {:?}", current_node.names());
+        debug!("current node: {:?}", current_node.names());
 
         let bodies_sorted = sort_by_distance(cur_i, bodies);
-        println!(
+        debug!(
             "sorted nodes: {:?}",
             bodies_sorted
                 .iter()
@@ -188,7 +189,7 @@ fn group_bodies(bodies: &Vec<Node>) -> Vec<Edge> {
         let within_threshold =
             find_bodies_within_threshold(&bodies_sorted, distance_ratio_threshold);
 
-        println!(
+        debug!(
             "close to: {:?}",
             within_threshold
                 .iter()
@@ -220,7 +221,7 @@ fn build_one_level(nodes: &Vec<Node>) -> Vec<Vec<NodeIndex>> {
 
     // tarjan algorithm finds all groups of connected nodes
     let groups = algo::tarjan_scc(&graph);
-    println!("{:?}", groups);
+    debug!("{:?}", groups);
 
     groups
 }
@@ -242,7 +243,7 @@ pub fn build_hierarchy(bodies: &Vec<Body>) -> (DiGraph<Body, ()>, NodeIndex) {
         // it should just return the overall_graph indexes
         let (root_nodes, map_root_to_graph) = find_roots(&overall_graph);
 
-        println!("roots: {:?}", root_nodes);
+        debug!("roots: {:?}", root_nodes);
 
         i += 1;
         if i > 10 {
@@ -268,7 +269,7 @@ pub fn build_hierarchy(bodies: &Vec<Body>) -> (DiGraph<Body, ()>, NodeIndex) {
                 overall_graph.add_edge(root_index, *overall_idx_of_group_member, ());
             }
 
-            println!(
+            debug!(
                 "new graph: {:?}",
                 Dot::with_config(&overall_graph, &[Config::EdgeNoLabel])
             );
@@ -298,7 +299,7 @@ pub fn build_hierarchy(bodies: &Vec<Body>) -> (DiGraph<Body, ()>, NodeIndex) {
             }
         }
 
-        println!(
+        debug!(
             "new graph: {:?}",
             Dot::with_config(&overall_graph, &[Config::EdgeNoLabel])
         );
@@ -307,7 +308,7 @@ pub fn build_hierarchy(bodies: &Vec<Body>) -> (DiGraph<Body, ()>, NodeIndex) {
     let bodies_graph = map_to_bodies(overall_graph);
     let localized = map_to_localized(bodies_graph);
 
-    println!(
+    debug!(
         "final localized graph: {:?}",
         Dot::with_config(&localized, &[Config::EdgeNoLabel])
     );
@@ -326,12 +327,10 @@ fn map_to_bodies(graph: DiGraph<Node, ()>) -> DiGraph<Body, ()> {
 
                     let (should_use_circular, circular_vel_lock) =
                         if let Some(parent) = parents.next() {
-                            println!("parent {:?}", parent);
                             let siblings: Vec<_> = graph
                                 .neighbors_directed(parent, petgraph::Direction::Outgoing)
                                 .filter(|&s| nx != s)
                                 .collect();
-                            println!("siblings {:?}", siblings);
 
                             let should_use_circular = siblings.len() == 1;
                             let circular_vel_lock = if should_use_circular {

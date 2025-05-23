@@ -3,6 +3,7 @@ mod tree;
 mod ui;
 
 use body::{Body, Preset};
+use log::{debug, log_enabled, Level};
 use petgraph::graph::{DiGraph, NodeIndex};
 use std::{collections::HashMap, f32};
 use tree::build_hierarchy;
@@ -36,8 +37,6 @@ pub struct Orbital {
 
 impl App for Orbital {
     fn run(&mut self) {
-        // let start = Instant::now();
-
         if !self.started || self.stopped {
             return;
         }
@@ -46,17 +45,15 @@ impl App for Orbital {
         }
         self.analyze();
 
-        println!("");
-        for b in self.bodies_vec().iter() {
-            println!("{}: abs: {:?}, rel: {:?}", b.name, b.absolute_pos, b.pos);
+        if log_enabled!(Level::Debug) {
+            debug!("");
+            for b in self.bodies_vec().iter() {
+                debug!("{}: abs: {:?}, rel: {:?}", b.name, b.absolute_pos, b.pos);
+            }
         }
-
-        // let duration = start.elapsed();
-        // println!("Run: Time elapsed = {:?}", duration);
     }
 
     fn draw(&self, canvas: &mut femtovg::Canvas<femtovg::renderer::WGPURenderer>) {
-        // let start = Instant::now();
         let (x_distance_range, y_distance_range) = self.distance_range(canvas);
         draw_tick_marks(
             canvas,
@@ -85,9 +82,6 @@ impl App for Orbital {
                 self.distance_per_px,
             );
         }
-
-        // let duration = start.elapsed();
-        // println!("Draw: Time elapsed = {:?}", duration);
     }
 
     fn ui(&mut self, ctx: &egui::Context) {

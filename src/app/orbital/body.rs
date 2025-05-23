@@ -370,7 +370,6 @@ impl Preset {
         };
 
         let (v1, v2) = circ_velocity_bodies(&body1, &body2);
-        println!("circ_vs {:?}, {:?}", v1, v2);
         body1.v = v1;
         body2.v = v2;
 
