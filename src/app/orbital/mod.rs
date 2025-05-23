@@ -180,7 +180,7 @@ impl Orbital {
     }
     fn bodies_vec(&self) -> Vec<&Body> {
         // return a vec of the bodies with same indices as graph
-        self.hierarchy.node_weights().map(|b| b).collect()
+        self.hierarchy.node_weights().collect()
     }
     fn bodies_vec_mut(&mut self) -> Vec<&mut Body> {
         // return a vec of the bodies with same indices as graph
@@ -391,17 +391,16 @@ impl Orbital {
     }
 
     fn reset(&mut self) {
-        // let initial_bodies: Vec<Body> = self
-        //     .bodies
-        //     .iter()
-        //     .filter(|body| !body.is_barycenter)
-        //     .map(|body| match body.trajectory.get(0) {
-        //         Some(initial_body) => initial_body.clone(),
-        //         None => body.clone(),
-        //     })
-        //     .collect();
-        // self.bodies = initial_bodies;
-        // doesn't maintain manually changed settings?
+        let initial_bodies: Vec<Body> = self
+            .original_bodies()
+            .iter()
+            .map(|body| match body.trajectory.get(0) {
+                Some(initial_body) => initial_body.clone(),
+                None => body.clone(),
+            })
+            .collect();
+
+        self.bodies = initial_bodies;
         self.create_hierarchy();
 
         self.started = false;
