@@ -166,6 +166,7 @@ fn find_bodies_within_threshold(
     return vec![];
 }
 
+// determine which bodies should be grouped at this level - returns all necessary edges
 // the graph in here is just to group bodies for this level, it's not the same graph that's used to construct the hierarchy
 fn group_bodies(bodies: &Vec<Node>) -> Vec<Edge> {
     let distance_ratio_threshold = 10.0_f32;
@@ -344,7 +345,7 @@ fn map_to_bodies(graph: DiGraph<Node, ()>) -> DiGraph<Body, ()> {
                         };
 
                     Body {
-                        name: n.label() + " barycenter",
+                        name: n.label(),
                         absolute_pos: n.pos(),
                         mass: n.mass(),
                         radius: 0.,

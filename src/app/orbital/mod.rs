@@ -197,7 +197,13 @@ impl Orbital {
         self.bodies_vec()
             .iter()
             .enumerate()
-            .map(|(i, b)| format!("Body {}: {}", i + 1, b.name))
+            .map(|(i, b)| {
+                if b.is_barycenter {
+                    format!("Barycenter: {}", b.name)
+                } else {
+                    format!("Body {}: {}", i + 1, b.name)
+                }
+            })
             .collect()
     }
     fn original_bodies(&self) -> Vec<Body> {

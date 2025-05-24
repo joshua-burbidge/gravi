@@ -51,15 +51,9 @@ pub fn ui(app: &mut Orbital, ctx: &egui::Context) {
             let x_range = -10000.0..=10000.;
             let y_range = -10000.0..=10000.;
 
-            egui::CollapsingHeader::new(
-                RichText::new(format!("Body {}: {}", i + 1, body.name))
-                    .heading()
-                    .color(egui::Color32::from_rgb(
-                        body.color.0,
-                        body.color.1,
-                        body.color.2,
-                    )),
-            )
+            egui::CollapsingHeader::new(RichText::new(bodies_list[i].clone()).heading().color(
+                egui::Color32::from_rgb(body.color.0, body.color.1, body.color.2),
+            ))
             .default_open(body.default_expanded)
             .show(ui, |ui| {
                 ui.add_enabled_ui(!started, |ui| {
@@ -115,7 +109,6 @@ pub fn ui(app: &mut Orbital, ctx: &egui::Context) {
             });
             ui.add_space(20.);
         }
-
         app.set_velocities();
 
         if ui.button("Start").clicked() {
