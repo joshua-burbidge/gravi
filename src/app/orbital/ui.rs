@@ -87,6 +87,10 @@ pub fn ui(app: &mut Orbital, ctx: &egui::Context) {
                                 x_range,
                                 y_range,
                             ));
+                            text_sized(ui, "Relative Position", 14.);
+                            ui.monospace(format!("Rx:    {:+.4e}", body.pos.x));
+                            ui.monospace(format!("Ry:    {:+.4e}", body.pos.y));
+
                             ui.label(format!("|r|: {} km", body.pos.mag()));
                             ui.add_space(6.);
 
@@ -113,12 +117,16 @@ pub fn ui(app: &mut Orbital, ctx: &egui::Context) {
                                 });
                                 ui.add_enabled_ui(!vel_lock_enabled, |ui| {
                                     ui.add(XYInput::new(
-                                        &mut body.v.x,
-                                        &mut body.v.y,
+                                        &mut body.absolute_vel.x,
+                                        &mut body.absolute_vel.y,
                                         -50.0..=50.0,
                                         -50.0..=50.0,
                                     ));
                                 });
+                                text_sized(ui, "Relative Velocity", 14.);
+                                ui.monospace(format!("Vx:    {:+.4e}", body.v.x));
+                                ui.monospace(format!("Vy:    {:+.4e}", body.v.y));
+
                                 ui.label(format!("|v|: {} km/s", body.v.mag()));
 
                                 ui.add_space(4.);

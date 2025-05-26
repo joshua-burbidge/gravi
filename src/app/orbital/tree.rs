@@ -62,7 +62,7 @@ impl Node {
     }
     fn vel(&self) -> Velocity {
         match self {
-            Node::Leaf { body } => body.v,
+            Node::Leaf { body } => body.absolute_vel,
             Node::Group { .. } => {
                 let bodies = self.bodies();
                 barycentric_velocity(&bodies)
@@ -356,7 +356,7 @@ fn map_to_bodies(graph: DiGraph<Node, ()>) -> DiGraph<Body, ()> {
                     Body {
                         name: n.label(),
                         absolute_pos: n.pos(),
-                        v: n.vel(),
+                        absolute_vel: n.vel(),
                         mass: n.mass(),
                         radius: 0.,
                         lock_to_circular_velocity: should_use_circular,
@@ -386,16 +386,17 @@ fn map_to_localized(graph: DiGraph<Body, ()>) -> DiGraph<Body, ()> {
             let localized_body = if let Some(parent_idx) = neighbors.next() {
                 let parent = graph.node_weight(parent_idx).expect("invalid index");
                 let localized_position = n.absolute_pos.minus(parent.absolute_pos);
-                // let localized_vel = n.absolute_vel.minus(parent.absolute_vel);
+                let localized_vel = n.absolute_vel.minus(parent.absolute_vel);
+                // n.absolute_vel is 0 because velocity is set in set_velocities after this -> localized_vel is 0
                 Body {
                     pos: localized_position,
-                    // v: localized_vel,
+                    v: localized_vel,
                     ..n.copy()
                 }
             } else {
                 Body {
                     pos: n.absolute_pos,
-                    // v: n.absolute_vel,
+                    v: n.absolute_vel,
                     ..n.copy()
                 }
             };

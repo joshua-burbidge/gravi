@@ -13,6 +13,7 @@ pub struct Body {
     pub trajectory: Vec<Body>,
     pub computed_a: Acceleration,
     pub absolute_pos: Position,
+    pub absolute_vel: Velocity,
     pub is_fixed: bool,
     pub is_barycenter: bool,
     pub lock_to_circular_velocity: bool,
@@ -31,6 +32,7 @@ impl Default for Body {
             trajectory: Default::default(),
             computed_a: Acceleration::default(),
             absolute_pos: Position::default(),
+            absolute_vel: Velocity::default(),
             is_fixed: Default::default(),
             is_barycenter: false,
             lock_to_circular_velocity: Default::default(),
@@ -53,6 +55,7 @@ impl Body {
             radius: self.radius,
             computed_a: self.computed_a,
             absolute_pos: self.absolute_pos,
+            absolute_vel: self.absolute_vel,
             is_fixed: self.is_fixed,
             is_barycenter: self.is_barycenter,
             lock_to_circular_velocity: self.lock_to_circular_velocity,
@@ -71,10 +74,12 @@ impl Body {
         new_vel: Velocity,
         new_acc: Acceleration,
         parent_abs_pos: Position,
+        parent_abs_vel: Velocity,
     ) {
         self.pos = new_pos;
         self.absolute_pos = parent_abs_pos.add(new_pos);
         self.v = new_vel;
+        self.absolute_vel = parent_abs_vel.add(new_vel);
         self.computed_a = new_acc;
         self.trajectory.push(self.copy());
     }
@@ -367,18 +372,19 @@ impl Preset {
             default_expanded: true,
             ..Body::default()
         };
-        let body2 = Body {
+        let mut body2 = Body {
             name: "2".to_string(),
             mass: 1.23e22,
             absolute_pos: body2_pos,
-            lock_to_circular_velocity: true,
+            lock_to_circular_velocity: false,
             selected_vel_lock: 0,
             color: (220, 0, 0),
             ..body1.clone()
         };
 
-        let (body1_circ_v, _body2_circ_v) = circ_velocity_bodies(&body1, &body2);
-        body1.v = body1_circ_v.add(Velocity::new(0.02, -0.02));
+        let (body1_circ_v, body2_circ_v) = circ_velocity_bodies(&body1, &body2);
+        body1.absolute_vel = body1_circ_v.add(Velocity::new(0.02, -0.02));
+        body2.absolute_vel = body2_circ_v;
 
         Self {
             name: "Unequal binary system".to_string(),

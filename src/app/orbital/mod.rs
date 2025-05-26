@@ -225,15 +225,27 @@ impl Orbital {
             return;
         }
 
-        let positions: Vec<(Position, Velocity, f32)> = self
+        let positions: Vec<(Position, f32)> =
+            self.bodies_vec().iter().map(|b| (b.pos, b.mass)).collect();
+
+        // circ v is computing relative v
+        // to convert to absolute, need to add the parent's absolute v
+        let parents: Vec<_> = self
             .bodies_vec()
             .iter()
-            .map(|b| (b.pos, b.v, b.mass))
+            .enumerate()
+            .map(|(i, _b)| {
+                let default = &Body::default();
+                let parent_node =
+                    parent_node_or_default(&self.hierarchy, NodeIndex::new(i), default);
+                parent_node.clone()
+            })
             .collect();
 
-        for body in self.bodies_vec_mut().iter_mut() {
+        // TODO better iteration over all bodies with access to parent nodes
+        for (i, body) in self.bodies_vec_mut().iter_mut().enumerate() {
             if body.lock_to_circular_velocity {
-                let (locked_body_pos, _locked_body_v, locked_body_m) = positions
+                let (locked_body_pos, locked_body_m) = positions
                     .get(body.selected_vel_lock)
                     .expect("invalid index");
 
@@ -241,9 +253,12 @@ impl Orbital {
                     circ_velocity_barycenter(body.mass, body.pos, *locked_body_m, *locked_body_pos)
                         .0;
 
+                let parent_node = &parents[i];
+
                 body.v = circ_vel;
+                body.absolute_vel = circ_vel.add(parent_node.absolute_vel);
             } else if body.lock_to_escape_velocity {
-                let (locked_body_pos, _locked_body_v, locked_body_m) = positions
+                let (locked_body_pos, locked_body_m) = positions
                     .get(body.selected_vel_lock)
                     .expect("invalid index");
 
@@ -254,7 +269,10 @@ impl Orbital {
                     *locked_body_pos,
                 );
 
+                let parent_node = &parents[i];
+
                 body.v = esc_vel;
+                body.absolute_vel = esc_vel.add(parent_node.absolute_vel);
             }
         }
     }
@@ -277,11 +295,11 @@ impl Orbital {
         let mut body_groups: Vec<Vec<&Body>> = Vec::new();
         let mut index_groups: Vec<Vec<NodeIndex>> = Vec::new();
 
-        // body_groups.push(vec![self
-        //     .hierarchy
-        //     .node_weight(self.root)
-        //     .expect("invalid index")]);
-        // index_groups.push(vec![self.root]);
+        body_groups.push(vec![self
+            .hierarchy
+            .node_weight(self.root)
+            .expect("invalid index")]);
+        index_groups.push(vec![self.root]);
 
         while let Some(nx) = bfs.next(&self.hierarchy) {
             let children: Vec<NodeIndex> = self
@@ -332,6 +350,7 @@ impl Orbital {
             // if no parent, then it is the root node - consider 0,0 to be parent
             // (maybe add 0,0 to the tree?)
             for &node_idx in group {
+                // println!("updating {:?}", node_idx);
                 if let Some(update) = updates.get(&node_idx) {
                     // let parent_idx = self
                     //     .hierarchy
@@ -344,15 +363,20 @@ impl Orbital {
                     //     .expect("no parent found when updating");
                     let default = &Body::default(); // 0,0 position
                     let updated_parent = parent_node_or_default(&self.hierarchy, node_idx, default);
+
+                    // if updated_parent.name == "".to_string() {
+                    //     println!("default parent {:?}", updated_parent);
+                    // }
                     // parent has already been updated because it's looping in BFS order
                     let parent_abs_pos = updated_parent.absolute_pos;
+                    let parent_abs_vel = updated_parent.absolute_vel;
                     let node = self
                         .hierarchy
                         .node_weight_mut(node_idx)
                         .expect("invalid index");
 
                     let (next_r, next_v, a) = update.clone();
-                    node.update(next_r, next_v, a, parent_abs_pos);
+                    node.update(next_r, next_v, a, parent_abs_pos, parent_abs_vel);
                 } else {
                     // root node - no update
                 }
