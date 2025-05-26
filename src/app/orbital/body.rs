@@ -1,6 +1,6 @@
 use crate::app::core::physics::{
-    circ_velocity_barycenter, circ_velocity_bodies, circular_velocity, Acceleration, Position,
-    Velocity, R_EARTH_KM, R_MOON_KM, SUN_EARTH_R_KM,
+    circ_velocity_barycenter, circ_velocity_bodies, Acceleration, Position, Velocity, R_EARTH_KM,
+    R_MOON_KM, SUN_EARTH_R_KM,
 };
 
 #[derive(Clone, Debug)]
@@ -87,9 +87,6 @@ impl Body {
     // --------------- Constructors ------------------
     // starting conditions for a low earth orbit, modeled after the ISS
     pub fn outer_low() -> Self {
-        let earth_mass = Self::earth().mass;
-        let earth_pos = Self::earth().absolute_pos;
-
         let r = 400. + R_EARTH_KM;
         let x = 3000_f32;
         let y = (r.powi(2) - x.powi(2)).sqrt();
@@ -99,7 +96,8 @@ impl Body {
             name: "Orbiting Object".to_string(),
             mass: 400000., // kg
             absolute_pos: position,
-            v: circular_velocity(earth_pos, earth_mass, position), // km/s
+            lock_to_circular_velocity: true,
+            selected_vel_lock: 0,
             trajectory: Vec::new(),
             default_expanded: true,
             color: (255, 0, 0),
@@ -125,7 +123,7 @@ impl Body {
             mass: moon_mass,
             radius: R_MOON_KM,
             absolute_pos: position,
-            v: circ_velocity_barycenter(moon_mass, position, earth_mass, earth_pos).0, // km/s
+            absolute_vel: circ_velocity_barycenter(moon_mass, position, earth_mass, earth_pos).0, // km/s
             default_expanded: true,
             color: (160, 160, 160),
             ..Default::default()
@@ -208,20 +206,18 @@ impl Preset {
         }
     }
     pub fn three_body() -> Self {
-        let b1 = Body {
+        let mut b1 = Body {
             name: String::from("1"),
             radius: 1000.,
             mass: 1e21,
             absolute_pos: Position::new(-5000., -5000.),
-            lock_to_circular_velocity: true,
             selected_vel_lock: 1,
             color: (0, 255, 0),
             ..Default::default()
         };
-        let b2 = Body {
+        let mut b2 = Body {
             name: String::from("2"),
             absolute_pos: Position::new(0., 5000.),
-            lock_to_circular_velocity: true,
             selected_vel_lock: 0,
             color: (255, 0, 0),
             ..b1.clone()
@@ -229,11 +225,15 @@ impl Preset {
         let b3: Body = Body {
             name: String::from("3"),
             absolute_pos: Position::new(7000., -5000.),
-            v: Velocity::new(-0.2, 0.08),
+            absolute_vel: Velocity::new(-0.2, 0.08),
             lock_to_circular_velocity: false,
-            color: (0, 70, 180),
+            color: (255, 200, 0),
             ..b1.clone()
         };
+
+        let (circ_v_1, circ_v_2) = circ_velocity_bodies(&b1, &b2);
+        b1.absolute_vel = circ_v_1;
+        b2.absolute_vel = circ_v_2;
 
         Self {
             name: String::from("Three body"),
