@@ -183,22 +183,17 @@ impl Preset {
     }
 
     pub fn earth_moon() -> Self {
-        let mut barycenter_earth = Body {
+        let barycenter_earth = Body {
             is_fixed: false,
-            // lock_to_circular_velocity: true,
+            lock_to_circular_velocity: true,
             selected_vel_lock: 1,
             ..Body::earth()
         };
-        let mut moon_orbiting_earth = Body {
-            // lock_to_circular_velocity: true,
+        let moon_orbiting_earth = Body {
+            lock_to_circular_velocity: true,
             selected_vel_lock: 0,
             ..Body::moon()
         };
-        let (circ_v_earth, circ_v_moon) =
-            circ_velocity_bodies(&barycenter_earth, &moon_orbiting_earth);
-
-        barycenter_earth.v = circ_v_earth;
-        moon_orbiting_earth.v = circ_v_moon;
 
         Preset {
             bodies: vec![barycenter_earth, moon_orbiting_earth],
@@ -325,7 +320,7 @@ impl Preset {
     // binary system with equal masses and circular velocities
     // both bodies will move in the exact same circle
     pub fn equal_binary() -> Self {
-        let mut body1 = Body {
+        let body1 = Body {
             name: "1".to_string(),
             mass: 1.23e22,
             radius: 8000.,
@@ -335,17 +330,13 @@ impl Preset {
             default_expanded: true,
             ..Body::default()
         };
-        let mut body2 = Body {
+        let body2 = Body {
             name: "2".to_string(),
             absolute_pos: Position::new(-50000., 0.),
             selected_vel_lock: 0,
             color: (220, 0, 0),
             ..body1.clone()
         };
-
-        let (v1, v2) = circ_velocity_bodies(&body1, &body2);
-        body1.v = v1;
-        body2.v = v2;
 
         Self {
             name: "Equal circular binary system".to_string(),
@@ -363,13 +354,12 @@ impl Preset {
     // If velocities are slightly changed, both bodies will travel in elliptical orbits.
     // If the overall system velocity is changed, then both bodies will be orbiting a moving barycenter.
     pub fn unequal_binary() -> Self {
-        let body1_mass = 6.23e22;
         let body1_pos = Position::new(-100000., 150000.);
         let body2_pos = Position::new(-200000., 150000.);
 
         let mut body1 = Body {
             name: "1".to_string(),
-            mass: body1_mass,
+            mass: 6.23e22,
             radius: 8000.,
             absolute_pos: body1_pos,
             lock_to_circular_velocity: false,
@@ -377,7 +367,7 @@ impl Preset {
             default_expanded: true,
             ..Body::default()
         };
-        let mut body2 = Body {
+        let body2 = Body {
             name: "2".to_string(),
             mass: 1.23e22,
             absolute_pos: body2_pos,
@@ -387,9 +377,8 @@ impl Preset {
             ..body1.clone()
         };
 
-        let (body1_circ_v, body2_circ_v) = circ_velocity_bodies(&body1, &body2);
+        let (body1_circ_v, _body2_circ_v) = circ_velocity_bodies(&body1, &body2);
         body1.v = body1_circ_v.add(Velocity::new(0.02, -0.02));
-        body2.v = body2_circ_v;
 
         Self {
             name: "Unequal binary system".to_string(),
