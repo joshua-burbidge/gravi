@@ -338,7 +338,7 @@ impl Orbital {
                         .expect("invalid index");
 
                     let (next_r, next_v, a) = update.clone();
-                    node.update_with_abs(next_r, next_v, a, parent_abs_pos);
+                    node.update(next_r, next_v, a, parent_abs_pos);
                 } else {
                     // root node - no update
                 }

@@ -1,6 +1,6 @@
 use crate::app::core::physics::{
-    barycenter_abs, circ_velocity_barycenter, circ_velocity_bodies, circular_velocity,
-    Acceleration, Position, Velocity, R_EARTH_KM, R_MOON_KM,
+    circ_velocity_barycenter, circ_velocity_bodies, circular_velocity, Acceleration, Position,
+    Velocity, R_EARTH_KM, R_MOON_KM, SUN_EARTH_R_KM,
 };
 
 #[derive(Clone, Debug)]
@@ -65,7 +65,7 @@ impl Body {
         }
     }
 
-    pub fn update_with_abs(
+    pub fn update(
         &mut self,
         new_pos: Position,
         new_vel: Velocity,
@@ -132,18 +132,11 @@ impl Body {
             absolute_pos: Position::new(0., 0.),
             mass: 1.989e30,
             radius: 6.963e5,
-            is_fixed: true,
+            is_fixed: false,
             color: (255, 255, 0),
             ..Default::default()
         }
     }
-}
-
-// if the object being pulled is 1000x more massive than the source of the gravity,
-// then the gravitational force is negligible
-pub fn is_mass_significant(source_body: &Body, body_under_effect: &Body) -> bool {
-    let ratio_threshold = 1000.;
-    (body_under_effect.mass / source_body.mass) < ratio_threshold
 }
 
 #[derive(Default)]
@@ -180,9 +173,9 @@ impl Preset {
                 distance_per_px: 150,
                 ..Preset::default()
             },
+            Self::sun_earth_moon(),
             Self::earth_moon(),
             Self::three_body(),
-            Self::sun_earth_moon(),
             Self::equal_binary(),
             Self::unequal_binary(),
             Self::hierarchy_test(),
@@ -252,48 +245,29 @@ impl Preset {
     }
 
     pub fn sun_earth_moon() -> Self {
-        let sun = Body {
-            is_fixed: false,
-            lock_to_circular_velocity: true,
-            selected_vel_lock: 3,
-            ..Body::sun()
-        };
+        let sun = Body::sun();
 
-        let mut earth = Body {
-            absolute_pos: Position::new(0., 149597870_f32),
+        let earth = Body {
+            absolute_pos: Position::new(0., SUN_EARTH_R_KM),
             lock_to_circular_velocity: true,
             selected_vel_lock: 2,
             ..Body::earth()
         };
 
         let default_moon = Body::moon();
-        let mut moon = Body {
+        let moon = Body {
             absolute_pos: earth.absolute_pos.add(default_moon.absolute_pos),
             lock_to_circular_velocity: true,
             selected_vel_lock: 1,
             ..default_moon
         };
 
-        let (earth_circ_v, moon_circ_v) = circ_velocity_bodies(&earth, &moon);
-
-        let mut e_m_barycenter = Body {
-            absolute_pos: barycenter_abs(&vec![earth.clone(), moon.clone()]),
-            mass: earth.mass + moon.mass,
-            ..Body::default()
-        };
-
-        let e_m_circ_v = circ_velocity_bodies(&e_m_barycenter, &sun).0;
-
-        e_m_barycenter.v = e_m_circ_v;
-        earth.v = earth_circ_v.add(e_m_circ_v);
-        moon.v = moon_circ_v.add(e_m_circ_v);
-
         Self {
-            name: "Sun + earth + moon".to_string(),
+            name: "Sun + Earth + Moon".to_string(),
             bodies: vec![sun, earth, moon],
             distance_per_px: 1400000,
             dt: 50.,
-            ticks_per_press: 1,
+            ticks_per_press: 100000,
             draw_frequency: 24 * 60 * 60,
         }
     }
