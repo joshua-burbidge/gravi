@@ -34,6 +34,7 @@ Created from my femtovg+wgpu+egui boilerplate here: https://github.com/joshua-bu
 - why is the frame time so low even when it's lagging
 - resonance
 - refactor tree code
+- refactor collapsing section UI
 
 Performance gets worse when there are long trajectories
 - a path of circles performs worse than a path of line_to (much worse)
