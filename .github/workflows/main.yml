@@ -2,7 +2,7 @@ name: Deploy
 
 on:
   push:
-    branches: [ "master" ]
+    branches: [ "hierarchy" ]
 
 permissions:
   id-token: write
