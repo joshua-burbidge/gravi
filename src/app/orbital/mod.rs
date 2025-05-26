@@ -324,8 +324,6 @@ impl Orbital {
     fn hierarchical_update(&mut self) {
         let (index_groups, _) = self.sibling_groups();
 
-        // println!("index_groups {:?}", index_groups);
-
         let mut updates: HashMap<NodeIndex, (Position, Velocity, Acceleration)> = HashMap::new();
 
         // TODO add velocity to root node when initializing, then include it in updates
@@ -350,23 +348,10 @@ impl Orbital {
             // if no parent, then it is the root node - consider 0,0 to be parent
             // (maybe add 0,0 to the tree?)
             for &node_idx in group {
-                // println!("updating {:?}", node_idx);
                 if let Some(update) = updates.get(&node_idx) {
-                    // let parent_idx = self
-                    //     .hierarchy
-                    //     .neighbors_directed(node_idx, petgraph::Direction::Incoming)
-                    //     .next()
-                    //     .expect("no parent index found when updating");
-                    // let updated_parent = self
-                    //     .hierarchy
-                    //     .node_weight(parent_idx)
-                    //     .expect("no parent found when updating");
                     let default = &Body::default(); // 0,0 position
                     let updated_parent = parent_node_or_default(&self.hierarchy, node_idx, default);
 
-                    // if updated_parent.name == "".to_string() {
-                    //     println!("default parent {:?}", updated_parent);
-                    // }
                     // parent has already been updated because it's looping in BFS order
                     let parent_abs_pos = updated_parent.absolute_pos;
                     let parent_abs_vel = updated_parent.absolute_vel;

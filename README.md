@@ -32,11 +32,8 @@ Created from my femtovg+wgpu+egui boilerplate here: https://github.com/joshua-bu
   - don't clear canvas?
 - use types for units
 - why is the frame time so low even when it's lagging
-- recenter on preset
-- big: hierarchical calculations for multi-body systems
-  - add the circular velocities to the barycenter velocity, not to the other body's velocity 
 - resonance
-- panic in barycenters() if selecting a preset with fewer bodies
+- refactor tree code
 
 Performance gets worse when there are long trajectories
 - a path of circles performs worse than a path of line_to (much worse)
@@ -50,13 +47,3 @@ text disappears at smaller scales - when deployed, it only appears at large scal
 - try increasing the scale
 - scale == 0.05, font == 930 is visible
 
-
-----------
-
-WIP - hierarchy:
-
-barycenters should move correctly
-  - setting non-circular velocities leads to barycenter having a velocity, but the
-    the body has non-circular velocity relative to the barycenter, basically double-counting the velocity difference
-  - need to have the absolute vs relative distinction that is used for position
-refactor tree code
