@@ -327,6 +327,7 @@ pub fn build_hierarchy(bodies: &Vec<Body>) -> (DiGraph<Body, ()>, NodeIndex) {
 }
 
 // TODO combine two mapping steps
+// need to set velocities before merging bodies
 fn map_to_bodies(graph: DiGraph<Node, ()>) -> DiGraph<Body, ()> {
     let body_graph: DiGraph<Body, ()> = graph.map(
         |nx, n| {
