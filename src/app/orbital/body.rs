@@ -183,7 +183,6 @@ impl Preset {
             Self::three_body(),
             Self::equal_binary(),
             Self::unequal_binary(),
-            Self::hierarchy_test(),
         ]
     }
 
@@ -272,7 +271,7 @@ impl Preset {
         }
     }
 
-    pub fn hierarchy_test() -> Self {
+    pub fn _hierarchy_test() -> Self {
         let base = Self::sun_earth_moon();
 
         let cluster_y = -599_597_870_f32;
