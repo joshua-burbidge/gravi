@@ -10,7 +10,7 @@ use petgraph::{
     graph::{DiGraph, NodeIndex, UnGraph},
 };
 
-use crate::app::core::physics::{barycenter_abs, Position};
+use crate::app::core::physics::{barycenter_abs, barycentric_velocity, Position, Velocity};
 
 use super::body::Body;
 
@@ -57,6 +57,15 @@ impl Node {
             Node::Group { .. } => {
                 let bodies = self.bodies();
                 barycenter_abs(&bodies)
+            }
+        }
+    }
+    fn vel(&self) -> Velocity {
+        match self {
+            Node::Leaf { body } => body.v,
+            Node::Group { .. } => {
+                let bodies = self.bodies();
+                barycentric_velocity(&bodies)
             }
         }
     }
@@ -347,6 +356,7 @@ fn map_to_bodies(graph: DiGraph<Node, ()>) -> DiGraph<Body, ()> {
                     Body {
                         name: n.label(),
                         absolute_pos: n.pos(),
+                        v: n.vel(),
                         mass: n.mass(),
                         radius: 0.,
                         lock_to_circular_velocity: should_use_circular,
@@ -376,13 +386,16 @@ fn map_to_localized(graph: DiGraph<Body, ()>) -> DiGraph<Body, ()> {
             let localized_body = if let Some(parent_idx) = neighbors.next() {
                 let parent = graph.node_weight(parent_idx).expect("invalid index");
                 let localized_position = n.absolute_pos.minus(parent.absolute_pos);
+                // let localized_vel = n.absolute_vel.minus(parent.absolute_vel);
                 Body {
                     pos: localized_position,
+                    // v: localized_vel,
                     ..n.copy()
                 }
             } else {
                 Body {
                     pos: n.absolute_pos,
+                    // v: n.absolute_vel,
                     ..n.copy()
                 }
             };

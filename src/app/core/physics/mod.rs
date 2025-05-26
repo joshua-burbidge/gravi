@@ -165,14 +165,6 @@ pub fn gravitational_potential_energy(m1: f32, m2: f32, pos1: Position, pos2: Po
 // Compute the barycenter of multiple bodies - the point around which two bodies both orbit
 // Same as center of mass for spherical bodies in normal conditions.
 // Rb = m1*r1 + m2*r2 + ... +mn*rn / (m1 + m2 + ... + mn)
-pub fn barycenter(bodies: &Vec<Body>) -> Position {
-    let mass_sum = bodies.iter().fold(0., |acc, b| acc + b.mass);
-    let weighted_pos_sum = bodies
-        .iter()
-        .fold(Position::default(), |acc, b| acc.add(b.pos.scale(b.mass)));
-
-    weighted_pos_sum.divide(mass_sum)
-}
 pub fn barycenter_abs(bodies: &Vec<Body>) -> Position {
     let mass_sum = bodies.iter().fold(0., |acc, b| acc + b.mass);
     let weighted_pos_sum = bodies.iter().fold(Position::default(), |acc, b| {
@@ -180,4 +172,14 @@ pub fn barycenter_abs(bodies: &Vec<Body>) -> Position {
     });
 
     weighted_pos_sum.divide(mass_sum)
+}
+
+pub fn barycentric_velocity(bodies: &Vec<Body>) -> Velocity {
+    let mass_sum = bodies.iter().fold(0., |acc, b| acc + b.mass);
+
+    let weighted_vel_sum = bodies
+        .iter()
+        .fold(Velocity::default(), |acc, b| acc.add(b.v.scale(b.mass)));
+
+    weighted_vel_sum.divide(mass_sum)
 }

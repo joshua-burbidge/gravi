@@ -54,8 +54,9 @@ text disappears at smaller scales - when deployed, it only appears at large scal
 ----------
 
 WIP - hierarchy:
-- want to use the bodies array before starting, then use the tree after starting
-    - or update the bodies array after starting?
 
 barycenters should move correctly
+  - setting non-circular velocities leads to barycenter having a velocity, but the
+    the body has non-circular velocity relative to the barycenter, basically double-counting the velocity difference
+  - need to have the absolute vs relative distinction that is used for position
 refactor tree code

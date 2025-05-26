@@ -8,6 +8,8 @@ use petgraph::graph::{DiGraph, NodeIndex};
 use std::{collections::HashMap, f32};
 use tree::build_hierarchy;
 
+use crate::app::core::graph::parent_node_or_default;
+
 use super::{
     core::{
         draw::{draw_body, draw_line_thru_points, draw_text, draw_tick_marks, get_scale},
@@ -275,6 +277,12 @@ impl Orbital {
         let mut body_groups: Vec<Vec<&Body>> = Vec::new();
         let mut index_groups: Vec<Vec<NodeIndex>> = Vec::new();
 
+        // body_groups.push(vec![self
+        //     .hierarchy
+        //     .node_weight(self.root)
+        //     .expect("invalid index")]);
+        // index_groups.push(vec![self.root]);
+
         while let Some(nx) = bfs.next(&self.hierarchy) {
             let children: Vec<NodeIndex> = self
                 .hierarchy
@@ -298,6 +306,8 @@ impl Orbital {
     fn hierarchical_update(&mut self) {
         let (index_groups, _) = self.sibling_groups();
 
+        // println!("index_groups {:?}", index_groups);
+
         let mut updates: HashMap<NodeIndex, (Position, Velocity, Acceleration)> = HashMap::new();
 
         // TODO add velocity to root node when initializing, then include it in updates
@@ -319,17 +329,21 @@ impl Orbital {
             }
 
             // apply updates
+            // if no parent, then it is the root node - consider 0,0 to be parent
+            // (maybe add 0,0 to the tree?)
             for &node_idx in group {
                 if let Some(update) = updates.get(&node_idx) {
-                    let parent_idx = self
-                        .hierarchy
-                        .neighbors_directed(node_idx, petgraph::Direction::Incoming)
-                        .next()
-                        .expect("no parent index found when updating");
-                    let updated_parent = self
-                        .hierarchy
-                        .node_weight(parent_idx)
-                        .expect("no parent found when updating");
+                    // let parent_idx = self
+                    //     .hierarchy
+                    //     .neighbors_directed(node_idx, petgraph::Direction::Incoming)
+                    //     .next()
+                    //     .expect("no parent index found when updating");
+                    // let updated_parent = self
+                    //     .hierarchy
+                    //     .node_weight(parent_idx)
+                    //     .expect("no parent found when updating");
+                    let default = &Body::default(); // 0,0 position
+                    let updated_parent = parent_node_or_default(&self.hierarchy, node_idx, default);
                     // parent has already been updated because it's looping in BFS order
                     let parent_abs_pos = updated_parent.absolute_pos;
                     let node = self
