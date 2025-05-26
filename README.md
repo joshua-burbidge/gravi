@@ -57,7 +57,5 @@ WIP - hierarchy:
 - want to use the bodies array before starting, then use the tree after starting
     - or update the bodies array after starting?
 
-barycenter names
 barycenters should move correctly
-shouldn't have to click refresh
 refactor tree code

@@ -89,6 +89,7 @@ impl App for Orbital {
         ui::controls_panel(self, ctx);
         if !self.started {
             self.refresh_hierarchy();
+            self.set_velocities();
         }
         self.analyze();
     }

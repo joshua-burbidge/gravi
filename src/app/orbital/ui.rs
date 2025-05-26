@@ -139,7 +139,6 @@ pub fn ui(app: &mut Orbital, ctx: &egui::Context) {
 
             ui.add_space(20.);
         }
-        app.set_velocities();
 
         if ui.button("Start").clicked() {
             app.start();
