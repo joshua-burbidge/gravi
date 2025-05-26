@@ -1,4 +1,5 @@
 pub mod draw;
+pub mod graph;
 pub mod physics;
 
 pub fn midpoint(a: f32, b: f32) -> f32 {
