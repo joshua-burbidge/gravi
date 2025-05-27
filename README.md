@@ -41,6 +41,11 @@ Performance gets worse when there are long trajectories
 - "run" function time stays mostly the same, "draw" increases with long trajectories
 - in the "run" function the calculation is taking 10x more time than the rest
 
+Tests
+- add tests that check results of simulation
+  - check that setting circular velocity results in a circle
+  - check known orbital periods like Sun-Earth, Earth-moon 
+
 #### Verify
 - new energy implementation
 
