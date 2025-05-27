@@ -90,6 +90,10 @@ impl App for Orbital {
         ui::ui(self, ctx);
         ui::controls_panel(self, ctx);
         if !self.started {
+            // need to set velocities before so that barycenter grouping knows the bodies' velocities
+            // need to set velocities after to apply the circular velocities set by the grouping
+            // TODO refactor? calculate circular velocity while grouping?
+            self.set_velocities();
             self.refresh_hierarchy();
             self.set_velocities();
         }
@@ -256,7 +260,15 @@ impl Orbital {
                 let parent_node = &parents[i];
 
                 body.v = circ_vel;
+                // loops and increases forever
+                // it is circular, just the absolute v of this body and the barycenter keep changing together
                 body.absolute_vel = circ_vel.add(parent_node.absolute_vel);
+
+                if body.name == "Sun".to_string() {
+                    println!("circ_vel {:?}", circ_vel);
+                    println!("parent vel {:?}", parent_node.absolute_vel);
+                    println!("abs_vel {:?}", body.absolute_vel);
+                }
             } else if body.lock_to_escape_velocity {
                 let (locked_body_pos, locked_body_m) = positions
                     .get(body.selected_vel_lock)

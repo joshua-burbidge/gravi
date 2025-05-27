@@ -248,7 +248,11 @@ impl Preset {
     }
 
     pub fn sun_earth_moon() -> Self {
-        let sun = Body::sun();
+        let sun = Body {
+            lock_to_circular_velocity: true,
+            selected_vel_lock: 3,
+            ..Body::sun()
+        };
 
         let earth = Body {
             absolute_pos: Position::new(0., SUN_EARTH_R_KM),
