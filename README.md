@@ -49,10 +49,6 @@ Tests
   - check that setting circular velocity results in a circle
   - check known orbital periods like Sun-Earth, Earth-moon 
 
-#### Verify
-- new energy implementation
-
 text disappears at smaller scales - when deployed, it only appears at large scales
 - try increasing the scale
 - scale == 0.05, font == 930 is visible
-

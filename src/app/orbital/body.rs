@@ -184,22 +184,21 @@ impl Preset {
         ]
     }
 
+    // to keep the barycenter stationary, all bodies should start with an initialized velocity,
+    // or all bodies start with no velocity and use velocity lock
     pub fn earth_moon() -> Self {
-        let mut barycenter_earth = Body {
+        let barycenter_earth = Body {
             is_fixed: false,
             lock_to_circular_velocity: true,
             selected_vel_lock: 1,
             ..Body::earth()
         };
-        let mut moon_orbiting_earth = Body {
+        let moon_orbiting_earth = Body {
+            absolute_vel: Velocity::default(),
             lock_to_circular_velocity: true,
             selected_vel_lock: 0,
             ..Body::moon()
         };
-
-        let (circ_v_1, circ_v_2) = circ_velocity_bodies(&barycenter_earth, &moon_orbiting_earth);
-        barycenter_earth.absolute_vel = circ_v_1;
-        moon_orbiting_earth.absolute_vel = circ_v_2;
 
         Preset {
             bodies: vec![barycenter_earth, moon_orbiting_earth],
@@ -264,6 +263,7 @@ impl Preset {
         let default_moon = Body::moon();
         let moon = Body {
             absolute_pos: earth.absolute_pos.add(default_moon.absolute_pos),
+            absolute_vel: Velocity::default(),
             lock_to_circular_velocity: true,
             selected_vel_lock: 1,
             ..default_moon
