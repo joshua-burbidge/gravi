@@ -17,10 +17,11 @@ pub fn get_scale<T: Renderer>(canvas: &Canvas<T>) -> f32 {
     }
 }
 
+// Provide a width number and then use the result as the canvas length.
+// It will stay a constant screen size as scale changes.
 pub fn scaled_width<T: Renderer>(canvas: &Canvas<T>, width_factor: f32) -> f32 {
     let canvas_scale = get_scale(canvas);
 
-    // balance width when scale is small and large
     width_factor / canvas_scale
 }
 
@@ -198,28 +199,26 @@ pub fn _draw_circle_scaled<T: Renderer>(
 }
 
 pub fn draw_body<T: Renderer>(canvas: &mut Canvas<T>, body: &Body, distance_per_px: f32) {
-    let radius = if body.radius == 0. {
+    let radius = if body.is_barycenter {
+        scaled_width(canvas, 4.)
+    } else if body.radius == 0. {
         scaled_width(canvas, 10.)
     } else {
-        convert_length(body.radius, distance_per_px)
+        // use actual radius if it's big enough, else use a constant so it stays visible
+        let canvas_radius = convert_length(body.radius, distance_per_px);
+        let scale = get_scale(canvas);
+
+        if canvas_radius * scale > 20. {
+            canvas_radius
+        } else {
+            scaled_width(canvas, 20.)
+        }
     };
 
     let (r, g, b) = body.color;
     let paint = Paint::color(Color::rgb(r, g, b));
 
-    draw_circle_paint(canvas, &body.pos, radius, distance_per_px, paint);
-}
-
-pub fn draw_barycenter<T: Renderer>(
-    canvas: &mut Canvas<T>,
-    position: &Position,
-    width_factor: f32,
-    distance_per_px: f32,
-) {
-    let paint = Paint::color(Color::rgbf(0., 0., 1.));
-    let r = scaled_width(canvas, width_factor);
-
-    draw_circle_paint(canvas, position, r, distance_per_px, paint);
+    draw_circle_paint(canvas, &body.absolute_pos, radius, distance_per_px, paint);
 }
 
 pub fn draw_line_thru_points<T: Renderer>(
@@ -236,13 +235,13 @@ pub fn draw_line_thru_points<T: Renderer>(
     let initial_state = trajectory_iter.next();
     match initial_state {
         Some(b) => {
-            let canvas_pos = pos_to_canvas(&b.pos, distance_per_px);
+            let canvas_pos = pos_to_canvas(&b.absolute_pos, distance_per_px);
             trajectory_path.move_to(canvas_pos.x, canvas_pos.y);
         }
         None => {}
     }
     for b in trajectory_iter.step_by(ticks_per_graph_point) {
-        let canvas_pos = pos_to_canvas(&b.pos, distance_per_px);
+        let canvas_pos = pos_to_canvas(&b.absolute_pos, distance_per_px);
         trajectory_path.line_to(canvas_pos.x, canvas_pos.y);
     }
 

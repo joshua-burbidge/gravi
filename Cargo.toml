@@ -16,6 +16,9 @@ wgpu = { version = "24" }
 egui-wgpu = { version = "0.31.0", features = ["winit"] }
 egui = "0.31.0"
 resource = "0.6.0"
+petgraph = "0.8.1"
+log = "0.4.27"
+env_logger = "0.11.8"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 glutin = "0.32.2"

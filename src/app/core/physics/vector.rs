@@ -28,11 +28,17 @@ impl<T: VectorType + Default> Vector<T> {
     pub fn scale(self, factor: f32) -> Self {
         Self::new_vec(self._type, self.x * factor, self.y * factor)
     }
+    pub fn divide(self, divisor: f32) -> Self {
+        self.scale(1. / divisor)
+    }
     pub fn add(self, vec2: Vector<T>) -> Self {
         Self::new_vec(self._type, self.x + vec2.x, self.y + vec2.y)
     }
     pub fn minus(self, vec2: Vector<T>) -> Self {
         self.add(vec2.scale(-1.))
+    }
+    pub fn abs_diff(self, vec2: Vector<T>) -> f32 {
+        self.minus(vec2).mag()
     }
     pub fn perpendicular_cw(self) -> Self {
         Self::new_vec(self._type, self.y, -self.x)

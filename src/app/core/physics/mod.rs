@@ -1,11 +1,14 @@
 pub use vector::{Acceleration, Position, Velocity};
 
+use crate::app::orbital::body::Body;
+
 mod vector;
 
 pub const G: f32 = 6.674e-11; // N m^2 / kg^2
 pub const G_KM: f32 = G * 1e-6; // N km^2 / kg^2 (converted to km)
 pub const R_EARTH_KM: f32 = 6378.;
 pub const R_MOON_KM: f32 = 1740.;
+pub const SUN_EARTH_R_KM: f32 = 149597870.;
 
 pub enum Axis {
     X,
@@ -49,7 +52,24 @@ pub fn circ_velocity_barycenter(
 
     // split the whole vc based on mass ratio to get individual velocities
     let v1 = overall_vc.scale(m2 / (m1 + m2));
-    let v2 = overall_vc.scale(m1 / (m1 + m2));
+    let v2 = overall_vc.scale(-m1 / (m1 + m2));
+
+    (v1, v2)
+}
+
+pub fn circ_velocity_bodies(body1: &Body, body2: &Body) -> (Velocity, Velocity) {
+    let r = body2.absolute_pos.minus(body1.absolute_pos);
+
+    let circ_v_mag = circular_velocity_magnitude(body1.mass + body2.mass, r.mag());
+
+    let r_unit_vector = r.divide(r.mag());
+    let v_unit_vector = r_unit_vector.perpendicular_cw();
+
+    let vc = Velocity::from(v_unit_vector.scale(circ_v_mag));
+
+    let mass_sum = body1.mass + body2.mass;
+    let v1 = vc.scale(-body2.mass / mass_sum);
+    let v2 = vc.scale(body1.mass / mass_sum);
 
     (v1, v2)
 }
@@ -129,24 +149,37 @@ pub fn kinetic_energy(mass: f32, v: Velocity) -> f32 {
     body_kinetic_mj
 }
 
-pub fn gravitational_potential_energy(m1: f32, m2: f32, pos1: Position, pos2: Position) -> f32 {
+pub fn gravitational_potential_energy(m1: f32, m2: f32, pos1: Position, pos2: Position) -> f64 {
     // Gravitational energy between two masses
     // Eg = -G * M * m / r
     let r = pos1.minus(pos2).mag();
-    let grav_potential_kj = -G_KM * m1 * m2 / r; // KJ
+
+    let (m1, m2, r) = (m1 as f64, m2 as f64, r as f64);
+
+    let grav_potential_kj = -G_KM as f64 * m1 * m2 / r; // KJ
     let grav_potential_mj = grav_potential_kj * 1e-3; // MJ
 
     grav_potential_mj
 }
 
-// Compute the barycenter - the point around which two bodies both orbit
+// Compute the barycenter of multiple bodies - the point around which two bodies both orbit
 // Same as center of mass for spherical bodies in normal conditions.
-pub fn barycenter(m1: f32, m2: f32, pos1: Position, pos2: Position) -> Position {
-    // barycenter of two masses, distance d apart
-    // Rb = m2 / (m1 + m2) * d
-    let distance_vector = pos2.minus(pos1);
+// Rb = m1*r1 + m2*r2 + ... +mn*rn / (m1 + m2 + ... + mn)
+pub fn barycenter_abs(bodies: &Vec<Body>) -> Position {
+    let mass_sum = bodies.iter().fold(0., |acc, b| acc + b.mass);
+    let weighted_pos_sum = bodies.iter().fold(Position::default(), |acc, b| {
+        acc.add(b.absolute_pos.scale(b.mass))
+    });
 
-    let bary_from_p1 = distance_vector.scale(m2 / (m1 + m2));
-    let bary = pos1.add(bary_from_p1);
-    bary
+    weighted_pos_sum.divide(mass_sum)
+}
+
+pub fn barycentric_velocity(bodies: &Vec<Body>) -> Velocity {
+    let mass_sum = bodies.iter().fold(0., |acc, b| acc + b.mass);
+
+    let weighted_vel_sum = bodies.iter().fold(Velocity::default(), |acc, b| {
+        acc.add(b.absolute_vel.scale(b.mass))
+    });
+
+    weighted_vel_sum.divide(mass_sum)
 }

@@ -4,6 +4,8 @@ mod helpers;
 mod ui;
 
 fn main() {
+    env_logger::builder().format_timestamp(None).init();
+
     let app = {
         #[cfg(feature = "simple")]
         app::orbital::Orbital::new()

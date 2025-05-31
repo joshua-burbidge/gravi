@@ -1,21 +1,24 @@
 use crate::app::core::physics::{
-    circ_velocity_barycenter, circular_velocity, Acceleration, Position, Velocity, R_EARTH_KM,
-    R_MOON_KM,
+    circ_velocity_barycenter, circ_velocity_bodies, Acceleration, Position, Velocity, R_EARTH_KM,
+    R_MOON_KM, SUN_EARTH_R_KM,
 };
 
 #[derive(Clone, Debug)]
 pub struct Body {
+    pub name: String,
     pub pos: Position,
     pub v: Velocity,
     pub mass: f32,
     pub radius: f32,
     pub trajectory: Vec<Body>,
     pub computed_a: Acceleration,
+    pub absolute_pos: Position,
+    pub absolute_vel: Velocity,
     pub is_fixed: bool,
+    pub is_barycenter: bool,
     pub lock_to_circular_velocity: bool,
     pub lock_to_escape_velocity: bool,
     pub selected_vel_lock: usize,
-    pub name: String,
     pub color: (u8, u8, u8),
     pub default_expanded: bool,
 }
@@ -28,7 +31,10 @@ impl Default for Body {
             radius: Default::default(),
             trajectory: Default::default(),
             computed_a: Acceleration::default(),
+            absolute_pos: Position::default(),
+            absolute_vel: Velocity::default(),
             is_fixed: Default::default(),
+            is_barycenter: false,
             lock_to_circular_velocity: Default::default(),
             lock_to_escape_velocity: Default::default(),
             selected_vel_lock: Default::default(),
@@ -41,14 +47,17 @@ impl Default for Body {
 impl Body {
     // returns a version of this struct to be used for the trajectory history
     // maybe make this a separate struct?
-    pub fn new_history_entry(&self) -> Self {
+    pub fn copy(&self) -> Self {
         Self {
             pos: self.pos,
             v: self.v,
             mass: self.mass,
             radius: self.radius,
             computed_a: self.computed_a,
+            absolute_pos: self.absolute_pos,
+            absolute_vel: self.absolute_vel,
             is_fixed: self.is_fixed,
+            is_barycenter: self.is_barycenter,
             lock_to_circular_velocity: self.lock_to_circular_velocity,
             lock_to_escape_velocity: self.lock_to_escape_velocity,
             selected_vel_lock: self.selected_vel_lock,
@@ -64,20 +73,20 @@ impl Body {
         new_pos: Position,
         new_vel: Velocity,
         new_acc: Acceleration,
-    ) -> &mut Self {
+        parent_abs_pos: Position,
+        parent_abs_vel: Velocity,
+    ) {
         self.pos = new_pos;
+        self.absolute_pos = parent_abs_pos.add(new_pos);
         self.v = new_vel;
+        self.absolute_vel = parent_abs_vel.add(new_vel);
         self.computed_a = new_acc;
-        self.trajectory.push(self.new_history_entry());
-
-        self
+        self.trajectory.push(self.copy());
     }
 
+    // --------------- Constructors ------------------
     // starting conditions for a low earth orbit, modeled after the ISS
     pub fn outer_low() -> Self {
-        let earth_mass = Self::earth().mass;
-        let earth_pos = Self::earth().pos;
-
         let r = 400. + R_EARTH_KM;
         let x = 3000_f32;
         let y = (r.powi(2) - x.powi(2)).sqrt();
@@ -86,20 +95,12 @@ impl Body {
         Self {
             name: "Orbiting Object".to_string(),
             mass: 400000., // kg
-            pos: position,
-            v: circular_velocity(earth_pos, earth_mass, position), // km/s
+            absolute_pos: position,
+            lock_to_circular_velocity: true,
+            selected_vel_lock: 0,
             trajectory: Vec::new(),
             default_expanded: true,
             color: (255, 0, 0),
-            ..Default::default()
-        }
-    }
-    fn _outer_med() -> Self {
-        Self {
-            mass: 5000.,
-            pos: Position::new(5000., 15000.),
-            v: Velocity::new(3.9, 0.),
-            default_expanded: true,
             ..Default::default()
         }
     }
@@ -113,7 +114,7 @@ impl Body {
     }
     pub fn moon() -> Self {
         let earth_mass = Self::earth().mass;
-        let earth_pos = Self::earth().pos;
+        let earth_pos = Self::earth().absolute_pos;
         let position = Position::new(0., 3.844e5 + R_EARTH_KM);
         let moon_mass = 7.34e22;
 
@@ -121,8 +122,8 @@ impl Body {
             name: "Moon".to_string(),
             mass: moon_mass,
             radius: R_MOON_KM,
-            pos: position,
-            v: circ_velocity_barycenter(moon_mass, position, earth_mass, earth_pos).0, // km/s
+            absolute_pos: position,
+            absolute_vel: circ_velocity_barycenter(moon_mass, position, earth_mass, earth_pos).0, // km/s
             default_expanded: true,
             color: (160, 160, 160),
             ..Default::default()
@@ -131,21 +132,14 @@ impl Body {
     pub fn sun() -> Self {
         Self {
             name: "Sun".to_string(),
-            pos: Position::new(0., 0.),
+            absolute_pos: Position::new(0., 0.),
             mass: 1.989e30,
             radius: 6.963e5,
-            is_fixed: true,
+            is_fixed: false,
             color: (255, 255, 0),
             ..Default::default()
         }
     }
-}
-
-// if the object being pulled is 1000x more massive than the source of the gravity,
-// then the gravitational force is negligible
-pub fn is_mass_significant(source_body: &Body, body_under_effect: &Body) -> bool {
-    let ratio_threshold = 1000.;
-    (body_under_effect.mass / source_body.mass) < ratio_threshold
 }
 
 #[derive(Default)]
@@ -174,17 +168,7 @@ impl Preset {
             lock_to_escape_velocity: false,
             ..Body::earth()
         };
-        let barycenter_earth = Body {
-            is_fixed: false,
-            lock_to_circular_velocity: true,
-            selected_vel_lock: 1,
-            ..Body::earth()
-        };
-        let moon_orbiting_earth = Body {
-            lock_to_circular_velocity: true,
-            selected_vel_lock: 0,
-            ..Body::moon()
-        };
+
         vec![
             Preset {
                 bodies: vec![fixed_earth, Body::outer_low()],
@@ -192,47 +176,67 @@ impl Preset {
                 distance_per_px: 150,
                 ..Preset::default()
             },
-            Preset {
-                bodies: vec![barycenter_earth, moon_orbiting_earth],
-                name: String::from("Moon orbiting Earth"),
-                distance_per_px: 4000,
-                ticks_per_press: 100000,
-                ..Preset::default()
-            },
-            Self::three_body(),
             Self::sun_earth_moon(),
+            Self::earth_moon(),
+            Self::three_body(),
             Self::equal_binary(),
             Self::unequal_binary(),
         ]
     }
 
+    // to keep the barycenter stationary, all bodies should start with an initialized velocity,
+    // or all bodies start with no velocity and use velocity lock
+    pub fn earth_moon() -> Self {
+        let barycenter_earth = Body {
+            is_fixed: false,
+            lock_to_circular_velocity: true,
+            selected_vel_lock: 1,
+            ..Body::earth()
+        };
+        let moon_orbiting_earth = Body {
+            absolute_vel: Velocity::default(),
+            lock_to_circular_velocity: true,
+            selected_vel_lock: 0,
+            ..Body::moon()
+        };
+
+        Preset {
+            bodies: vec![barycenter_earth, moon_orbiting_earth],
+            name: String::from("Moon orbiting Earth"),
+            distance_per_px: 4000,
+            ticks_per_press: 100000,
+            ..Preset::default()
+        }
+    }
     pub fn three_body() -> Self {
-        let b1 = Body {
+        let mut b1 = Body {
             name: String::from("1"),
             radius: 1000.,
             mass: 1e21,
-            pos: Position::new(-5000., -5000.),
-            lock_to_circular_velocity: true,
+            absolute_pos: Position::new(-5000., -5000.),
             selected_vel_lock: 1,
             color: (0, 255, 0),
             ..Default::default()
         };
-        let b2 = Body {
+        let mut b2 = Body {
             name: String::from("2"),
-            pos: Position::new(0., 5000.),
-            lock_to_circular_velocity: true,
+            absolute_pos: Position::new(0., 5000.),
             selected_vel_lock: 0,
             color: (255, 0, 0),
             ..b1.clone()
         };
         let b3: Body = Body {
             name: String::from("3"),
-            pos: Position::new(7000., -5000.),
-            v: Velocity::new(-0.2, 0.08),
+            absolute_pos: Position::new(7000., -5000.),
+            absolute_vel: Velocity::new(-0.2, 0.08),
             lock_to_circular_velocity: false,
-            color: (0, 70, 180),
+            color: (255, 200, 0),
             ..b1.clone()
         };
+
+        let (circ_v_1, circ_v_2) = circ_velocity_bodies(&b1, &b2);
+        b1.absolute_vel = circ_v_1;
+        b2.absolute_vel = circ_v_2;
 
         Self {
             name: String::from("Three body"),
@@ -243,28 +247,85 @@ impl Preset {
     }
 
     pub fn sun_earth_moon() -> Self {
-        let sun = Body::sun();
-        let earth = Body {
-            pos: Position::new(0., 149597870_f32),
+        let sun = Body {
             lock_to_circular_velocity: true,
-            selected_vel_lock: 0,
+            selected_vel_lock: 3,
+            ..Body::sun()
+        };
+
+        let earth = Body {
+            absolute_pos: Position::new(0., SUN_EARTH_R_KM),
+            lock_to_circular_velocity: true,
+            selected_vel_lock: 2,
             ..Body::earth()
         };
+
         let default_moon = Body::moon();
         let moon = Body {
-            pos: earth.pos.add(default_moon.pos),
+            absolute_pos: earth.absolute_pos.add(default_moon.absolute_pos),
+            absolute_vel: Velocity::default(),
             lock_to_circular_velocity: true,
             selected_vel_lock: 1,
             ..default_moon
         };
 
         Self {
-            name: "Sun + earth + moon".to_string(),
+            name: "Sun + Earth + Moon".to_string(),
             bodies: vec![sun, earth, moon],
             distance_per_px: 1400000,
             dt: 50.,
             ticks_per_press: 100000,
             draw_frequency: 24 * 60 * 60,
+        }
+    }
+
+    pub fn _hierarchy_test() -> Self {
+        let base = Self::sun_earth_moon();
+
+        let cluster_y = -599_597_870_f32;
+        let earth_2 = Body {
+            name: "Earth 2".to_string(),
+            absolute_pos: Position::new(0., cluster_y - 5_978_700.),
+            ..Body::earth()
+        };
+        let moon_2 = Body {
+            name: "Moon 2".to_string(),
+            absolute_pos: earth_2.absolute_pos.add(Body::moon().absolute_pos),
+            ..Body::moon()
+        };
+
+        let earth_3 = Body {
+            name: "Earth 3".to_string(),
+            absolute_pos: Position::new(0., cluster_y + 9_597_870.),
+            ..Body::earth()
+        };
+        let moon_3 = Body {
+            name: "Moon 3".to_string(),
+            absolute_pos: earth_3.absolute_pos.add(Body::moon().absolute_pos),
+            ..Body::moon()
+        };
+        let third = Body {
+            name: "Third body".to_string(),
+            absolute_pos: earth_3.absolute_pos.minus(Body::moon().absolute_pos),
+            ..Body::moon()
+        };
+        let small = Body {
+            name: "Small test particle".to_string(),
+            mass: 10.,
+            absolute_pos: third.absolute_pos.add(Position::new(100., 100.)),
+            ..Body::default()
+        };
+
+        let bodies = [
+            base.bodies,
+            vec![earth_2, moon_2, earth_3, moon_3, third, small],
+        ]
+        .concat();
+
+        Self {
+            name: "hierarchy_test".to_string(),
+            bodies,
+            ..base
         }
     }
 
@@ -275,7 +336,7 @@ impl Preset {
             name: "1".to_string(),
             mass: 1.23e22,
             radius: 8000.,
-            pos: Position::new(50000., 0.),
+            absolute_pos: Position::new(50000., 0.),
             lock_to_circular_velocity: true,
             selected_vel_lock: 1,
             default_expanded: true,
@@ -283,9 +344,11 @@ impl Preset {
         };
         let body2 = Body {
             name: "2".to_string(),
-            pos: Position::new(-50000., 0.),
+            absolute_pos: Position::new(-50000., 0.),
+            lock_to_circular_velocity: true,
             selected_vel_lock: 0,
             color: (220, 0, 0),
+            default_expanded: false,
             ..body1.clone()
         };
 
@@ -305,34 +368,32 @@ impl Preset {
     // If velocities are slightly changed, both bodies will travel in elliptical orbits.
     // If the overall system velocity is changed, then both bodies will be orbiting a moving barycenter.
     pub fn unequal_binary() -> Self {
-        let body1_mass = 6.23e22;
         let body1_pos = Position::new(-100000., 150000.);
-        let body2_mass = body1_mass / 5.;
         let body2_pos = Position::new(-200000., 150000.);
 
-        let (body1_circ_v, _body2_circ_v) =
-            circ_velocity_barycenter(body1_mass, body1_pos, body2_mass, body2_pos);
-
-        let body1 = Body {
+        let mut body1 = Body {
             name: "1".to_string(),
-            mass: body1_mass,
+            mass: 6.23e22,
             radius: 8000.,
-            pos: body1_pos,
-            v: body1_circ_v.add(Velocity::new(0.02, -0.02)),
+            absolute_pos: body1_pos,
             lock_to_circular_velocity: false,
             selected_vel_lock: 1,
             default_expanded: true,
             ..Body::default()
         };
-        let body2 = Body {
+        let mut body2 = Body {
             name: "2".to_string(),
             mass: 1.23e22,
-            pos: body2_pos,
-            lock_to_circular_velocity: true,
+            absolute_pos: body2_pos,
+            lock_to_circular_velocity: false,
             selected_vel_lock: 0,
             color: (220, 0, 0),
             ..body1.clone()
         };
+
+        let (body1_circ_v, body2_circ_v) = circ_velocity_bodies(&body1, &body2);
+        body1.absolute_vel = body1_circ_v.add(Velocity::new(0.02, -0.02));
+        body2.absolute_vel = body2_circ_v;
 
         Self {
             name: "Unequal binary system".to_string(),

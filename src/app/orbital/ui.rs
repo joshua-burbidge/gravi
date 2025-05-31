@@ -28,12 +28,13 @@ pub fn ui(app: &mut Orbital, ctx: &egui::Context) {
                 }
             });
 
-        ui.add_space(20.);
+        ui.add(egui::Separator::default().spacing(10.));
 
         ui.label(RichText::new("General").heading());
         ui.add(CustomSlider::new(&mut app.dt, 0.01..=10.0).label("dt:"));
         ui.add(CustomSlider::new(&mut app.num_ticks, 100..=100000).label("ticks per press:"));
-        ui.add_space(20.);
+
+        ui.add(egui::Separator::default().spacing(10.));
 
         ui.input(|i| {
             if i.key_pressed(egui::Key::A) {
@@ -44,95 +45,141 @@ pub fn ui(app: &mut Orbital, ctx: &egui::Context) {
             }
         });
 
-        let len = app.bodies.len();
+        let bodies_list = app.bodies_list();
+        let started = app.started;
 
-        for (i, body) in app.bodies.iter_mut().enumerate() {
-            let x_range = -10000.0..=10000.;
-            let y_range = -10000.0..=10000.;
+        egui::ScrollArea::vertical().show(ui, |ui| {
+            ui.label(RichText::new("Bodies").heading());
+            ui.add_space(6.);
 
-            egui::CollapsingHeader::new(
-                RichText::new(format!("Body {}: {}", i + 1, body.name))
-                    .heading()
-                    .color(egui::Color32::from_rgb(
-                        body.color.0,
-                        body.color.1,
-                        body.color.2,
-                    )),
-            )
-            .default_open(body.default_expanded)
-            .show(ui, |ui| {
-                ui.add_enabled_ui(!app.started, |ui| {
-                    text_sized(ui, "Position (km)", 14.);
-                    ui.add(XYInput::new(
-                        &mut body.pos.x,
-                        &mut body.pos.y,
-                        x_range,
-                        y_range,
-                    ));
-                    ui.label(format!("|r|: {} km", body.pos.mag()));
-                    ui.add_space(6.);
+            for (i, body) in app.bodies_vec_mut().iter_mut().enumerate() {
+                let x_range = -10000.0..=10000.;
+                let y_range = -10000.0..=10000.;
 
-                    if !body.is_fixed {
-                        text_sized(ui, "Velocity (km/s)", 14.);
-                        ui.checkbox(
-                            &mut body.lock_to_circular_velocity,
-                            "lock to circular velocity",
-                        );
-                        ui.checkbox(&mut body.lock_to_escape_velocity, "lock to escape velocity");
+                let id = ui.make_persistent_id(format!("collapsing_{}", i));
+                let collapsing = egui::collapsing_header::CollapsingState::load_with_default_open(
+                    ui.ctx(),
+                    id,
+                    body.default_expanded,
+                );
 
-                        let vel_lock_enabled =
-                            body.lock_to_circular_velocity || body.lock_to_escape_velocity;
-                        ui.add_enabled_ui(vel_lock_enabled, |ui| {
-                            egui::ComboBox::from_label("Around body").show_index(
-                                ui,
-                                &mut body.selected_vel_lock,
-                                len,
-                                |i| format!("Body {}", i + 1),
-                            );
-                        });
-                        ui.add_enabled_ui(!vel_lock_enabled, |ui| {
+                let response = collapsing
+                    .show_header(ui, |ui| {
+                        ui.add(
+                            egui::Label::new(
+                                RichText::new(bodies_list[i].clone()).heading().color(
+                                    egui::Color32::from_rgb(
+                                        body.color.0,
+                                        body.color.1,
+                                        body.color.2,
+                                    ),
+                                ),
+                            )
+                            .wrap(),
+                        )
+                    })
+                    .body(|ui| {
+                        ui.add_enabled_ui(!started, |ui| {
+                            text_sized(ui, "Position (km)", 14.);
                             ui.add(XYInput::new(
-                                &mut body.v.x,
-                                &mut body.v.y,
-                                -50.0..=50.0,
-                                -50.0..=50.0,
+                                &mut body.absolute_pos.x,
+                                &mut body.absolute_pos.y,
+                                x_range,
+                                y_range,
                             ));
+                            text_sized(ui, "Relative Position", 14.);
+                            ui.monospace(format!("Rx:    {:+.4e}", body.pos.x));
+                            ui.monospace(format!("Ry:    {:+.4e}", body.pos.y));
+
+                            ui.label(format!("|r|: {} km", body.pos.mag()));
+                            ui.add_space(6.);
+
+                            if !body.is_fixed {
+                                text_sized(ui, "Velocity (km/s)", 14.);
+                                ui.checkbox(
+                                    &mut body.lock_to_circular_velocity,
+                                    "lock to circular velocity",
+                                );
+                                ui.checkbox(
+                                    &mut body.lock_to_escape_velocity,
+                                    "lock to escape velocity",
+                                );
+
+                                let vel_lock_enabled =
+                                    body.lock_to_circular_velocity || body.lock_to_escape_velocity;
+                                ui.add_enabled_ui(vel_lock_enabled, |ui| {
+                                    egui::ComboBox::from_label("Around body").show_index(
+                                        ui,
+                                        &mut body.selected_vel_lock,
+                                        bodies_list.len(),
+                                        |i| bodies_list[i].clone(),
+                                    );
+                                });
+                                ui.add_enabled_ui(!vel_lock_enabled, |ui| {
+                                    ui.add(XYInput::new(
+                                        &mut body.absolute_vel.x,
+                                        &mut body.absolute_vel.y,
+                                        -50.0..=50.0,
+                                        -50.0..=50.0,
+                                    ));
+                                });
+                                text_sized(ui, "Relative Velocity", 14.);
+                                ui.monospace(format!("Vx:    {:+.4e}", body.v.x));
+                                ui.monospace(format!("Vy:    {:+.4e}", body.v.y));
+
+                                ui.label(format!("|v|: {} km/s", body.v.mag()));
+
+                                ui.add_space(4.);
+                            }
+
+                            text_sized(ui, "Mass (kg)", 14.);
+                            ui.add(CustomSlider::new(&mut body.mass, 1.0..=5e10).label("M:"));
+                            ui.add_space(6.);
+
+                            text_sized(ui, "Acceleration (km/s^2)", 14.);
+                            ui.monospace(format!("Ax:    {:+.4e}", body.computed_a.x));
+                            ui.monospace(format!("Ay:    {:+.4e}", body.computed_a.y));
                         });
-                        ui.label(format!("|v|: {} km/s", body.v.mag()));
+                    });
 
-                        ui.add_space(4.);
+                // TODO cursor icon when clicking
+                if response.1.inner.hovered() {
+                    ui.ctx().set_cursor_icon(egui::CursorIcon::Default);
+                }
+
+                if response.1.inner.clicked() {
+                    if let Some(mut col_state) =
+                        egui::collapsing_header::CollapsingState::load(ui.ctx(), id)
+                    {
+                        col_state.toggle(ui);
+                        col_state.store(ui.ctx());
                     }
+                }
 
-                    text_sized(ui, "Mass (kg)", 14.);
-                    ui.add(CustomSlider::new(&mut body.mass, 1.0..=5e10).label("M:"));
-                    ui.add_space(6.);
+                ui.add_space(10.);
+            }
 
-                    text_sized(ui, "Acceleration (km/s^2)", 14.);
-                    ui.monospace(format!("Ax:    {:+.4e}", body.computed_a.x));
-                    ui.monospace(format!("Ay:    {:+.4e}", body.computed_a.y));
-                });
-            });
-            ui.add_space(20.);
-        }
+            if ui.button("Start").clicked() {
+                app.start();
+            }
 
-        app.set_velocities();
-
-        if ui.button("Start").clicked() {
-            app.start();
-        }
-
-        ui.add_space(10.);
-        ui.label(RichText::new("Analysis").heading());
-        let t = app.t();
-        let days = t / (60 * 60 * 24) as f32;
-        ui.monospace(format!("t: {:.4e} s, {:.2} d", t, days));
-        ui.monospace("Energy (MJ)");
-        ui.monospace(format!("Kinetic:    {:+.4e}", kinetic));
-        ui.monospace(format!("Potential:  {:+.4e}", potential));
-        ui.monospace(format!("Total:      {:+.4e}", kinetic + potential));
-        ui.monospace(format!("Initial:    {:+.4e}", app.analysis.initial_e));
-        ui.monospace(format!("Diff:        {:.2}%", diff_percent));
-        ui.monospace(format!("Diff per t:  {:.2e}%", (100. - diff_percent) / t));
+            ui.add_space(10.);
+            ui.label(RichText::new("Analysis").heading());
+            let t = app.t();
+            let days = t / (60 * 60 * 24) as f32;
+            ui.monospace(format!("t: {:.4e} s, {:.2} d", t, days));
+            ui.monospace("Energy (MJ)");
+            ui.monospace(format!("Kinetic:    {:+.4e}", kinetic));
+            ui.monospace(format!("Potential:  {:+.4e}", potential));
+            ui.monospace(format!("Total:      {:+.4e}", kinetic + potential));
+            ui.monospace(format!("Initial:    {:+.4e}", app.analysis.initial_e));
+            ui.monospace(format!("Diff:        {:.2}%", diff_percent));
+            ui.monospace(format!(
+                "Diff per t:  {:.2e}%",
+                (100. - diff_percent) / t as f64
+            ));
+            ui.add_space(10.);
+        });
     });
 }
 

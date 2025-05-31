@@ -32,19 +32,22 @@ Created from my femtovg+wgpu+egui boilerplate here: https://github.com/joshua-bu
   - don't clear canvas?
 - use types for units
 - why is the frame time so low even when it's lagging
-- recenter on preset
-- big: hierarchical calculations for multi-body systems
-  - add the circular velocities to the barycenter velocity, not to the other body's velocity 
 - resonance
-- panic in barycenters() if selecting a preset with fewer bodies
+- refactor tree code
+- refactor collapsing section UI
+- equal binary system lock circular and escape velocity - feedback loop
+- center on specific body
+- fix overlapping labels
 
 Performance gets worse when there are long trajectories
 - a path of circles performs worse than a path of line_to (much worse)
 - "run" function time stays mostly the same, "draw" increases with long trajectories
 - in the "run" function the calculation is taking 10x more time than the rest
 
-#### Verify
-- new energy implementation
+Tests
+- add tests that check results of simulation
+  - check that setting circular velocity results in a circle
+  - check known orbital periods like Sun-Earth, Earth-moon 
 
 text disappears at smaller scales - when deployed, it only appears at large scales
 - try increasing the scale
