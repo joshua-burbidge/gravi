@@ -36,6 +36,8 @@ Created from my femtovg+wgpu+egui boilerplate here: https://github.com/joshua-bu
 - refactor tree code
 - refactor collapsing section UI
 - equal binary system lock circular and escape velocity - feedback loop
+- center on specific body
+- fix overlapping labels
 
 Performance gets worse when there are long trajectories
 - a path of circles performs worse than a path of line_to (much worse)
