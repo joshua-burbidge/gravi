@@ -345,8 +345,10 @@ impl Preset {
         let body2 = Body {
             name: "2".to_string(),
             absolute_pos: Position::new(-50000., 0.),
+            lock_to_circular_velocity: false,
             selected_vel_lock: 0,
             color: (220, 0, 0),
+            default_expanded: false,
             ..body1.clone()
         };
 
