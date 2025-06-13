@@ -47,6 +47,9 @@ impl<T: VectorType + Default> Vector<T> {
     pub fn from<SourceType: VectorType>(v: Vector<SourceType>) -> Self {
         Vector::new_vec(T::default(), v.x, v.y)
     }
+    pub fn to_tuple(self) -> (f32, f32) {
+        (self.x, self.y)
+    }
     fn new_vec(vec_type: T, x: f32, y: f32) -> Self {
         Self {
             _type: vec_type,

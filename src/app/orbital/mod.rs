@@ -35,6 +35,7 @@ pub struct Orbital {
     analysis: Analysis,
     hierarchy: DiGraph<Body, ()>,
     root: NodeIndex,
+    focused: Option<NodeIndex>,
 }
 
 impl App for Orbital {
@@ -119,9 +120,25 @@ impl Orbital {
             analysis: Analysis::default(),
             hierarchy: DiGraph::new(),
             root: NodeIndex::new(0),
+            focused: None,
         };
         app.load_preset(0);
         app
+    }
+
+    fn focused_pos(&self) -> Option<(f32, f32)> {
+        if let Some(focused_idx) = self.focused {
+            Some(
+                self.hierarchy
+                    .node_weight(focused_idx)
+                    .expect("invalid index")
+                    .pos
+                    .divide(self.distance_per_px)
+                    .to_tuple(),
+            )
+        } else {
+            None
+        }
     }
 
     // TODO not accurate if you change dt
