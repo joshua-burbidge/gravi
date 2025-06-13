@@ -80,6 +80,10 @@ impl App for ConstAcceleration {
     fn panel_width(&self) -> f32 {
         self.ui_state.panel_width
     }
+
+    fn focused_pos(&self) -> Option<(f32, f32)> {
+        None
+    }
 }
 
 pub struct UiState {

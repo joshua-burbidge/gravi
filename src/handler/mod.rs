@@ -188,6 +188,11 @@ impl<A: App> ApplicationHandler for AppHandler<A> {
                 canvas.clear_rect(0, 0, size.width, size.height, Color::black());
                 draw_base_canvas(canvas);
 
+                if let Some(pos) = self.app.focused_pos() {
+                    translate_to_pos(canvas, pos);
+                }
+
+                // if focused, translate canvas to focused position
                 if self.next_tick {
                     self.app.run();
                 }
@@ -234,6 +239,22 @@ impl<A: App> ApplicationHandler for AppHandler<A> {
             _event_loop.exit();
         }
     }
+}
+
+fn translate_to_pos(canvas: &mut Canvas<WGPURenderer>, pos: (f32, f32)) {
+    let transform = canvas.transform();
+
+    // let focused = (500., 600.);
+
+    println!("1 {:?}", transform);
+
+    let mut new_transform = transform.clone();
+    new_transform[4] = pos.0;
+    new_transform[5] = pos.1;
+
+    println!("2 {:?}", new_transform);
+
+    // canvas.set_transform(&new_transform);
 }
 
 fn draw_base_canvas(canvas: &mut Canvas<WGPURenderer>) {

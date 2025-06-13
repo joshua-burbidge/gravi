@@ -100,8 +100,24 @@ impl App for Orbital {
         }
         self.analyze();
     }
+
     fn panel_width(&self) -> f32 {
         self.ui_state.panel_width
+    }
+
+    fn focused_pos(&self) -> Option<(f32, f32)> {
+        if let Some(focused_idx) = self.focused {
+            Some(
+                self.hierarchy
+                    .node_weight(focused_idx)
+                    .expect("invalid index")
+                    .pos
+                    .divide(self.distance_per_px)
+                    .to_tuple(),
+            )
+        } else {
+            None
+        }
     }
 }
 
@@ -124,21 +140,6 @@ impl Orbital {
         };
         app.load_preset(0);
         app
-    }
-
-    fn focused_pos(&self) -> Option<(f32, f32)> {
-        if let Some(focused_idx) = self.focused {
-            Some(
-                self.hierarchy
-                    .node_weight(focused_idx)
-                    .expect("invalid index")
-                    .pos
-                    .divide(self.distance_per_px)
-                    .to_tuple(),
-            )
-        } else {
-            None
-        }
     }
 
     // TODO not accurate if you change dt
