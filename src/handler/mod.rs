@@ -241,7 +241,6 @@ impl<A: App> ApplicationHandler for AppHandler<A> {
     }
 }
 
-// TODO combine translations
 // TODO a bit jumpy when moving forwards because it updates position first and then translates
 fn translate_to_pos<A: App>(canvas: &mut Canvas<WGPURenderer>, pos: (f32, f32), app: &A) {
     let transform = canvas.transform();
@@ -249,16 +248,20 @@ fn translate_to_pos<A: App>(canvas: &mut Canvas<WGPURenderer>, pos: (f32, f32), 
 
     // undo the current translation
     let inverse = (-transform[4] / scale, -transform[5] / scale);
-    canvas.translate(inverse.0, inverse.1);
 
     // center the canvas on the middle of the screen
     let midpoint_y = (canvas.height() / 2) as f32;
     let midpoint_x = (app.panel_width() + canvas.width() as f32) / 2.;
-    canvas.translate(midpoint_x / scale, midpoint_y / scale);
+    let center_translation = (midpoint_x / scale, midpoint_y / scale);
 
     // focus on the specific body
     let focus_translation = (pos.0, pos.1);
-    canvas.translate(-focus_translation.0, focus_translation.1);
+
+    let total_translation = (
+        inverse.0 + center_translation.0 - focus_translation.0,
+        inverse.1 + center_translation.1 + focus_translation.1,
+    );
+    canvas.translate(total_translation.0, total_translation.1);
 }
 
 fn draw_base_canvas(canvas: &mut Canvas<WGPURenderer>) {
