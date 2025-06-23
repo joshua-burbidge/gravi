@@ -111,7 +111,7 @@ impl App for Orbital {
                 self.hierarchy
                     .node_weight(focused_idx)
                     .expect("invalid index")
-                    .pos
+                    .absolute_pos
                     .divide(self.distance_per_px)
                     .to_tuple(),
             )
@@ -136,7 +136,7 @@ impl Orbital {
             analysis: Analysis::default(),
             hierarchy: DiGraph::new(),
             root: NodeIndex::new(0),
-            focused: None,
+            focused: Some(NodeIndex::new(1)),
         };
         app.load_preset(0);
         app

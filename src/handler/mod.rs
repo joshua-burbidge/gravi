@@ -189,7 +189,7 @@ impl<A: App> ApplicationHandler for AppHandler<A> {
                 draw_base_canvas(canvas);
 
                 if let Some(pos) = self.app.focused_pos() {
-                    translate_to_pos(canvas, pos);
+                    translate_to_pos(canvas, pos, &self.app);
                 }
 
                 // if focused, translate canvas to focused position
@@ -241,20 +241,24 @@ impl<A: App> ApplicationHandler for AppHandler<A> {
     }
 }
 
-fn translate_to_pos(canvas: &mut Canvas<WGPURenderer>, pos: (f32, f32)) {
+// TODO combine translations
+// TODO a bit jumpy when moving forwards because it updates position first and then translates
+fn translate_to_pos<A: App>(canvas: &mut Canvas<WGPURenderer>, pos: (f32, f32), app: &A) {
     let transform = canvas.transform();
+    let scale = get_scale(canvas);
 
-    // let focused = (500., 600.);
+    // undo the current translation
+    let inverse = (-transform[4] / scale, -transform[5] / scale);
+    canvas.translate(inverse.0, inverse.1);
 
-    println!("1 {:?}", transform);
+    // center the canvas on the middle of the screen
+    let midpoint_y = (canvas.height() / 2) as f32;
+    let midpoint_x = (app.panel_width() + canvas.width() as f32) / 2.;
+    canvas.translate(midpoint_x / scale, midpoint_y / scale);
 
-    let mut new_transform = transform.clone();
-    new_transform[4] = pos.0;
-    new_transform[5] = pos.1;
-
-    println!("2 {:?}", new_transform);
-
-    // canvas.set_transform(&new_transform);
+    // focus on the specific body
+    let focus_translation = (pos.0, pos.1);
+    canvas.translate(-focus_translation.0, focus_translation.1);
 }
 
 fn draw_base_canvas(canvas: &mut Canvas<WGPURenderer>) {
