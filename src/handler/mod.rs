@@ -188,14 +188,15 @@ impl<A: App> ApplicationHandler for AppHandler<A> {
                 canvas.clear_rect(0, 0, size.width, size.height, Color::black());
                 draw_base_canvas(canvas);
 
+                if self.next_tick {
+                    self.app.run();
+                }
+
+                // if focused, translate canvas to focused position
                 if let Some(pos) = self.app.focused_pos() {
                     translate_to_pos(canvas, pos, &self.app);
                 }
 
-                // if focused, translate canvas to focused position
-                if self.next_tick {
-                    self.app.run();
-                }
                 self.app.draw(canvas);
                 self.next_tick = false;
                 surface.present_canvas(canvas, &surface_texture);
@@ -241,7 +242,6 @@ impl<A: App> ApplicationHandler for AppHandler<A> {
     }
 }
 
-// TODO a bit jumpy when moving forwards because it updates position first and then translates
 fn translate_to_pos<A: App>(canvas: &mut Canvas<WGPURenderer>, pos: (f32, f32), app: &A) {
     let transform = canvas.transform();
     let scale = get_scale(canvas);
