@@ -180,6 +180,8 @@ impl Orbital {
     }
 
     pub fn load_preset(&mut self, preset_num: usize) {
+        self.focused = None;
+
         let preset = self.presets.get(preset_num);
 
         match preset {
