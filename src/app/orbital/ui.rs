@@ -172,11 +172,6 @@ pub fn ui(app: &mut Orbital, ctx: &egui::Context) {
                 ui.add_space(10.);
             }
 
-            if focus_click != MAX {
-                app.set_focus(Some(NodeIndex::new(focus_click)));
-                // focused = MAX; // reset after setting focus
-            }
-
             if ui.button("Start").clicked() {
                 app.start();
             }
@@ -198,6 +193,15 @@ pub fn ui(app: &mut Orbital, ctx: &egui::Context) {
             ));
             ui.add_space(10.);
         });
+
+        // set focus on click, or remove focus if already focused
+        if focus_click != MAX {
+            let new_focus = match current_focus {
+                Some(focused) if focused.index() == focus_click => None,
+                _ => Some(NodeIndex::new(focus_click)),
+            };
+            app.set_focus(new_focus);
+        }
     });
 }
 
