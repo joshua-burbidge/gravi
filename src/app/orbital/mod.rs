@@ -136,7 +136,7 @@ impl Orbital {
             analysis: Analysis::default(),
             hierarchy: DiGraph::new(),
             root: NodeIndex::new(0),
-            focused: Some(NodeIndex::new(1)),
+            focused: None,
         };
         app.load_preset(0);
         app
@@ -456,6 +456,14 @@ impl Orbital {
 
         self.started = false;
         self.stopped = false;
+    }
+
+    fn set_focus(&mut self, focused: Option<NodeIndex>) {
+        if let Some(focused_idx) = focused {
+            self.focused = Some(focused_idx);
+        } else {
+            self.focused = None;
+        }
     }
 
     fn analyze(&mut self) {

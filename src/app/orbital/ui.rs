@@ -1,4 +1,7 @@
+use std::usize::MAX;
+
 use egui::RichText;
+use petgraph::graph::NodeIndex;
 
 use crate::ui::widgets::{CustomSlider, XYInput};
 
@@ -47,6 +50,8 @@ pub fn ui(app: &mut Orbital, ctx: &egui::Context) {
 
         let bodies_list = app.bodies_list();
         let started = app.started;
+        let current_focus = app.focused;
+        let mut focus_click: usize = MAX;
 
         egui::ScrollArea::vertical().show(ui, |ui| {
             ui.label(RichText::new("Bodies").heading());
@@ -65,6 +70,14 @@ pub fn ui(app: &mut Orbital, ctx: &egui::Context) {
 
                 let response = collapsing
                     .show_header(ui, |ui| {
+                        let is_focused = current_focus == Some(NodeIndex::new(i));
+                        let mut button = egui::Button::new(egui::RichText::new("🎯").size(16.0));
+                        if is_focused {
+                            button = button.fill(ui.visuals().selection.bg_fill);
+                        }
+                        if ui.add(button).clicked() {
+                            focus_click = i;
+                        }
                         ui.add(
                             egui::Label::new(
                                 RichText::new(bodies_list[i].clone()).heading().color(
@@ -157,6 +170,11 @@ pub fn ui(app: &mut Orbital, ctx: &egui::Context) {
                 }
 
                 ui.add_space(10.);
+            }
+
+            if focus_click != MAX {
+                app.set_focus(Some(NodeIndex::new(focus_click)));
+                // focused = MAX; // reset after setting focus
             }
 
             if ui.button("Start").clicked() {
