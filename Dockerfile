@@ -2,7 +2,7 @@ FROM rust:1.85 as builder
 
 WORKDIR /app
 
-COPY ["Cargo.toml", "Cargo.lock", "rust-toolchain.toml", "./"]
+COPY ["Cargo.toml", "Cargo.lock", "./"]
 RUN rustup target add wasm32-unknown-unknown
 RUN cargo install wasm-bindgen-cli
 
