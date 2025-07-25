@@ -25,6 +25,7 @@ use super::{
 pub struct Orbital {
     ui_state: UiState,
     pub dt: f32,
+    pub t: f32,
     pub num_ticks: i32,
     distance_per_px: f32,
     draw_frequency: u32, // graph a point every X seconds
@@ -46,6 +47,7 @@ impl App for Orbital {
         for _ in 0..self.num_ticks {
             self.run_euler();
         }
+        self.t += self.dt * self.num_ticks as f32;
         self.analyze();
 
         if log_enabled!(Level::Debug) {
@@ -128,6 +130,7 @@ impl Orbital {
         let mut app = Self {
             ui_state: UiState::new(),
             dt: 1.,
+            t: 0.,
             num_ticks: 1000,
             distance_per_px: 150.,
             draw_frequency: 100,
@@ -142,18 +145,6 @@ impl Orbital {
         };
         app.load_preset(0);
         app
-    }
-
-    // TODO not accurate if you change dt
-    fn t(&self) -> f32 {
-        let body = self.bodies_vec()[0];
-        let len = body.trajectory.len();
-
-        if len > 0 {
-            (len - 1) as f32 * self.dt
-        } else {
-            0.
-        }
     }
 
     fn distance_range(
@@ -460,6 +451,7 @@ impl Orbital {
 
         self.started = false;
         self.stopped = false;
+        self.t = 0.;
     }
 
     fn set_focus(&mut self, focused: Option<NodeIndex>) {
