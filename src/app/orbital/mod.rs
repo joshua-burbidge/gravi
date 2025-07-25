@@ -78,12 +78,14 @@ impl App for Orbital {
                 b.color,
             );
 
-            draw_text(
-                canvas,
-                b.name.clone(),
-                &b.absolute_pos,
-                self.distance_per_px,
-            );
+            if !b.is_barycenter {
+                draw_text(
+                    canvas,
+                    b.name.clone(),
+                    &b.absolute_pos,
+                    self.distance_per_px,
+                );
+            }
         }
     }
 
