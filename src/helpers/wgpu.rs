@@ -155,7 +155,11 @@ pub async fn create_canvas(
             dx12: wgpu::Dx12BackendOptions {
                 shader_compiler: dx12_shader_compiler,
             },
-            gl: wgpu::GlBackendOptions { gles_minor_version },
+            gl: wgpu::GlBackendOptions {
+                gles_minor_version,
+                fence_behavior: Default::default(),
+            },
+            noop: Default::default(),
         },
     })
     .await;
@@ -168,17 +172,15 @@ pub async fn create_canvas(
 
     // Create the logical device and command queue
     let (device, queue) = adapter
-        .request_device(
-            &wgpu::DeviceDescriptor {
-                label: None,
-                required_features: wgpu::Features::empty(),
-                // Make sure we use the texture resolution limits from the adapter, so we can support images the size of the swapchain.
-                required_limits: wgpu::Limits::downlevel_webgl2_defaults()
-                    .using_resolution(adapter.limits()),
-                memory_hints: wgpu::MemoryHints::MemoryUsage,
-            },
-            None,
-        )
+        .request_device(&wgpu::DeviceDescriptor {
+            label: None,
+            required_features: wgpu::Features::empty(),
+            // Make sure we use the texture resolution limits from the adapter, so we can support images the size of the swapchain.
+            required_limits: wgpu::Limits::downlevel_webgl2_defaults()
+                .using_resolution(adapter.limits()),
+            memory_hints: wgpu::MemoryHints::MemoryUsage,
+            trace: Default::default(),
+        })
         .await
         .expect("Failed to create device");
 
