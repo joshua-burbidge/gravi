@@ -493,7 +493,7 @@ impl Analysis {
     fn analyze(&self, app: &Orbital) -> Analysis {
         let (kinetic_mj, grav_potential_mj, total) = self.current_e(app);
         let diff_percentage = if self.initial_e != 0. {
-            (total / self.initial_e) * 100.
+            (total / self.initial_e - 1.) * 100.
         } else {
             0.
         };

@@ -182,15 +182,26 @@ pub fn ui(app: &mut Orbital, ctx: &egui::Context) {
             let days = t / (60 * 60 * 24) as f32;
             ui.monospace(format!("t: {:.4e} s, {:.2} d", t, days));
             ui.monospace("Energy (MJ)");
-            ui.monospace(format!("Kinetic:    {:+.4e}", kinetic));
-            ui.monospace(format!("Potential:  {:+.4e}", potential));
-            ui.monospace(format!("Total:      {:+.4e}", kinetic + potential));
-            ui.monospace(format!("Initial:    {:+.4e}", app.analysis.initial_e));
-            ui.monospace(format!("Diff:        {:.2}%", diff_percent));
-            ui.monospace(format!(
-                "Diff per t:  {:.2e}%",
-                (100. - diff_percent) / t as f64
-            ));
+            ui.monospace(format!("Kinetic:      {:+.4e}", kinetic));
+            ui.monospace(format!("Potential:    {:+.4e}", potential));
+            ui.monospace(format!("Total:        {:+.4e}", kinetic + potential));
+            ui.monospace(format!("Initial:      {:+.4e}", app.analysis.initial_e));
+            ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
+                ui.monospace(format!("Energy Drift: {:.2e}%", diff_percent));
+                ui.monospace("❓")
+                    .on_hover_cursor(egui::CursorIcon::Default)
+                    .on_hover_text(
+                    "Percentage difference from initial energy. Closer to 0% means more accurate.",
+                );
+            });
+            ui.with_layout(egui::Layout::left_to_right(egui::Align::TOP), |ui| {
+                ui.monospace(format!("Drift per t:  {:.2e}%", diff_percent / t as f64));
+                ui.monospace("❓")
+                    .on_hover_cursor(egui::CursorIcon::Default)
+                    .on_hover_text(
+                    "Percentage difference divided by time elapsed. The absolute value should trend downwards if the simulation is accurate.",
+                );
+            });
             ui.add_space(10.);
         });
 
