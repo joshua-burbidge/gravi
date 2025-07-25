@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-egui-winit = { version = "0.31.0", default-features = false, features = [
+egui-winit = { version = "0.32.0", default-features = false, features = [
   "links",   # default feature "clipboard" doesn't work with wasm
   "wayland",
   "x11",
@@ -13,8 +13,8 @@ femtovg = { version = "0.15.0", features = ["wgpu"] }
 spin_on = "0.1.1"
 winit = { version = "0.30.9" }
 wgpu = { version = "25" }
-egui-wgpu = { version = "0.31.0", features = ["winit"] }
-egui = "0.31.0"
+egui-wgpu = { version = "0.32.0", features = ["winit"] }
+egui = "0.32.0"
 resource = "0.6.0"
 petgraph = "0.8.1"
 log = "0.4.27"
