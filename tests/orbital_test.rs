@@ -101,7 +101,7 @@ fn test_energy_conservation() {
 
     assert!(
         percent_diff_2 < 0.1, // .1% threshold
-        "Energy diverged too much: {:.4}% change (this may indicate integrator or hierarchy issues)",
+        "Energy diverged too much: {:.4}% change",
         percent_diff_2
     );
 }
