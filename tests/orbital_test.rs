@@ -10,13 +10,7 @@ use grav::{
 /// and returns to approximately its starting location within a tolerance.
 #[test]
 fn test_earth_completes_one_orbit() {
-    let mut app = Orbital::new();
-
-    app.load_preset(1);
-
-    app.set_velocities();
-    app.refresh_hierarchy();
-    app.set_velocities();
+    let mut app = load_preset(1);
 
     let initial_bodies = get_bodies_snapshot(&app);
     let earth_initial_pos = find_body_position(initial_bodies, "Earth");
@@ -73,50 +67,42 @@ fn test_earth_completes_one_orbit() {
     );
 }
 
-/// Test that energy is conserved (within numerical precision) over a short simulation
+/// Test that energy is conserved before and after
 #[test]
-fn test_energy_conservation_short_run() {
-    let mut app = Orbital::new();
-
-    // Use Earth+Moon preset (index 2) for simpler 2-body system
-    app.load_preset(2);
+fn test_energy_conservation() {
+    // Use earth+moon preset
+    let mut app = load_preset(2);
     app.start();
 
-    // Record initial energy
-    let (initial_kinetic, initial_potential) = get_energy(&app);
-    let initial_total = initial_kinetic + initial_potential;
+    app.analyze();
+    let initial_e = app.analysis.initial_e;
 
-    println!("Initial total energy: {:.2e} MJ", initial_total);
+    println!("Initial total energy: {:.4e} MJ", initial_e);
 
-    // Run for a short time (just a few iterations)
-    for _ in 0..3 {
+    for _ in 0..20 {
         app.run();
     }
 
-    // Check final energy
-    let (final_kinetic, final_potential) = get_energy(&app);
-    let final_total = final_kinetic + final_potential;
+    app.analyze();
+    let final_e = app.analysis.total_e;
 
-    let energy_diff = (final_total - initial_total).abs();
-    let percent_diff = if initial_total != 0.0 {
-        (energy_diff / initial_total.abs()) * 100.0
+    let energy_diff_2 = (final_e - initial_e).abs();
+    let percent_diff_2 = if initial_e != 0.0 {
+        (energy_diff_2 / initial_e.abs()) * 100.0
     } else {
         0.0
     };
 
-    println!("Final total energy: {:.2e} MJ", final_total);
+    println!("Final total energy: {:.4e} MJ", final_e);
     println!(
-        "Energy difference: {:.2e} MJ ({:.4}%)",
-        energy_diff, percent_diff
+        "Energy difference: {:.4e} MJ ({:.6}%)",
+        energy_diff_2, percent_diff_2
     );
 
-    // Allow for numerical error. Symplectic Euler has ~O(dt^2) local error and better long-term
-    // energy conservation than standard Euler, but over a few steps some drift is expected.
-    // Using a 50% tolerance to account for initialization quirks and hierarchical grouping effects.
     assert!(
-        percent_diff < 50.0,
+        percent_diff_2 < 0.1, // .1% threshold
         "Energy diverged too much: {:.4}% change (this may indicate integrator or hierarchy issues)",
-        percent_diff
+        percent_diff_2
     );
 }
 
@@ -139,7 +125,17 @@ fn test_all_presets_runnable() {
     }
 }
 
-// ============ Helper functions ============
+fn load_preset(preset_idx: usize) -> Orbital {
+    let mut app = Orbital::new();
+
+    app.load_preset(preset_idx);
+
+    app.set_velocities();
+    app.refresh_hierarchy();
+    app.set_velocities();
+
+    app
+}
 
 fn get_bodies_snapshot(app: &Orbital) -> Vec<&Body> {
     let bodies_vec = app.bodies_vec();
@@ -153,30 +149,4 @@ fn find_body_position(bodies: Vec<&Body>, name: &str) -> Position {
     assert!(body_opt.is_some(), "Body {} not found", name);
 
     body_opt.unwrap().absolute_pos
-}
-
-/// Get the current kinetic and potential energy (in MJ)
-fn get_energy(app: &Orbital) -> (f64, f64) {
-    use grav::app::core::physics::{gravitational_potential_energy, kinetic_energy};
-
-    let bodies_vec = app.bodies_vec();
-
-    let mut total_kinetic = 0.0;
-    let mut total_potential = 0.0;
-
-    // Calculate kinetic energy for all bodies
-    for body in bodies_vec.iter() {
-        let ke = kinetic_energy(body.mass, body.v) as f64;
-        total_kinetic += ke;
-    }
-
-    // Calculate potential energy for all pairs
-    for (i, body1) in bodies_vec.iter().enumerate() {
-        for body2 in bodies_vec[i + 1..].iter() {
-            let pe = gravitational_potential_energy(body1.mass, body2.mass, body1.pos, body2.pos);
-            total_potential += pe;
-        }
-    }
-
-    (total_kinetic, total_potential)
 }

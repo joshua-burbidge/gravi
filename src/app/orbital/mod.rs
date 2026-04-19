@@ -33,7 +33,7 @@ pub struct Orbital {
     stopped: bool,
     bodies: Vec<Body>,
     presets: Vec<Preset>,
-    analysis: Analysis,
+    pub analysis: Analysis,
     hierarchy: DiGraph<Body, ()>,
     root: NodeIndex,
     focused: Option<NodeIndex>,
@@ -462,7 +462,7 @@ impl Orbital {
         }
     }
 
-    fn analyze(&mut self) {
+    pub fn analyze(&mut self) {
         self.analysis = self.analysis.analyze(self);
     }
 }
@@ -481,9 +481,10 @@ impl UiState {
 }
 
 #[derive(Default)]
-struct Analysis {
-    initial_e: f64,
+pub struct Analysis {
+    pub initial_e: f64,
     kinetic_e: f64,
+    pub total_e: f64,
     gravitational_e: f64,
     diff_percentage: f64,
 }
@@ -501,6 +502,7 @@ impl Analysis {
         Analysis {
             kinetic_e: kinetic_mj,
             gravitational_e: grav_potential_mj,
+            total_e: total,
             diff_percentage,
             initial_e: self.initial_e,
         }
