@@ -106,17 +106,14 @@ fn test_energy_conservation() {
     );
 }
 
-/// Test that the app can load and run multiple presets without panicking
+/// Test that the app can load and run presets
 #[test]
 fn test_all_presets_runnable() {
-    // Test first 5 presets (excluding the hierarchy test which may be heavy)
     for preset_idx in 0..5 {
         println!("Testing preset {}...", preset_idx);
-        let mut app = Orbital::new();
-        app.load_preset(preset_idx);
-        app.start();
+        let mut app = load_preset(preset_idx);
 
-        // Just run a couple of iterations to check for crashes
+        // run a couple iterations as a smoke test
         for _ in 0..2 {
             app.run();
         }
