@@ -1,4 +1,10 @@
-use grav::{app::orbital::Orbital, App};
+use grav::{
+    app::{
+        core::physics::Position,
+        orbital::{body::Body, Orbital},
+    },
+    App,
+};
 
 /// Test that Earth completes approximately one orbit around the Sun
 /// and returns to approximately its starting location within a tolerance.
@@ -6,21 +12,15 @@ use grav::{app::orbital::Orbital, App};
 fn test_earth_completes_one_orbit() {
     let mut app = Orbital::new();
 
-    // Load the Sun + Earth + Moon preset (index 1)
     app.load_preset(1);
 
     app.set_velocities();
     app.refresh_hierarchy();
     app.set_velocities();
 
-    // Retrieve initial state
     let initial_bodies = get_bodies_snapshot(&app);
-    let earth_initial_pos = find_body_position(&initial_bodies, "Earth");
+    let earth_initial_pos = find_body_position(initial_bodies, "Earth");
 
-    assert!(earth_initial_pos.is_some(), "Earth not found in preset");
-    let (earth_x_init, earth_y_init) = earth_initial_pos.unwrap();
-
-    // Start the simulation
     app.start();
 
     // Make the seconds per run equal to one quarter of a day,
@@ -38,7 +38,7 @@ fn test_earth_completes_one_orbit() {
     let runs_needed = ((seconds_in_year / seconds_per_run).ceil()) as usize;
 
     println!(
-        "Running {} iterations (~{:.1} days)...",
+        "Running {} iterations ({:.2} days)...",
         runs_needed,
         (runs_needed as f32 * seconds_per_run) / seconds_in_day
     );
@@ -47,50 +47,28 @@ fn test_earth_completes_one_orbit() {
         app.run();
     }
 
-    // Get final state
     let final_bodies = get_bodies_snapshot(&app);
-    let earth_final_pos = find_body_position(&final_bodies, "Earth");
+    let earth_final_pos = find_body_position(final_bodies, "Earth");
 
-    assert!(
-        earth_final_pos.is_some(),
-        "Earth not found after simulation"
-    );
-    let (earth_x_final, earth_y_final) = earth_final_pos.unwrap();
+    let earth_position_delta = earth_final_pos.abs_diff(earth_initial_pos);
 
-    // Calculate distance between initial and final positions
-    let delta_x = earth_x_final - earth_x_init;
-    let delta_y = earth_y_final - earth_y_init;
-    let distance = (delta_x.powi(2) + delta_y.powi(2)).sqrt();
+    let earth_orbit_radius = earth_initial_pos.mag();
+    let tolerance = earth_orbit_radius * 0.001;
 
-    // TODO: make this check position difference relative to the original position
-
-    // Earth orbits at ~150 million km from the Sun
-    // For a nearly complete orbit, we expect Earth to be roughly back within a small fraction
-    // of its orbital radius. Tolerance: 5% of orbital radius ≈ 7.5 million km
-    // This is generous to account for numerical integration errors and the Moon's perturbation.
-    let earth_orbit_radius = 149_597_870.0; // km (1 AU approximately)
-    let tolerance = earth_orbit_radius * 0.001; // .1% tolerance
-
-    println!(
-        "Earth initial position: ({:.2}, {:.2}) km",
-        earth_x_init, earth_y_init
-    );
-    println!(
-        "Earth final position: ({:.2}, {:.2}) km",
-        earth_x_final, earth_y_final
-    );
+    println!("Earth initial position: {:?}", earth_initial_pos);
+    println!("Earth final position: {:?}", earth_final_pos);
     println!(
         "Distance from initial: {:.2} km ({:.4}% of orbital radius)",
-        distance,
-        (distance / earth_orbit_radius) * 100.0
+        earth_position_delta,
+        (earth_position_delta / earth_orbit_radius) * 100.0
     );
     println!("Tolerance: {:.2} km", tolerance);
 
     assert!(
-        distance < tolerance,
+        earth_position_delta < tolerance,
         "Earth did not return to starting position within tolerance. \
          Distance: {:.2} km, Tolerance: {:.2} km",
-        distance,
+        earth_position_delta,
         tolerance
     );
 }
@@ -163,30 +141,18 @@ fn test_all_presets_runnable() {
 
 // ============ Helper functions ============
 
-/// Snapshot of a body's position and name for checking
-#[derive(Clone, Debug)]
-struct BodySnapshot {
-    name: String,
-    x: f32,
-    y: f32,
-}
-
-/// Get a snapshot of all current body positions
-fn get_bodies_snapshot(app: &Orbital) -> Vec<BodySnapshot> {
+fn get_bodies_snapshot(app: &Orbital) -> Vec<&Body> {
     let bodies_vec = app.bodies_vec();
+
     bodies_vec
-        .iter()
-        .map(|b| BodySnapshot {
-            name: b.name.clone(),
-            x: b.absolute_pos.x,
-            y: b.absolute_pos.y,
-        })
-        .collect()
 }
 
-/// Find a body by name and return its (x, y) position, or None
-fn find_body_position(bodies: &[BodySnapshot], name: &str) -> Option<(f32, f32)> {
-    bodies.iter().find(|b| b.name == name).map(|b| (b.x, b.y))
+fn find_body_position(bodies: Vec<&Body>, name: &str) -> Position {
+    let body_opt = bodies.iter().find(|b| b.name == name);
+
+    assert!(body_opt.is_some(), "Body {} not found", name);
+
+    body_opt.unwrap().absolute_pos
 }
 
 /// Get the current kinetic and potential energy (in MJ)
