@@ -33,7 +33,7 @@ pub struct Orbital {
     stopped: bool,
     bodies: Vec<Body>,
     presets: Vec<Preset>,
-    analysis: Analysis,
+    pub analysis: Analysis,
     hierarchy: DiGraph<Body, ()>,
     root: NodeIndex,
     focused: Option<NodeIndex>,
@@ -195,7 +195,7 @@ impl Orbital {
     fn current_bodies(&self) -> Vec<Body> {
         self.hierarchy.node_weights().map(|b| b.copy()).collect()
     }
-    fn bodies_vec(&self) -> Vec<&Body> {
+    pub fn bodies_vec(&self) -> Vec<&Body> {
         // return a vec of the bodies with same indices as graph
         self.hierarchy.node_weights().collect()
     }
@@ -203,7 +203,7 @@ impl Orbital {
         // return a vec of the bodies with same indices as graph
         self.hierarchy.node_weights_mut().collect()
     }
-    fn refresh_hierarchy(&mut self) {
+    pub fn refresh_hierarchy(&mut self) {
         let (hierarchy, root_index) = build_hierarchy(&self.original_bodies());
         self.hierarchy = hierarchy;
         self.root = root_index;
@@ -237,7 +237,7 @@ impl Orbital {
 
     // Set circular or orbital velocity for any body that is locked to one of those.
     // Only applies when setting initial conditions before starting.
-    fn set_velocities(&mut self) {
+    pub fn set_velocities(&mut self) {
         if self.started {
             return;
         }
@@ -462,7 +462,7 @@ impl Orbital {
         }
     }
 
-    fn analyze(&mut self) {
+    pub fn analyze(&mut self) {
         self.analysis = self.analysis.analyze(self);
     }
 }
@@ -481,9 +481,10 @@ impl UiState {
 }
 
 #[derive(Default)]
-struct Analysis {
-    initial_e: f64,
+pub struct Analysis {
+    pub initial_e: f64,
     kinetic_e: f64,
+    pub total_e: f64,
     gravitational_e: f64,
     diff_percentage: f64,
 }
@@ -501,6 +502,7 @@ impl Analysis {
         Analysis {
             kinetic_e: kinetic_mj,
             gravitational_e: grav_potential_mj,
+            total_e: total,
             diff_percentage,
             initial_e: self.initial_e,
         }
