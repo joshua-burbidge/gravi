@@ -18,12 +18,12 @@ jobs:
       run:
         shell: bash
     steps:
-    - uses: actions/checkout@v4
-    - uses: aws-actions/configure-aws-credentials@v4
+    - uses: actions/checkout@v6
+    - uses: aws-actions/configure-aws-credentials@v6
       with:
         role-to-assume: arn:aws:iam::575737149124:role/gravi-deploy
         aws-region: us-east-1
-    - uses: hashicorp/setup-terraform@v3
+    - uses: hashicorp/setup-terraform@v4
       with:
         terraform_version: 1.11.2
     - name: Terraform
