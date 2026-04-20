@@ -96,8 +96,6 @@ fn draw_ticks_for_axis<T: Renderer>(
     let first_tick = (min_distance / interval as f32).ceil() as i32;
     let last_tick = (max_distance / interval as f32).floor() as i32;
 
-    let scale = get_scale(canvas);
-
     for i in first_tick..=last_tick {
         let axis_distance = (interval * i) as f32;
 
@@ -113,7 +111,7 @@ fn draw_ticks_for_axis<T: Renderer>(
                     paint = paint.with_text_baseline(femtovg::Baseline::Top)
                 }
             }
-            paint = paint.with_font_size(20.0 / scale);
+            paint = paint.with_font_size(16.0);
             let distance_text = format!("{} km", large_number_formatter(axis_distance.into()));
             draw_text_custom(
                 canvas,
@@ -257,7 +255,7 @@ pub fn draw_text<T: Renderer>(
     pos: &Position,
     distance_per_px: f32,
 ) {
-    draw_text_font(canvas, text, pos, 12.0, distance_per_px);
+    draw_text_font(canvas, text, pos, 16.0, distance_per_px);
 }
 
 pub fn draw_text_custom<T: Renderer>(
@@ -267,11 +265,9 @@ pub fn draw_text_custom<T: Renderer>(
     paint: Paint,
     distance_per_px: f32,
 ) {
-    let px = pos_to_canvas(pos, distance_per_px);
+    let canvas_pos = pos_to_canvas(pos, distance_per_px);
 
-    canvas
-        .fill_text(px.x, px.y, text, &paint)
-        .expect("failed to write text");
+    draw_text_with_transform(canvas, text, canvas_pos, paint);
 }
 
 pub fn draw_text_font<T: Renderer>(
@@ -283,11 +279,38 @@ pub fn draw_text_font<T: Renderer>(
 ) {
     let text_paint = Paint::color(Color::white()).with_font_size(font_size);
 
-    let px = pos_to_canvas(pos, distance_per_px);
+    let canvas_pos = pos_to_canvas(pos, distance_per_px);
+
+    draw_text_with_transform(canvas, text, canvas_pos, text_paint);
+}
+
+fn canvas_pos_to_screen<T: Renderer>(canvas: &Canvas<T>, px: &Position) -> Position {
+    let transform = canvas.transform();
+    let screen_x = transform.0[0] * px.x + transform.0[4];
+    let screen_y = transform.0[3] * px.y + transform.0[5];
+    Position::new(screen_x, screen_y)
+}
+
+fn draw_text_with_transform<T: Renderer>(
+    canvas: &mut Canvas<T>,
+    text: String,
+    canvas_pos: Position,
+    text_paint: Paint,
+) {
+    // Convert the given canvas position to the actual screen position.
+    // Revert canvas transformation, then write text based on screen position, then restore canvas transformation.
+    // This prevents blurry text due to scaling and anti-aliasing.
+    canvas.save();
+
+    let screen_pos = canvas_pos_to_screen(canvas, &canvas_pos);
+
+    canvas.reset_transform();
 
     canvas
-        .fill_text(px.x, px.y, text, &text_paint)
+        .fill_text(screen_pos.x, screen_pos.y, text, &text_paint)
         .expect("failed to write text");
+
+    canvas.restore();
 }
 
 pub fn large_number_formatter(num: f64) -> String {
