@@ -40,7 +40,7 @@ pub fn ui(app: &mut Orbital, ctx: &egui::Context) {
         ui.add(egui::Separator::default().spacing(10.));
 
         ui.input(|i| {
-            if i.key_pressed(egui::Key::A) {
+            if i.key_pressed(egui::Key::R) {
                 app.reset();
             }
             if !app.started && i.key_pressed(egui::Key::Enter) {
@@ -230,19 +230,39 @@ pub fn controls_panel(app: &mut Orbital, ctx: &egui::Context) {
 
     egui::Area::new("right-side-panel".into())
         .fixed_pos([x, y])
-        .default_size([200., 200.])
+        .default_size([600., 200.])
         .show(ctx, |ui| {
             egui::Frame::new()
                 .fill(panel_color)
                 .inner_margin(6.)
                 .stroke(panel_stroke)
                 .show(ui, |ui| {
-                    ui.label(RichText::new("Controls").heading());
+                    ui.set_min_width(200.);
+                    ui.set_max_width(400.);
+                    egui::CollapsingHeader::new("Instructions and Controls")
+                        .default_open(true)
+                        .show(ui, |ui| {
+                            ui.label(RichText::new("Instructions").heading());
+                            text_sized(ui, "1. Select a Preset option in the top left.", 12.);
+                            text_sized(
+                                ui,
+                                "2. Press Enter to lock in the starting configuration.",
+                                12.,
+                            );
+                            text_sized(
+                                ui,
+                                &format!("3. Press {} to progress forward.", '\u{2192}'),
+                                12.,
+                            );
 
-                    text_sized(ui, "drag and scroll with mouse", 12.);
-                    text_sized(ui, &format!("{}: start", '\u{21B5}'), 14.);
-                    text_sized(ui, &format!("{}: progress forwards", '\u{2192}'), 14.);
-                    text_sized(ui, "a: reset", 14.);
+                            ui.separator();
+
+                            ui.label(RichText::new("Controls").heading());
+                            text_sized(ui, "Drag and scroll with mouse", 12.);
+                            text_sized(ui, &format!("{}: start", '\u{21B5}'), 12.);
+                            text_sized(ui, &format!("{}: progress forwards", '\u{2192}'), 12.);
+                            text_sized(ui, "r: reset", 12.);
+                        })
                 });
         });
 }
