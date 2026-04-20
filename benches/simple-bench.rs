@@ -1,8 +1,11 @@
+mod common;
+
+use common::load_preset;
 use criterion::{criterion_group, criterion_main, BatchSize, Criterion};
 use femtovg::Color;
 use grav::{
     helpers::{init_canvas, wgpu::create_canvas},
-    App, Orbital,
+    App,
 };
 
 // bench the first call of the "run" function
@@ -10,8 +13,8 @@ fn run_bench(c: &mut Criterion) {
     c.bench_function("first_run_bench", |b| {
         b.iter_batched_ref(
             || {
-                let mut app = Orbital::new();
-                app.load_preset(1);
+                let mut app = load_preset(1);
+
                 app.start();
                 app
             },
@@ -29,8 +32,7 @@ fn draw_bench(c: &mut Criterion) {
     c.bench_function("draw_bench", |b| {
         b.iter_batched_ref(
             || {
-                let mut app = Orbital::new();
-                app.load_preset(1);
+                let mut app = load_preset(1);
                 app.start();
                 app.run();
                 app.run();
