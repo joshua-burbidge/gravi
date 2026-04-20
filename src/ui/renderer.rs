@@ -1,5 +1,5 @@
 use egui;
-use egui_wgpu;
+use egui_wgpu::{self, RendererOptions};
 use egui_winit;
 use wgpu::{
     CommandEncoderDescriptor, Operations, RenderPassColorAttachment, RenderPassDescriptor,
@@ -25,7 +25,8 @@ impl EguiRenderer {
         let egui_winit_state =
             egui_winit::State::new(egui_context.clone(), viewport_id, window, None, None, None);
 
-        let egui_renderer = egui_wgpu::Renderer::new(device, output_color_format, None, 1, false);
+        let egui_renderer =
+            egui_wgpu::Renderer::new(device, output_color_format, RendererOptions::default());
 
         Self {
             state: egui_winit_state,
@@ -101,6 +102,7 @@ impl EguiRenderer {
                 color_attachments: &[Some(RenderPassColorAttachment {
                     view: &texture_view,
                     resolve_target: None,
+                    depth_slice: None,
                     ops: Operations {
                         load: wgpu::LoadOp::Load,
                         store: wgpu::StoreOp::Store,

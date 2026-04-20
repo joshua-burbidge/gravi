@@ -1,3 +1,4 @@
+use wgpu::{wgt::Dx12UseFrameLatencyWaitableObject, ExperimentalFeatures, MemoryBudgetThresholds};
 #[cfg(not(target_arch = "wasm32"))]
 use winit::dpi::PhysicalSize;
 
@@ -151,9 +152,12 @@ pub async fn create_canvas(
     let instance = wgpu::util::new_instance_with_webgpu_detection(&wgpu::InstanceDescriptor {
         backends,
         flags: wgpu::InstanceFlags::from_build_config().with_env(),
+        memory_budget_thresholds: MemoryBudgetThresholds::default(),
         backend_options: wgpu::BackendOptions {
             dx12: wgpu::Dx12BackendOptions {
                 shader_compiler: dx12_shader_compiler,
+                presentation_system: wgpu::wgt::Dx12SwapchainKind::default(),
+                latency_waitable_object: Dx12UseFrameLatencyWaitableObject::default(),
             },
             gl: wgpu::GlBackendOptions {
                 gles_minor_version,
@@ -180,6 +184,7 @@ pub async fn create_canvas(
                 .using_resolution(adapter.limits()),
             memory_hints: wgpu::MemoryHints::MemoryUsage,
             trace: Default::default(),
+            experimental_features: ExperimentalFeatures::default(),
         })
         .await
         .expect("Failed to create device");
