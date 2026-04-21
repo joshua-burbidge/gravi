@@ -15,6 +15,6 @@ jobs:
       - name: Build
         run: cargo build
       - name: Run tests
-        run: cargo test --verbose -- --nocapture
+        run: cargo test -- --nocapture
       - name: Run benches
         run: cargo bench -- --nocapture
