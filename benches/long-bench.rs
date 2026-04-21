@@ -31,6 +31,12 @@ fn long_run_bench(c: &mut Criterion) {
 }
 
 fn long_draw_bench(c: &mut Criterion) {
+    // Skip this benchmark in headless environments like CI
+    if std::env::var("DISPLAY").is_err() && std::env::var("WAYLAND_DISPLAY").is_err() {
+        println!("Skipping long_draw_bench: no display available");
+        return;
+    }
+
     let mut group = c.benchmark_group("long-bench");
     group.sample_size(60);
 
