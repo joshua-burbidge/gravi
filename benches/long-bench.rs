@@ -40,9 +40,10 @@ fn long_draw_bench(c: &mut Criterion) {
     let mut group = c.benchmark_group("long-bench");
     group.sample_size(60);
 
-    let (mut canvas, _, _, _) = spin_on::spin_on(create_canvas(1600, 1000, "benching"));
+    let mut canvas_resources = spin_on::spin_on(create_canvas(1600, 1000, "benching"));
+    let (canvas, _, _, _) = &mut canvas_resources;
 
-    init_canvas(&mut canvas);
+    init_canvas(canvas);
 
     group.bench_function("long_draw_bench", |b| {
         b.iter_batched_ref(
@@ -56,7 +57,7 @@ fn long_draw_bench(c: &mut Criterion) {
             },
             |app| {
                 canvas.clear_rect(0, 0, 1600, 1000, Color::black());
-                app.draw(&mut canvas);
+                app.draw(canvas);
             },
             BatchSize::SmallInput,
         )
