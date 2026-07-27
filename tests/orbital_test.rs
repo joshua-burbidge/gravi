@@ -10,7 +10,7 @@ use grav::{
 /// and returns to approximately its starting location within a tolerance.
 #[test]
 fn test_earth_completes_one_orbit() {
-    let mut app = load_preset(1);
+    let mut app = load_preset_by_name(String::from("Sun + Earth + Moon"));
 
     let initial_bodies = get_bodies_snapshot(&app);
     let earth_initial_pos = find_body_position(initial_bodies, "Earth");
@@ -70,8 +70,7 @@ fn test_earth_completes_one_orbit() {
 /// Test that energy is conserved before and after
 #[test]
 fn test_energy_conservation() {
-    // Use earth+moon preset
-    let mut app = load_preset(2);
+    let mut app = load_preset_by_name(String::from("Moon orbiting Earth"));
     app.start();
 
     app.analyze();
@@ -126,6 +125,18 @@ fn load_preset(preset_idx: usize) -> Orbital {
     let mut app = Orbital::new();
 
     app.load_preset(preset_idx);
+
+    app.set_velocities();
+    app.refresh_hierarchy();
+    app.set_velocities();
+
+    app
+}
+
+fn load_preset_by_name(preset_name: String) -> Orbital {
+    let mut app = Orbital::new();
+
+    app.load_preset_by_name(preset_name);
 
     app.set_velocities();
     app.refresh_hierarchy();
