@@ -13,7 +13,7 @@ fn test_earth_completes_one_orbit() {
     let mut app = load_preset_by_name(String::from("Sun + Earth + Moon"));
 
     let initial_bodies = get_bodies_snapshot(&app);
-    let earth_initial_pos = find_body_position(initial_bodies, "Earth");
+    let earth_initial_pos = find_body_position(&initial_bodies, "Earth");
 
     app.start();
 
@@ -42,7 +42,7 @@ fn test_earth_completes_one_orbit() {
     }
 
     let final_bodies = get_bodies_snapshot(&app);
-    let earth_final_pos = find_body_position(final_bodies, "Earth");
+    let earth_final_pos = find_body_position(&final_bodies, "Earth");
 
     let earth_position_delta = earth_final_pos.abs_diff(earth_initial_pos);
 
@@ -67,7 +67,70 @@ fn test_earth_completes_one_orbit() {
     );
 }
 
-/// Test that energy is conserved before and after
+/// Test that the Moon completes approximately one orbit around Earth
+/// using the Sun/Earth/Moon preset to exercise the hierarchical setup.
+#[test]
+fn test_moon_completes_one_orbit_around_earth() {
+    let mut app = load_preset_by_name(String::from("Sun + Earth + Moon"));
+
+    let initial_bodies = get_bodies_snapshot(&app);
+    let earth_initial_pos = find_body_position(&initial_bodies, "Earth");
+    let moon_initial_pos = find_body_position(&initial_bodies, "Moon");
+
+    app.start();
+
+    let seconds_in_day = 24.0 * 60.0 * 60.0;
+    let seconds_in_lunar_month = 27.32166_f32 * seconds_in_day;
+    let num_steps = 100;
+    let dt_seconds_per_tick = 60_f32;
+
+    let ticks_per_step =
+        (seconds_in_lunar_month / (num_steps as f32 * dt_seconds_per_tick)).floor() as i32;
+
+    app.dt = dt_seconds_per_tick;
+    app.num_ticks = ticks_per_step;
+
+    let seconds_per_step = dt_seconds_per_tick * ticks_per_step as f32;
+
+    println!(
+        "Running {} iterations for moon orbit ({:.2} days)...",
+        num_steps,
+        (num_steps as f32 * seconds_per_step) / seconds_in_day
+    );
+
+    for _ in 0..num_steps {
+        app.run();
+    }
+
+    let final_bodies = get_bodies_snapshot(&app);
+    let earth_final_pos = find_body_position(&final_bodies, "Earth");
+    let moon_final_pos = find_body_position(&final_bodies, "Moon");
+
+    let moon_initial_rel_pos = moon_initial_pos.minus(earth_initial_pos);
+    let moon_final_rel_pos = moon_final_pos.minus(earth_final_pos);
+    let moon_position_delta = moon_final_rel_pos.abs_diff(moon_initial_rel_pos);
+
+    let moon_orbit_radius = moon_initial_rel_pos.mag();
+    let tolerance = moon_orbit_radius * 0.01;
+
+    println!("Moon initial relative position: {:?}", moon_initial_rel_pos);
+    println!("Moon final relative position: {:?}", moon_final_rel_pos);
+    println!(
+        "Moon distance from initial relative position: {:.2} km ({:.4}% of orbital radius)",
+        moon_position_delta,
+        (moon_position_delta / moon_orbit_radius) * 100.0
+    );
+    println!("Tolerance: {:.2} km", tolerance);
+
+    assert!(
+        moon_position_delta < tolerance,
+        "Moon did not return to its starting position relative to Earth within tolerance. \
+         Distance: {:.2} km, Tolerance: {:.2} km",
+        moon_position_delta,
+        tolerance
+    );
+}
+
 #[test]
 fn test_energy_conservation() {
     let mut app = load_preset_by_name(String::from("Moon orbiting Earth"));
@@ -151,7 +214,7 @@ fn get_bodies_snapshot(app: &Orbital) -> Vec<&Body> {
     bodies_vec
 }
 
-fn find_body_position(bodies: Vec<&Body>, name: &str) -> Position {
+fn find_body_position(bodies: &[&Body], name: &str) -> Position {
     let body_opt = bodies.iter().find(|b| b.name == name);
 
     assert!(body_opt.is_some(), "Body {} not found", name);
