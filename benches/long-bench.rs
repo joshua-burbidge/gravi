@@ -1,17 +1,22 @@
+mod common;
+
+use common::load_preset;
 use criterion::{criterion_group, criterion_main, BatchSize, Criterion};
 use femtovg::Color;
 use grav::{
     helpers::{init_canvas, wgpu::create_canvas},
-    App, Orbital,
+    App,
 };
 
 // bench a call of the "run" function with many ticks already calculated
 fn long_run_bench(c: &mut Criterion) {
-    c.bench_function("long_run_bench", |b| {
+    let mut group = c.benchmark_group("long-bench");
+    group.sample_size(20);
+
+    group.bench_function("long_run_bench", |b| {
         b.iter_batched_ref(
             || {
-                let mut app = Orbital::new();
-                app.load_preset(1);
+                let mut app = load_preset(1);
                 app.num_ticks = 1e6 as i32;
                 app.start();
                 app.run();
@@ -26,15 +31,24 @@ fn long_run_bench(c: &mut Criterion) {
 }
 
 fn long_draw_bench(c: &mut Criterion) {
-    let (mut canvas, _, _, _) = spin_on::spin_on(create_canvas(1600, 1000, "benching"));
+    // Skip this benchmark in headless environments like CI
+    if std::env::var("DISPLAY").is_err() && std::env::var("WAYLAND_DISPLAY").is_err() {
+        println!("Skipping long_draw_bench: no display available");
+        return;
+    }
 
-    init_canvas(&mut canvas);
+    let mut group = c.benchmark_group("long-bench");
+    group.sample_size(60);
 
-    c.bench_function("long_draw_bench", |b| {
+    let mut canvas_resources = spin_on::spin_on(create_canvas(1600, 1000, "benching"));
+    let (canvas, _, _, _) = &mut canvas_resources;
+
+    init_canvas(canvas);
+
+    group.bench_function("long_draw_bench", |b| {
         b.iter_batched_ref(
             || {
-                let mut app = Orbital::new();
-                app.load_preset(1);
+                let mut app = load_preset(1);
                 app.start();
                 for _ in 0..10 {
                     app.run();
@@ -43,7 +57,7 @@ fn long_draw_bench(c: &mut Criterion) {
             },
             |app| {
                 canvas.clear_rect(0, 0, 1600, 1000, Color::black());
-                app.draw(&mut canvas);
+                app.draw(canvas);
             },
             BatchSize::SmallInput,
         )
