@@ -91,6 +91,7 @@ fn test_moon_completes_one_orbit_around_earth() {
     app.num_ticks = ticks_per_step;
 
     let seconds_per_step = dt_seconds_per_tick * ticks_per_step as f32;
+    // test
 
     println!(
         "Running {} iterations for moon orbit ({:.2} days)...",
