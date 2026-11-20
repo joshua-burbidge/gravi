@@ -172,6 +172,17 @@ impl Orbital {
         (x_range, y_range)
     }
 
+    pub fn load_preset_by_name(&mut self, preset_name: String) {
+        let opt = self
+            .presets
+            .iter()
+            .enumerate()
+            .find(|(_i, preset)| preset.name == preset_name);
+
+        let (i, _preset) = opt.expect(format!("Invalid preset name: {}", preset_name).as_str());
+
+        self.load_preset(i);
+    }
     pub fn load_preset(&mut self, preset_num: usize) {
         self.focused = None;
 
